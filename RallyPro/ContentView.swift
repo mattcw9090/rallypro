@@ -1,61 +1,36 @@
-//
-//  ContentView.swift
-//  RallyPro
-//
-//  Created by Matthew Chew on 19/1/25.
-//
-
 import SwiftUI
 import SwiftData
 
 struct ContentView: View {
-    @Environment(\.modelContext) private var modelContext
-    @Query private var items: [Item]
-
     var body: some View {
-        NavigationSplitView {
-            List {
-                ForEach(items) { item in
-                    NavigationLink {
-                        Text("Item at \(item.timestamp, format: Date.FormatStyle(date: .numeric, time: .standard))")
-                    } label: {
-                        Text(item.timestamp, format: Date.FormatStyle(date: .numeric, time: .standard))
-                    }
+        TabView {
+            SessionsView()
+                .tabItem {
+                    Label("Sessions", systemImage: "list.bullet")
                 }
-                .onDelete(perform: deleteItems)
-            }
-            .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    EditButton()
-                }
-                ToolbarItem {
-                    Button(action: addItem) {
-                        Label("Add Item", systemImage: "plus")
-                    }
-                }
-            }
-        } detail: {
-            Text("Select an item")
-        }
-    }
 
-    private func addItem() {
-        withAnimation {
-            let newItem = Item(timestamp: Date())
-            modelContext.insert(newItem)
-        }
-    }
-
-    private func deleteItems(offsets: IndexSet) {
-        withAnimation {
-            for index in offsets {
-                modelContext.delete(items[index])
-            }
+            WaitlistView()
+                .tabItem {
+                    Label("Waitlist", systemImage: "person.fill.badge.plus")
+                }
+            
+            AllPlayersView()
+                .tabItem {
+                    Label("All Players", systemImage: "person.3.fill")
+                }
         }
     }
 }
 
 #Preview {
-    ContentView()
-        .modelContainer(for: Item.self, inMemory: true)
+    let schema = Schema([Player.self, Season.self, Session.self, SessionParticipant.self, DoublesMatch.self])
+    let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: true)
+
+    do {
+        let mockContainer = try ModelContainer(for: schema, configurations: [modelConfiguration])
+        return ContentView()
+            .modelContainer(mockContainer)
+    } catch {
+        fatalError("Could not create ModelContainer: \(error)")
+    }
 }

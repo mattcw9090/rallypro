@@ -1,19 +1,10 @@
-//
-//  RallyProApp.swift
-//  RallyPro
-//
-//  Created by Matthew Chew on 19/1/25.
-//
-
 import SwiftUI
 import SwiftData
 
 @main
 struct RallyProApp: App {
     var sharedModelContainer: ModelContainer = {
-        let schema = Schema([
-            Item.self,
-        ])
+        let schema = Schema([Player.self, Season.self, Session.self, SessionParticipant.self, DoublesMatch.self])
         let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
 
         do {
@@ -22,7 +13,7 @@ struct RallyProApp: App {
             fatalError("Could not create ModelContainer: \(error)")
         }
     }()
-
+    
     var body: some Scene {
         WindowGroup {
             ContentView()
