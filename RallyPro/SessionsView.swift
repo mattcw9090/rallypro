@@ -77,8 +77,15 @@ struct SessionsView: View {
                             seasonNumber: season.seasonNumber,
                             sessions: allSessions.filter { $0.season.id == season.id },
                             isCompleted: season.isCompleted,
-                            addSession: { addSession(to: season) },
-                            markComplete: { markSeasonComplete(season) }
+                            markIncomplete: {
+                                markSeasonIncomplete(season)
+                            },
+                            addSession: {
+                                addSession(to: season)
+                            },
+                            markComplete: {
+                                markSeasonComplete(season)
+                            }
                         )
                     }
                     .listStyle(InsetGroupedListStyle())
@@ -164,6 +171,20 @@ struct SessionsView: View {
             showAlert = true
         }
     }
+    
+    private func markSeasonIncomplete(_ season: Season) {
+        guard let latest = latestSeason, season.id == latest.id else { return }
+        season.isCompleted = false
+        
+        do {
+            try modelContext.save()
+            print("Season \(season.seasonNumber) marked as incomplete")
+        } catch {
+            alertMessage = "Failed to mark the season as incomplete: \(error)"
+            showAlert = true
+        }
+    }
+
 }
 
 struct SeasonAccordionView: View {
@@ -171,6 +192,8 @@ struct SeasonAccordionView: View {
     let seasonNumber: Int
     let sessions: [Session]
     let isCompleted: Bool
+    let markIncomplete: () -> Void
+    
     let addSession: () -> Void
     let markComplete: () -> Void
 
@@ -216,6 +239,17 @@ struct SeasonAccordionView: View {
                 }
                 .padding(.top, 10)
             }
+            else {
+                Button("Mark Incomplete", action: markIncomplete)
+                    .buttonStyle(PlainButtonStyle())
+                    .padding(.vertical, 5)
+                    .padding(.horizontal, 10)
+                    .background(Color.red)
+                    .foregroundColor(.white)
+                    .cornerRadius(6)
+                    .font(.caption)
+                    .padding(.top, 10)
+            }
         } label: {
             HStack {
                 Text("Season \(seasonNumber)")
@@ -230,6 +264,7 @@ struct SeasonAccordionView: View {
         .contentShape(Rectangle())
     }
 }
+
 
 #Preview {
     let schema = Schema([Season.self, Session.self])
