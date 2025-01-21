@@ -28,17 +28,22 @@ struct ResultsView: View {
         completedMatches.reduce(0) { $0 + $1.blackTeamScoreFirstSet + $1.blackTeamScoreSecondSet }
     }
 
+    /// Participant scores sorted by highest to lowest net score
     private var participantScores: [(String, Int)] {
-        sessionParticipants.map { participant in
-            let netScore = completedMatches.filter {
-                [$0.redPlayer1.id, $0.redPlayer2.id, $0.blackPlayer1.id, $0.blackPlayer2.id].contains(participant.player.id)
-            }.reduce(0) { sum, match in
-                let scoreDiff = (match.blackTeamScoreFirstSet + match.blackTeamScoreSecondSet) -
-                                (match.redTeamScoreFirstSet + match.redTeamScoreSecondSet)
-                return sum + (participant.team == .Black ? scoreDiff : -scoreDiff)
+        sessionParticipants
+            .map { participant in
+                let netScore = completedMatches.filter {
+                    [$0.redPlayer1.id, $0.redPlayer2.id,
+                     $0.blackPlayer1.id, $0.blackPlayer2.id]
+                     .contains(participant.player.id)
+                }.reduce(0) { sum, match in
+                    let scoreDiff = (match.blackTeamScoreFirstSet + match.blackTeamScoreSecondSet)
+                                  - (match.redTeamScoreFirstSet + match.redTeamScoreSecondSet)
+                    return sum + (participant.team == .Black ? scoreDiff : -scoreDiff)
+                }
+                return (participant.player.name, netScore)
             }
-            return (participant.player.name, netScore)
-        }
+            .sorted { $0.1 > $1.1 }
     }
 
     // MARK: - Body
