@@ -35,7 +35,7 @@ struct TeamsView: View {
             VStack {
                 List {
                     // Red Team Section
-                    Section(header: teamHeader(text: "Red Team", color: .red)) {
+                    Section(header: teamHeader(text: "Red Team", color: .red, count: redTeamMembers.count)) {
                         ForEach(redTeamMembers, id: \.id) { player in
                             TeamMemberRow(name: player.name, team: .Red)
                                 .swipeActions(edge: .trailing, allowsFullSwipe: false) {
@@ -52,7 +52,7 @@ struct TeamsView: View {
                     }
 
                     // Black Team Section
-                    Section(header: teamHeader(text: "Black Team", color: .black)) {
+                    Section(header: teamHeader(text: "Black Team", color: .black, count: blackTeamMembers.count)) {
                         ForEach(blackTeamMembers, id: \.id) { player in
                             TeamMemberRow(name: player.name, team: .Black)
                                 .swipeActions(edge: .trailing, allowsFullSwipe: false) {
@@ -69,7 +69,7 @@ struct TeamsView: View {
                     }
 
                     // Unassigned Section
-                    Section(header: teamHeader(text: "Unassigned", color: .gray)) {
+                    Section(header: teamHeader(text: "Unassigned", color: .gray, count: unassignedMembers.count)) {
                         ForEach(unassignedMembers, id: \.id) { player in
                             Text(player.name)
                                 .font(.body)
@@ -92,6 +92,7 @@ struct TeamsView: View {
                                 }
                         }
                     }
+
                 }
                 .listStyle(InsetGroupedListStyle())
                 
@@ -256,12 +257,12 @@ struct TeamsView: View {
         print("All existing DoublesMatch records for this session have been deleted.")
     }
     
-    private func teamHeader(text: String, color: Color) -> some View {
+    private func teamHeader(text: String, color: Color, count: Int) -> some View {
         HStack {
             Circle()
                 .fill(color)
                 .frame(width: 10, height: 10)
-            Text(text)
+            Text("\(text) (\(count))")
                 .font(.headline)
                 .foregroundColor(color)
         }
