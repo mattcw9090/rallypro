@@ -232,7 +232,6 @@ struct TeamsView: View {
     
     private func moveToWaitlist(player: Player) {
         guard let participant = participants.first(where: { $0.player == player }) else {
-            alertMessage = AlertMessage(message: "Player not found in the current session.")
             return
         }
         context.delete(participant)
@@ -244,7 +243,6 @@ struct TeamsView: View {
             .max() ?? 0
         player.waitlistPosition = currentMaxPosition + 1
         saveContext()
-        alertMessage = AlertMessage(message: "\(player.name) has been moved to the waitlist.")
     }
     
     private func deleteExistingDoublesMatches() {
