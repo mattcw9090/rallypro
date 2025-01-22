@@ -123,61 +123,54 @@ struct TeamsView: View {
                         .pickerStyle(MenuPickerStyle())
                         .labelsHidden()
                     }
-                }
-                .padding([.horizontal, .top], 10)
-                
-                Button(action: {
-                    if validateTeams() {
-                        let logic = Logic()
-                        
-                        if let overallLineup = logic.generateCombinedLineup(
-                            numberOfPlayersPerTeam: 6,
-                            numberOfWaves: selectedNumberOfWaves,
-                            numberOfCourts: selectedNumberOfCourts
-                        ) {
-                            print("Overall Lineup: \(overallLineup)")
-                            deleteExistingDoublesMatches()
+
+                    Button(action: {
+                        if validateTeams() {
+                            let logic = Logic()
                             
-                            for (waveIndex, wave) in overallLineup.enumerated() {
-                                for match in wave {
-                                    let firstPair = match[0]
-                                    let secondPair = match[1]
-                                    
-                                    let newMatch = DoublesMatch(
-                                        session: session,
-                                        waveNumber: waveIndex + 1,
-                                        redPlayer1: redTeamMembers[firstPair.0 - 1],
-                                        redPlayer2: redTeamMembers[firstPair.1 - 1],
-                                        blackPlayer1: blackTeamMembers[secondPair.0 - 1],
-                                        blackPlayer2: blackTeamMembers[secondPair.1 - 1]
-                                    )
-                                    
-                                    context.insert(newMatch)
+                            if let overallLineup = logic.generateCombinedLineup(
+                                numberOfPlayersPerTeam: 6,
+                                numberOfWaves: selectedNumberOfWaves,
+                                numberOfCourts: selectedNumberOfCourts
+                            ) {
+                                print("Overall Lineup: \(overallLineup)")
+                                deleteExistingDoublesMatches()
+                                
+                                for (waveIndex, wave) in overallLineup.enumerated() {
+                                    for match in wave {
+                                        let firstPair = match[0]
+                                        let secondPair = match[1]
+                                        
+                                        let newMatch = DoublesMatch(
+                                            session: session,
+                                            waveNumber: waveIndex + 1,
+                                            redPlayer1: redTeamMembers[firstPair.0 - 1],
+                                            redPlayer2: redTeamMembers[firstPair.1 - 1],
+                                            blackPlayer1: blackTeamMembers[secondPair.0 - 1],
+                                            blackPlayer2: blackTeamMembers[secondPair.1 - 1]
+                                        )
+                                        
+                                        context.insert(newMatch)
+                                    }
                                 }
+                                
+                            } else {
+                                print("No valid lineup found after 10 attempts for red or black.")
                             }
-                            
-                        } else {
-                            print("No valid lineup found after 10 attempts for red or black.")
+                            alertMessage = AlertMessage(message: "Done trying draws. Check console for details.")
                         }
-                        alertMessage = AlertMessage(message: "Done trying draws. Check console for details.")
+                    }) {
+                        Text("Generate Draws")
+                            .font(.headline)
+                            .frame(maxWidth: .infinity)
+                            .padding()
+                            .background(Color.blue)
+                            .foregroundColor(.white)
+                            .cornerRadius(10)
                     }
-                }) {
-                    Text("Generate Draws")
-                        .font(.headline)
-                        .frame(maxWidth: .infinity)
-                        .padding()
-                        .background(Color.blue)
-                        .foregroundColor(.white)
-                        .cornerRadius(10)
-                        .padding()
                 }
-                .alert(item: $alertMessage) { message in
-                    Alert(
-                        title: Text("Validation Result"),
-                        message: Text(message.message),
-                        dismissButton: .default(Text("OK"))
-                    )
-                }
+                .padding(.horizontal, 40)
+                .padding(.top, 10)
             }
         }
     }
