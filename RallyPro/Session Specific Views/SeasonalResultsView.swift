@@ -5,35 +5,36 @@ struct SeasonalResultsView: View {
     let seasonNumber: Int
 
     // MARK: - Queries
-
     @Query private var seasonSessions: [Session]
     @Query private var allParticipants: [SessionParticipant]
     @Query private var allMatches: [DoublesMatch]
 
     // MARK: - Initialization
-
     init(seasonNumber: Int) {
         self.seasonNumber = seasonNumber
 
         self._seasonSessions = Query(
             filter: #Predicate<Session> { $0.seasonNumber == seasonNumber }
         )
-
         self._allParticipants = Query(
             filter: #Predicate<SessionParticipant> { $0.session.seasonNumber == seasonNumber }
         )
-
         self._allMatches = Query(
             filter: #Predicate<DoublesMatch> { $0.session.seasonNumber == seasonNumber }
         )
     }
 
     // MARK: - Computed Properties
-
     private var aggregatedPlayers: [
         (player: Player, sessionCount: Int, matchCount: Int, averageScore: Double)
     ] {
-        var playerStats: [UUID: (player: Player, sessionsAttended: Set<Int>, totalNet: Int, matchCount: Int)] = [:]
+        // Dictionary keyed by player ID so we can accumulate stats
+        var playerStats: [UUID: (
+            player: Player,
+            sessionsAttended: Set<Int>,
+            totalNet: Int,
+            matchCount: Int
+        )] = [:]
 
         // 1) Record sessions attended by each player
         allParticipants.forEach { participant in
@@ -53,21 +54,28 @@ struct SeasonalResultsView: View {
             }
         }
 
-        // 2) Filter only complete matches
+        // 2) Filter only completed matches
         let completedMatches = allMatches.filter { $0.isComplete }
 
-        // 3) Aggregate net scores from each match
+        // 3) Aggregate net scores from each completed match
         completedMatches.forEach { match in
-            let blackMinusRed = (match.blackTeamScoreFirstSet + match.blackTeamScoreSecondSet) -
-                                (match.redTeamScoreFirstSet + match.redTeamScoreSecondSet)
+            let blackMinusRed = (match.blackTeamScoreFirstSet + match.blackTeamScoreSecondSet)
+                                - (match.redTeamScoreFirstSet + match.redTeamScoreSecondSet)
 
-            let playersInMatch = [match.redPlayer1, match.redPlayer2, match.blackPlayer1, match.blackPlayer2]
+            // All four players in this match
+            let playersInMatch = [
+                match.redPlayer1, match.redPlayer2,
+                match.blackPlayer1, match.blackPlayer2
+            ]
 
             playersInMatch.forEach { matchPlayer in
+                // Find the participant record for this match + player
                 guard let participant = allParticipants.first(where: {
                     $0.player.id == matchPlayer.id &&
                     $0.session.uniqueIdentifier == match.session.uniqueIdentifier
-                }) else { return }
+                }) else {
+                    return
+                }
 
                 let netScore = (participant.team == .Black) ? blackMinusRed : -blackMinusRed
 
@@ -76,6 +84,7 @@ struct SeasonalResultsView: View {
                     stats.matchCount += 1
                     playerStats[matchPlayer.id] = stats
                 } else {
+                    // If not already in dictionary, create a new entry
                     playerStats[matchPlayer.id] = (
                         matchPlayer,
                         [],
@@ -86,25 +95,28 @@ struct SeasonalResultsView: View {
             }
         }
 
-        // 4) Compute average scores and prepare the final array
+        // 4) Compute final (average) stats
         return playerStats.values
             .map { stats -> (Player, Int, Int, Double) in
-                let avg = stats.matchCount > 0
-                    ? Double(stats.totalNet) / Double(stats.matchCount)
-                    : 0.0
+                let sessionCount = stats.sessionsAttended.count
+                let averageScore: Double
+                if sessionCount > 0 {
+                    averageScore = Double(stats.totalNet) / Double(sessionCount)
+                } else {
+                    averageScore = 0.0
+                }
 
                 return (
                     stats.player,
-                    stats.sessionsAttended.count,
+                    sessionCount,
                     stats.matchCount,
-                    avg
+                    averageScore
                 )
             }
-            .sorted { $0.player.name < $1.player.name }
+            .sorted { $0.3 > $1.3 }
     }
 
     // MARK: - Body
-
     var body: some View {
         NavigationView {
             List {
@@ -136,9 +148,11 @@ struct SeasonalResultsView: View {
                 }
             }
             .listStyle(InsetGroupedListStyle())
+            .navigationTitle("Season \(seasonNumber) Results")
         }
     }
 }
+
 
 #Preview {
     do {
