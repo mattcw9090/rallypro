@@ -230,6 +230,12 @@ struct WaveView: View {
 struct MatchView: View {
     @Environment(\.modelContext) private var modelContext
     @Bindable var match: DoublesMatch
+    
+    @FocusState private var activeScoreField: ScoreField?
+
+    private enum ScoreField {
+        case redFirst, blackFirst, redSecond, blackSecond
+    }
 
     let isEditingPlayers: Bool
 
@@ -365,55 +371,96 @@ extension MatchView {
     @ViewBuilder
     private var scoreInputView: some View {
         HStack(spacing: 16) {
-            // Set 1
+            // ----- SET 1 -----
             VStack(spacing: 4) {
                 Text("Set 1")
                     .font(.caption)
+                
                 HStack(spacing: 4) {
+                    // Red first-set score
                     TextField("R", text: $redFirstSetScore)
                         .keyboardType(.numberPad)
-                        .textFieldStyle(RoundedBorderTextFieldStyle())
+                        .textFieldStyle(.roundedBorder)
                         .frame(width: 40)
+                        .focused($activeScoreField, equals: .redFirst)
+                        .onChange(of: redFirstSetScore) { oldValue, newValue in
+                            // 1) Enforce max 2 digits
+                            if newValue.count > 2 {
+                                redFirstSetScore = String(newValue.prefix(2))
+                            }
+                            // 2) Move focus when we have exactly 2 digits
+                            if redFirstSetScore.count == 2 {
+                                activeScoreField = .blackFirst
+                            }
+                            // 3) Update underlying model
+                            updateScoreFields()
+                        }
+                    
                     Text("-")
+                    
+                    // Black first-set score
                     TextField("B", text: $blackFirstSetScore)
                         .keyboardType(.numberPad)
-                        .textFieldStyle(RoundedBorderTextFieldStyle())
+                        .textFieldStyle(.roundedBorder)
                         .frame(width: 40)
+                        .focused($activeScoreField, equals: .blackFirst)
+                        .onChange(of: blackFirstSetScore) { oldValue, newValue in
+                            if newValue.count > 2 {
+                                blackFirstSetScore = String(newValue.prefix(2))
+                            }
+                            if blackFirstSetScore.count == 2 {
+                                activeScoreField = .redSecond
+                            }
+                            updateScoreFields()
+                        }
                 }
             }
 
-            // Set 2
+            // ----- SET 2 -----
             VStack(spacing: 4) {
                 Text("Set 2")
                     .font(.caption)
+                
                 HStack(spacing: 4) {
+                    // Red second-set score
                     TextField("R", text: $redSecondSetScore)
                         .keyboardType(.numberPad)
-                        .textFieldStyle(RoundedBorderTextFieldStyle())
+                        .textFieldStyle(.roundedBorder)
                         .frame(width: 40)
+                        .focused($activeScoreField, equals: .redSecond)
+                        .onChange(of: redSecondSetScore) { oldValue, newValue in
+                            if newValue.count > 2 {
+                                redSecondSetScore = String(newValue.prefix(2))
+                            }
+                            if redSecondSetScore.count == 2 {
+                                activeScoreField = .blackSecond
+                            }
+                            updateScoreFields()
+                        }
+
                     Text("-")
+
+                    // Black second-set score
                     TextField("B", text: $blackSecondSetScore)
                         .keyboardType(.numberPad)
-                        .textFieldStyle(RoundedBorderTextFieldStyle())
+                        .textFieldStyle(.roundedBorder)
                         .frame(width: 40)
+                        .focused($activeScoreField, equals: .blackSecond)
+                        .onChange(of: blackSecondSetScore) { oldValue, newValue in
+                            if newValue.count > 2 {
+                                blackSecondSetScore = String(newValue.prefix(2))
+                            }
+                            // Optionally dismiss keyboard when final text field is filled:
+                            // if blackSecondSetScore.count == 2 {
+                            //     activeScoreField = nil
+                            // }
+                            updateScoreFields()
+                        }
                 }
             }
 
             Spacer()
         }
-        .onChange(of: redFirstSetScore) { oldValue, newValue in
-            updateScoreFields()
-        }
-        .onChange(of: blackFirstSetScore) { oldValue, newValue in
-            updateScoreFields()
-        }
-        .onChange(of: redSecondSetScore) { oldValue, newValue in
-            updateScoreFields()
-        }
-        .onChange(of: blackSecondSetScore) { oldValue, newValue in
-            updateScoreFields()
-        }
-
         .padding(.top, 4)
     }
 }
