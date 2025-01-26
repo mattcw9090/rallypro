@@ -26,7 +26,7 @@ struct SeasonalResultsView: View {
 
     // MARK: - Computed Properties
     private var aggregatedPlayers: [
-        (player: Player, sessionCount: Int, matchCount: Int, averageScore: Double)
+        (player: Player, sessionCount: Int, matchCount: Int, finalAverageScore: Double)
     ] {
         // Dictionary keyed by player ID so we can accumulate stats
         var playerStats: [UUID: (
@@ -95,10 +95,12 @@ struct SeasonalResultsView: View {
             }
         }
 
-        // 4) Compute final (average) stats
+        // 4) Compute final stats
         return playerStats.values
             .map { stats -> (Player, Int, Int, Double) in
                 let sessionCount = stats.sessionsAttended.count
+
+                // -- Don’t alter the existing average calculation logic --
                 let averageScore: Double
                 if sessionCount > 0 {
                     averageScore = Double(stats.totalNet) / Double(sessionCount)
@@ -106,13 +108,17 @@ struct SeasonalResultsView: View {
                     averageScore = 0.0
                 }
 
+                // --- The “adjustment” step, after the average is calculated ---
+                let finalAverageScore = averageScore + Double(sessionCount)
+
                 return (
                     stats.player,
                     sessionCount,
                     stats.matchCount,
-                    averageScore
+                    finalAverageScore
                 )
             }
+            // Keep sorting by the finalAverageScore (which now has sessions added in)
             .sorted { $0.3 > $1.3 }
     }
 
@@ -141,7 +147,7 @@ struct SeasonalResultsView: View {
                             .frame(maxWidth: .infinity, alignment: .leading)
                         Text("\(item.sessionCount)")
                             .frame(width: 80, alignment: .trailing)
-                        Text(String(format: "%.1f", item.averageScore))
+                        Text(String(format: "%.1f", item.finalAverageScore))
                             .frame(width: 80, alignment: .trailing)
                     }
                     .padding(.vertical, 5)
@@ -152,6 +158,7 @@ struct SeasonalResultsView: View {
         }
     }
 }
+
 
 
 #Preview {
