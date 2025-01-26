@@ -8,6 +8,7 @@ struct EditPlayerView: View {
     @Bindable var player: Player
     @State private var editedName: String = ""
     @State private var editedStatus: Player.PlayerStatus = .notInSession
+    @State private var editedIsMale: Bool = true
     @State private var showingAlert = false
     @State private var alertMessage = ""
 
@@ -16,7 +17,8 @@ struct EditPlayerView: View {
 
     // Waitlist Players Query
     private var waitlistPlayers: [Player] {
-        allPlayers.filter { $0.status == .onWaitlist }
+        allPlayers
+            .filter { $0.status == .onWaitlist }
             .sorted { ($0.waitlistPosition ?? 0) < ($1.waitlistPosition ?? 0) }
     }
 
@@ -51,6 +53,8 @@ struct EditPlayerView: View {
                             Text(status.rawValue).tag(status)
                         }
                     }
+                    
+                    Toggle("Is Male", isOn: $editedIsMale)
                 }
             }
             .navigationTitle("Edit Player")
@@ -70,6 +74,7 @@ struct EditPlayerView: View {
             .onAppear {
                 editedName = player.name
                 editedStatus = player.status
+                editedIsMale = player.isMale ?? true
             }
             .alert(isPresented: $showingAlert) {
                 Alert(
@@ -152,6 +157,7 @@ struct EditPlayerView: View {
         
         player.name = trimmedName
         player.status = editedStatus
+        player.isMale = editedIsMale
         
         do {
             try modelContext.save()
@@ -172,15 +178,18 @@ struct EditPlayerView: View {
 
         // Insert Mock Data
         let context = mockContainer.mainContext
-        let playerToEdit = Player(name: "Charlie", status: .playing)
-        context.insert(Player(name: "Alice", status: .playing))
-        context.insert(Player(name: "Bob", status: .onWaitlist, waitlistPosition: 2))
+        let playerToEdit = Player(name: "Charlie", status: .playing, isMale: true)
+        context.insert(Player(name: "Alice", status: .playing, isMale: false))
+        context.insert(Player(name: "Bob", status: .onWaitlist, waitlistPosition: 2, isMale: true))
         context.insert(playerToEdit)
-        context.insert(Player(name: "Denise", status: .onWaitlist, waitlistPosition: 1))
+        context.insert(Player(name: "Denise", status: .onWaitlist, waitlistPosition: 1, isMale: false))
+        
         let season = Season(seasonNumber: 1)
         context.insert(season)
+        
         let session = Session(sessionNumber: 1, season: season)
         context.insert(session)
+        
         let participant = SessionParticipant(session: session, player: playerToEdit, team: .Red)
         context.insert(participant)
 

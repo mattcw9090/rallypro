@@ -9,7 +9,8 @@ struct AddPlayerView: View {
     @State private var status: Player.PlayerStatus = .notInSession
     @State private var showingAlert = false
     @State private var alertMessage = ""
-    
+    @State private var isMale: Bool = true
+
     // All Players Query
     @Query private var allPlayers: [Player]
 
@@ -45,6 +46,7 @@ struct AddPlayerView: View {
                             Text(status.rawValue).tag(status)
                         }
                     }
+                    Toggle("Is Male", isOn: $isMale)
                 }
             }
             .navigationTitle("Add Player")
@@ -82,7 +84,7 @@ struct AddPlayerView: View {
             return
         }
         
-        let newPlayer = Player(name: trimmedName, status: status)
+        let newPlayer = Player(name: trimmedName, status: status, isMale: isMale)
 
         // Add player to the waitlist if status is .onWaitlist
         if status == .onWaitlist {
@@ -123,9 +125,9 @@ struct AddPlayerView: View {
         // Insert Mock Data
         let context = mockContainer.mainContext
         context.insert(Player(name: "Alice", status: .playing))
-        context.insert(Player(name: "Bob", status: .onWaitlist, waitlistPosition: 2))
-        context.insert(Player(name: "Charlie", status: .notInSession))
-        context.insert(Player(name: "Denise", status: .onWaitlist, waitlistPosition: 1))
+        context.insert(Player(name: "Bob", status: .onWaitlist, waitlistPosition: 2, isMale: true))
+        context.insert(Player(name: "Charlie", status: .notInSession, isMale: true))
+        context.insert(Player(name: "Denise", status: .onWaitlist, waitlistPosition: 1, isMale: false))
 
         return AddPlayerView()
             .modelContainer(mockContainer)

@@ -8,12 +8,13 @@ struct PlayerRowView: View {
             Image(systemName: "person.circle.fill")
                 .resizable()
                 .frame(width: 40, height: 40)
-                .foregroundColor(.blue)
+                .foregroundColor(player.isMale ?? true ? .blue : .pink)
             
             VStack(alignment: .leading) {
                 Text(player.name)
                     .font(.body)
-                Text(player.status.rawValue.capitalized)
+                
+                Text(player.status.rawValue)
                     .font(.caption)
                     .foregroundColor(.gray)
             }

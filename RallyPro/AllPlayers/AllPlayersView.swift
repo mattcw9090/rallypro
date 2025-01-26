@@ -80,10 +80,10 @@ struct AllPlayersView: View {
 
         // Insert Mock Data
         let context = mockContainer.mainContext
-        context.insert(Player(name: "Alice", status: .playing))
-        context.insert(Player(name: "Bob", status: .onWaitlist, waitlistPosition: 2))
-        context.insert(Player(name: "Charlie", status: .notInSession))
-        context.insert(Player(name: "Denise", status: .onWaitlist, waitlistPosition: 1))
+        context.insert(Player(name: "Alice", status: .playing, isMale: false))
+        context.insert(Player(name: "Bob", status: .onWaitlist, waitlistPosition: 2, isMale: true))
+        context.insert(Player(name: "Charlie", status: .notInSession, isMale: true))
+        context.insert(Player(name: "Denise", status: .onWaitlist, waitlistPosition: 1, isMale: false))
 
         return AllPlayersView()
             .modelContainer(mockContainer)

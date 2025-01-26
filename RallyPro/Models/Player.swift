@@ -7,6 +7,7 @@ class Player {
     @Attribute(.unique) var name: String
     var statusRawValue: String
     var waitlistPosition: Int?
+    @Attribute var isMale: Bool?
     
     enum PlayerStatus: String, Codable, CaseIterable {
         case playing = "Currently Playing"
@@ -19,10 +20,11 @@ class Player {
         set { statusRawValue = newValue.rawValue }
     }
 
-    init(id: UUID = UUID(), name: String, status: PlayerStatus = .notInSession, waitlistPosition: Int? = nil) {
+    init(id: UUID = UUID(), name: String, status: PlayerStatus = .notInSession, waitlistPosition: Int? = nil, isMale: Bool? = nil) {
         self.id = id
         self.name = name
         self.statusRawValue = status.rawValue
         self.waitlistPosition = waitlistPosition
+        self.isMale = isMale
     }
 }
