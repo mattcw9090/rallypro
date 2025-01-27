@@ -193,7 +193,7 @@ struct SeasonAccordionView: View {
     let sessions: [Session]
     let isCompleted: Bool
     let markIncomplete: () -> Void
-    
+
     let addSession: () -> Void
     let markComplete: () -> Void
 
@@ -205,6 +205,7 @@ struct SeasonAccordionView: View {
                     .foregroundColor(.gray)
                     .padding(.vertical, 5)
             } else {
+                // Existing sessions listing
                 ForEach(sessions) { session in
                     NavigationLink(destination: SessionDetailView(session: session)) {
                         HStack {
@@ -215,8 +216,21 @@ struct SeasonAccordionView: View {
                         .padding(.vertical, 5)
                     }
                 }
+                
+                // NEW: Seasonal Results row
+                NavigationLink(
+                    destination: SeasonalResultsView(seasonNumber: seasonNumber)
+                ) {
+                    HStack {
+                        Image(systemName: "chart.bar.fill")
+                        Text("Season \(seasonNumber) Results")
+                            .font(.body)
+                    }
+                    .padding(.vertical, 5)
+                }
             }
 
+            // Buttons for adding session and/or marking season complete/incomplete
             if !isCompleted {
                 HStack(spacing: 20) {
                     Button("Add Session", action: addSession)
@@ -264,7 +278,6 @@ struct SeasonAccordionView: View {
         .contentShape(Rectangle())
     }
 }
-
 
 #Preview {
     let schema = Schema([Season.self, Session.self])

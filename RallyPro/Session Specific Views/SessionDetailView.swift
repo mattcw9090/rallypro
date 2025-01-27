@@ -5,7 +5,6 @@ enum DetailSegment: String, CaseIterable, Identifiable {
     case teams = "Teams"
     case draws = "Draws"
     case results = "Results"
-    case seasonalResults = "Season"
     
     var id: String { rawValue }
 }
@@ -32,8 +31,6 @@ struct SessionDetailView: View {
                 DrawsView(session: session)
             case .results:
                 ResultsView(session: session)
-            case .seasonalResults:
-                SeasonalResultsView(seasonNumber: session.seasonNumber)
             }
 
             Spacer()
