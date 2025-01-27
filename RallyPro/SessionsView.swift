@@ -184,7 +184,26 @@ struct SessionsView: View {
             showAlert = true
         }
     }
-
+    
+    private func deleteSession(_ session: Session) {
+        // 1) Check if session has participants
+        if !session.participants.isEmpty {
+            alertMessage = "You cannot delete this session because it has participants."
+            showAlert = true
+            return
+        }
+        
+        // 2) Proceed with deletion only if there are no participants
+        modelContext.delete(session)
+        
+        do {
+            try modelContext.save()
+            print("Deleted session \(session.sessionNumber)")
+        } catch {
+            alertMessage = "Failed to delete the session: \(error)"
+            showAlert = true
+        }
+    }
 }
 
 struct SeasonAccordionView: View {

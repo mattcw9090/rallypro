@@ -3,12 +3,31 @@ import SwiftData
 
 struct AllPlayersView: View {
     @Environment(\.modelContext) private var modelContext
-    
+
+    // MARK: - State
+
     @State private var showingAddPlayerSheet = false
     @State private var selectedPlayerForEditing: Player?
     
+    // Search text for filtering
+    @State private var searchText = ""
+
+    // MARK: - Queries
+
     // All Players Query
     @Query(sort: \Player.name) private var allPlayers: [Player]
+    
+    // A computed property to filter players by search text
+    private var filteredPlayers: [Player] {
+        guard !searchText.isEmpty else {
+            // If the search is empty, show all players
+            return allPlayers
+        }
+        // Filter the list by name (case-insensitive)
+        return allPlayers.filter { player in
+            player.name.localizedCaseInsensitiveContains(searchText)
+        }
+    }
     
     // Latest Waitlist Position Query
     private var latestWaitlistPosition: Int? {
@@ -18,10 +37,12 @@ struct AllPlayersView: View {
             .max()
     }
     
+    // MARK: - Body
+
     var body: some View {
         NavigationView {
             List {
-                ForEach(allPlayers) { player in
+                ForEach(filteredPlayers) { player in
                     Button {
                         selectedPlayerForEditing = player
                     } label: {
@@ -40,6 +61,8 @@ struct AllPlayersView: View {
                 }
             }
             .navigationTitle("All Players")
+            // 1. Add the .searchable modifier
+            .searchable(text: $searchText, placement: .navigationBarDrawer(displayMode: .always))
             .toolbar {
                 ToolbarItem(placement: .primaryAction) {
                     Button {
@@ -57,6 +80,8 @@ struct AllPlayersView: View {
             }
         }
     }
+    
+    // MARK: - Methods
     
     private func addToWaitlist(_ player: Player) {
         player.status = .onWaitlist
