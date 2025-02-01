@@ -5,7 +5,6 @@ struct WaitlistView: View {
     @EnvironmentObject var playerManager: PlayerManager
     @EnvironmentObject var seasonManager: SeasonSessionManager
 
-    // Alert properties
     @State private var showingAlert = false
     @State private var alertMessage = ""
 
@@ -32,7 +31,6 @@ struct WaitlistView: View {
                         }
                         .padding(.vertical, 5)
                         .swipeActions(edge: .trailing) {
-                            // Move to Current Session Action
                             Button {
                                 do {
                                     try playerManager.movePlayerToCurrentSession(player, session: seasonManager.latestSession)
@@ -44,7 +42,6 @@ struct WaitlistView: View {
                                 Label("Move to Current Session", systemImage: "sportscourt")
                             }
 
-                            // Move to Bottom Action
                             Button {
                                 do {
                                     try playerManager.movePlayerToBottom(player)
@@ -58,7 +55,6 @@ struct WaitlistView: View {
                             .tint(.blue)
                         }
                         .swipeActions(edge: .leading) {
-                            // Remove from Waitlist Action
                             Button {
                                 do {
                                     try playerManager.removeFromWaitlist(player)
@@ -92,7 +88,6 @@ struct WaitlistView: View {
         let mockContainer = try ModelContainer(for: schema, configurations: [modelConfiguration])
         let context = mockContainer.mainContext
         
-        // Insert sample data
         let season1 = Season(seasonNumber: 1)
         context.insert(season1)
         let season2 = Season(seasonNumber: 2)
@@ -105,7 +100,6 @@ struct WaitlistView: View {
         context.insert(Player(name: "Denise", status: .onWaitlist, waitlistPosition: 1))
         context.insert(Player(name: "Eve", status: .onWaitlist, waitlistPosition: 4))
         
-        // Create manager instances
         let playerManager = PlayerManager(modelContext: context)
         let seasonManager = SeasonSessionManager(modelContext: context)
         
