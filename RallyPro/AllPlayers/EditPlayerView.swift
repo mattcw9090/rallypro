@@ -58,7 +58,7 @@ struct EditPlayerView: View {
 
     private func saveChanges() {
         do {
-            try playerManager.updatePlayer(
+            try playerManager.updatePlayerInfo(
                 player: player,
                 newName: editedName,
                 newStatus: editedStatus,

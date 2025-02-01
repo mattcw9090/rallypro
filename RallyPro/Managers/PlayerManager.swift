@@ -25,7 +25,7 @@ class PlayerManager: ObservableObject {
         }
     }
     
-    func filterPlayers(searchText: String) -> [Player] {
+    func searchPlayers(searchText: String) -> [Player] {
         guard !searchText.isEmpty else {
             return allPlayers
         }
@@ -34,7 +34,7 @@ class PlayerManager: ObservableObject {
         }
     }
     
-    func addToWaitlist(_ player: Player) {
+    func addNewPlayerToWaitlist(_ player: Player) {
         guard player.status == .notInSession else { return }
         let currentMaxPosition = waitlistPlayers
             .compactMap { $0.waitlistPosition }
@@ -73,7 +73,7 @@ class PlayerManager: ObservableObject {
         fetchAllPlayers()
     }
     
-    func updatePlayer(player: Player,
+    func updatePlayerInfo(player: Player,
                       newName: String,
                       newStatus: Player.PlayerStatus,
                       newIsMale: Bool,

@@ -12,7 +12,7 @@ struct AllPlayersView: View {
     var body: some View {
         NavigationStack {
             List {
-                ForEach(playerManager.filterPlayers(searchText: searchText)) { player in
+                ForEach(playerManager.searchPlayers(searchText: searchText)) { player in
                     PlayerRowView(player: player)
                         .swipeActions(edge: .trailing) {
                             swipeActions(for: player)
@@ -49,7 +49,7 @@ struct AllPlayersView: View {
     private func swipeActions(for player: Player) -> some View {
         if player.status == .notInSession {
             Button {
-                playerManager.addToWaitlist(player)
+                playerManager.addNewPlayerToWaitlist(player)
             } label: {
                 Label("Add to Waitlist", systemImage: "list.bullet")
             }
