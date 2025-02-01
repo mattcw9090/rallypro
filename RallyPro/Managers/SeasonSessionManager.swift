@@ -5,10 +5,12 @@ class SeasonSessionManager: ObservableObject {
     private var modelContext: ModelContext
 
     @Published var allSeasons: [Season] = []
+    @Published var allSessions: [Session] = []
 
     init(modelContext: ModelContext) {
         self.modelContext = modelContext
         fetchSeasons()
+        fetchSessions()
     }
 
     func fetchSeasons() {
@@ -22,21 +24,23 @@ class SeasonSessionManager: ObservableObject {
         }
     }
 
+    func fetchSessions() {
+        let descriptor = FetchDescriptor<Session>(
+            sortBy: [SortDescriptor(\Session.sessionNumber, order: .reverse)]
+        )
+        do {
+            allSessions = try modelContext.fetch(descriptor)
+        } catch {
+            print("Error fetching sessions: \(error)")
+        }
+    }
+
     var latestSeason: Season? {
         allSeasons.first
     }
     
     var latestSession: Session? {
         guard let season = latestSeason else { return nil }
-        let sessionDescriptor = FetchDescriptor<Session>(
-            sortBy: [SortDescriptor(\Session.sessionNumber, order: .reverse)]
-        )
-        do {
-            let sessions = try modelContext.fetch(sessionDescriptor)
-            return sessions.first { $0.season == season }
-        } catch {
-            print("Error fetching sessions: \(error)")
-            return nil
-        }
+        return allSessions.first { $0.season == season }
     }
 }
