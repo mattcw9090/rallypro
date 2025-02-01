@@ -6,7 +6,6 @@ struct RallyProApp: App {
     var sharedModelContainer: ModelContainer = {
         let schema = Schema([Player.self, Season.self, Session.self, SessionParticipant.self, DoublesMatch.self])
         let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
-
         do {
             return try ModelContainer(for: schema, configurations: [modelConfiguration])
         } catch {
@@ -15,16 +14,19 @@ struct RallyProApp: App {
     }()
     
     @StateObject private var playerManager: PlayerManager
+    @StateObject private var seasonManager: SeasonSessionManager
 
     init() {
         let modelContext = sharedModelContainer.mainContext
         _playerManager = StateObject(wrappedValue: PlayerManager(modelContext: modelContext))
+        _seasonManager = StateObject(wrappedValue: SeasonSessionManager(modelContext: modelContext))
     }
 
     var body: some Scene {
         WindowGroup {
             ContentView()
                 .environmentObject(playerManager)
+                .environmentObject(seasonManager)
         }
         .modelContainer(sharedModelContainer)
     }

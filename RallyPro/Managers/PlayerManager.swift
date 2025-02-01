@@ -66,7 +66,6 @@ class PlayerManager: ObservableObject {
         }
     }
     
-    /// Creates a new player. (Existing logic remains unchanged.)
     func addPlayer(name: String, status: Player.PlayerStatus, isMale: Bool, latestSession: Session?) throws {
         let trimmedName = name.trimmingCharacters(in: .whitespacesAndNewlines)
         if allPlayers.contains(where: { $0.name.lowercased() == trimmedName.lowercased() }) {
@@ -92,7 +91,6 @@ class PlayerManager: ObservableObject {
         fetchAllPlayers()
     }
     
-    /// Updates an existing player’s details and handles any status changes.
     func updatePlayer(player: Player,
                       newName: String,
                       newStatus: Player.PlayerStatus,

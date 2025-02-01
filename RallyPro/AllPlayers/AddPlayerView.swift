@@ -5,23 +5,13 @@ struct AddPlayerView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var modelContext
     @EnvironmentObject var playerManager: PlayerManager
+    @EnvironmentObject var seasonManager: SeasonSessionManager
 
     @State private var name: String = ""
     @State private var status: Player.PlayerStatus = .notInSession
     @State private var showingAlert = false
     @State private var alertMessage = ""
     @State private var isMale: Bool = true
-
-    // Query for Seasons (used to determine the latest session)
-    @Query(sort: \Season.seasonNumber, order: .reverse) private var allSeasons: [Season]
-    private var latestSeason: Season? { allSeasons.first }
-
-    // Query for Sessions (used to determine the current session)
-    @Query(sort: \Session.sessionNumber, order: .reverse) private var allSessions: [Session]
-    private var latestSession: Session? {
-        guard let season = latestSeason else { return nil }
-        return allSessions.first { $0.season == season }
-    }
 
     var body: some View {
         NavigationView {
@@ -69,7 +59,7 @@ struct AddPlayerView: View {
                 name: name,
                 status: status,
                 isMale: isMale,
-                latestSession: latestSession
+                latestSession: seasonManager.latestSession
             )
             dismiss()
         } catch {
@@ -97,11 +87,13 @@ struct AddPlayerView: View {
         let session = Session(sessionNumber: 1, season: season)
         context.insert(session)
         
-        let manager = PlayerManager(modelContext: context)
+        let playerManager = PlayerManager(modelContext: context)
+        let seasonManager = SeasonSessionManager(modelContext: context)
         
         return AddPlayerView()
             .modelContainer(mockContainer)
-            .environmentObject(manager)
+            .environmentObject(playerManager)
+            .environmentObject(seasonManager)
     } catch {
         fatalError("Could not create ModelContainer: \(error)")
     }

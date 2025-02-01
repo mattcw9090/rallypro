@@ -5,6 +5,7 @@ struct EditPlayerView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var modelContext
     @EnvironmentObject var playerManager: PlayerManager
+    @EnvironmentObject var seasonManager: SeasonSessionManager
 
     @Bindable var player: Player
     @State private var editedName: String = ""
@@ -12,17 +13,6 @@ struct EditPlayerView: View {
     @State private var editedIsMale: Bool = true
     @State private var showingAlert = false
     @State private var alertMessage = ""
-
-    // Latest Season Query
-    @Query(sort: \Season.seasonNumber, order: .reverse) private var allSeasons: [Season]
-    private var latestSeason: Season? { allSeasons.first }
-    
-    // Latest Session Query (uses the latest season)
-    @Query(sort: \Session.sessionNumber, order: .reverse) private var allSessions: [Session]
-    private var latestSession: Session? {
-        guard let season = latestSeason else { return nil }
-        return allSessions.first { $0.season == season }
-    }
 
     var body: some View {
         NavigationView {
@@ -73,7 +63,7 @@ struct EditPlayerView: View {
                 newName: editedName,
                 newStatus: editedStatus,
                 newIsMale: editedIsMale,
-                latestSession: latestSession
+                latestSession: seasonManager.latestSession
             )
             dismiss()
         } catch {
@@ -89,8 +79,6 @@ struct EditPlayerView: View {
 
     do {
         let mockContainer = try ModelContainer(for: schema, configurations: [modelConfiguration])
-
-        // Insert Mock Data
         let context = mockContainer.mainContext
         let playerToEdit = Player(name: "Charlie", status: .playing, isMale: true)
         context.insert(Player(name: "Alice", status: .playing, isMale: false))
@@ -100,7 +88,6 @@ struct EditPlayerView: View {
         
         let season = Season(seasonNumber: 1)
         context.insert(season)
-        
         let session = Session(sessionNumber: 1, season: season)
         context.insert(session)
         
@@ -110,6 +97,7 @@ struct EditPlayerView: View {
         return EditPlayerView(player: playerToEdit)
             .modelContainer(mockContainer)
             .environmentObject(PlayerManager(modelContext: context))
+            .environmentObject(SeasonSessionManager(modelContext: context))
     } catch {
         fatalError("Could not create ModelContainer: \(error)")
     }
