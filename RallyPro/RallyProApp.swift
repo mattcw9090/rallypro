@@ -14,9 +14,17 @@ struct RallyProApp: App {
         }
     }()
     
+    @StateObject private var playerManager: PlayerManager
+
+    init() {
+        let modelContext = sharedModelContainer.mainContext
+        _playerManager = StateObject(wrappedValue: PlayerManager(modelContext: modelContext))
+    }
+
     var body: some Scene {
         WindowGroup {
             ContentView()
+                .environmentObject(playerManager)
         }
         .modelContainer(sharedModelContainer)
     }

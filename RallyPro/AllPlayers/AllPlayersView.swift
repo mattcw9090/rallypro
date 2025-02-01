@@ -2,36 +2,29 @@ import SwiftUI
 import SwiftData
 
 struct AllPlayersView: View {
+    @EnvironmentObject var playerManager: PlayerManager
     @Environment(\.modelContext) private var modelContext
 
     // MARK: - State
 
     @State private var showingAddPlayerSheet = false
     @State private var selectedPlayerForEditing: Player?
-    
-    // Search text for filtering
     @State private var searchText = ""
 
     // MARK: - Queries
-
-    // All Players Query
-    @Query(sort: \Player.name) private var allPlayers: [Player]
     
-    // A computed property to filter players by search text
     private var filteredPlayers: [Player] {
         guard !searchText.isEmpty else {
-            // If the search is empty, show all players
-            return allPlayers
+            return playerManager.allPlayers
         }
-        // Filter the list by name (case-insensitive)
-        return allPlayers.filter { player in
+        return playerManager.allPlayers.filter { player in
             player.name.localizedCaseInsensitiveContains(searchText)
         }
     }
     
     // Latest Waitlist Position Query
     private var latestWaitlistPosition: Int? {
-        allPlayers
+        playerManager.allPlayers
             .filter { $0.status == .onWaitlist }
             .compactMap { $0.waitlistPosition }
             .max()
@@ -78,6 +71,9 @@ struct AllPlayersView: View {
             .sheet(item: $selectedPlayerForEditing) { player in
                 EditPlayerView(player: player)
             }
+            .onAppear {
+                playerManager.fetchAllPlayers()
+            }
         }
     }
     
@@ -102,7 +98,8 @@ struct AllPlayersView: View {
 
     do {
         let mockContainer = try ModelContainer(for: schema, configurations: [modelConfiguration])
-
+        let mockManager = PlayerManager(modelContext: mockContainer.mainContext)
+        
         // Insert Mock Data
         let context = mockContainer.mainContext
         context.insert(Player(name: "Alice", status: .playing, isMale: false))
@@ -111,6 +108,7 @@ struct AllPlayersView: View {
         context.insert(Player(name: "Denise", status: .onWaitlist, waitlistPosition: 1, isMale: false))
 
         return AllPlayersView()
+            .environmentObject(mockManager)
             .modelContainer(mockContainer)
     } catch {
         fatalError("Could not create ModelContainer: \(error)")
