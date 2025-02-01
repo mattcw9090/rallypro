@@ -2,7 +2,6 @@ import SwiftUI
 import SwiftData
 
 struct SessionsView: View {
-    @Environment(\.modelContext) private var modelContext
     @EnvironmentObject var seasonManager: SeasonSessionManager
 
     @State private var expandedSeasons: [Int: Bool] = [:]

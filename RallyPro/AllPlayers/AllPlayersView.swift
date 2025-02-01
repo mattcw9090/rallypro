@@ -2,7 +2,6 @@ import SwiftUI
 import SwiftData
 
 struct AllPlayersView: View {
-    @Environment(\.modelContext) private var modelContext
     @EnvironmentObject var playerManager: PlayerManager
     
     @State private var showingAddPlayerSheet = false

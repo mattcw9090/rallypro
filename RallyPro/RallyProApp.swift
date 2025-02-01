@@ -16,12 +16,14 @@ struct RallyProApp: App {
     @StateObject private var playerManager: PlayerManager
     @StateObject private var seasonManager: SeasonSessionManager
     @StateObject private var seasonalResultsManager: SeasonalResultsManager
+    @StateObject private var teamsManager: TeamsManager
 
     init() {
         let modelContext = sharedModelContainer.mainContext
         _playerManager = StateObject(wrappedValue: PlayerManager(modelContext: modelContext))
         _seasonManager = StateObject(wrappedValue: SeasonSessionManager(modelContext: modelContext))
         _seasonalResultsManager = StateObject(wrappedValue: SeasonalResultsManager(modelContext: modelContext))
+        _teamsManager = StateObject(wrappedValue: TeamsManager(modelContext: modelContext))
     }
 
     var body: some Scene {
@@ -30,6 +32,7 @@ struct RallyProApp: App {
                 .environmentObject(playerManager)
                 .environmentObject(seasonManager)
                 .environmentObject(seasonalResultsManager)
+                .environmentObject(teamsManager)
         }
         .modelContainer(sharedModelContainer)
     }

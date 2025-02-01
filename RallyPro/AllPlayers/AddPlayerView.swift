@@ -3,7 +3,6 @@ import SwiftData
 
 struct AddPlayerView: View {
     @Environment(\.dismiss) private var dismiss
-    @Environment(\.modelContext) private var modelContext
     @EnvironmentObject var playerManager: PlayerManager
     @EnvironmentObject var seasonManager: SeasonSessionManager
 
