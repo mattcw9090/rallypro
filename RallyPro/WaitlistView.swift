@@ -2,53 +2,18 @@ import SwiftUI
 import SwiftData
 
 struct WaitlistView: View {
-    @Environment(\.modelContext) private var modelContext
+    @EnvironmentObject var playerManager: PlayerManager
+    @EnvironmentObject var seasonManager: SeasonSessionManager
 
-    // Waitlist query
-    @Query(
-        filter: #Predicate<Player> { player in
-            player.statusRawValue == "On the Waitlist"
-        },
-        sort: [SortDescriptor<Player>(\.waitlistPosition, order: .forward)]
-    )
-    private var waitlistPlayers: [Player]
-
-    // All seasons query
-    @Query(
-        sort: [SortDescriptor<Season>(\.seasonNumber, order: .reverse)]
-    )
-    private var allSeasons: [Season]
-
-    // All sessions query
-    @Query(
-        sort: [SortDescriptor<Session>(\.sessionNumber, order: .reverse)]
-    )
-    private var allSessions: [Session]
-
-    // All session participants query
-    @Query
-    private var allParticipants: [SessionParticipant]
-
-    // Computed Properties
-    private var latestSeason: Season? {
-        allSeasons.first
-    }
-
-    private var latestSession: Session? {
-        guard let season = latestSeason else { return nil }
-        return allSessions.first { $0.season == season }
-    }
-
-    private var sessionParticipants: [SessionParticipant]? {
-        guard let session = latestSession else { return nil }
-        return allParticipants.filter { $0.session == session }
-    }
+    // Alert properties
+    @State private var showingAlert = false
+    @State private var alertMessage = ""
 
     var body: some View {
         NavigationView {
             VStack {
                 List {
-                    ForEach(waitlistPlayers) { player in
+                    ForEach(playerManager.waitlistPlayers) { player in
                         HStack {
                             Image(systemName: "person.circle.fill")
                                 .resizable()
@@ -69,14 +34,24 @@ struct WaitlistView: View {
                         .swipeActions(edge: .trailing) {
                             // Move to Current Session Action
                             Button {
-                                moveToCurrentSession(player)
+                                do {
+                                    try playerManager.movePlayerToCurrentSession(player, session: seasonManager.latestSession)
+                                } catch {
+                                    alertMessage = error.localizedDescription
+                                    showingAlert = true
+                                }
                             } label: {
                                 Label("Move to Current Session", systemImage: "sportscourt")
                             }
 
                             // Move to Bottom Action
                             Button {
-                                moveToBottom(player)
+                                do {
+                                    try playerManager.movePlayerToBottom(player)
+                                } catch {
+                                    alertMessage = error.localizedDescription
+                                    showingAlert = true
+                                }
                             } label: {
                                 Label("Move to Bottom", systemImage: "arrow.down")
                             }
@@ -85,7 +60,12 @@ struct WaitlistView: View {
                         .swipeActions(edge: .leading) {
                             // Remove from Waitlist Action
                             Button {
-                                removeFromWaitlist(player)
+                                do {
+                                    try playerManager.removeFromWaitlist(player)
+                                } catch {
+                                    alertMessage = error.localizedDescription
+                                    showingAlert = true
+                                }
                             } label: {
                                 Label("Remove from Waitlist", systemImage: "minus.circle")
                             }
@@ -102,95 +82,6 @@ struct WaitlistView: View {
             }
         }
     }
-
-    // MARK: - Alert Properties
-    @State private var showingAlert = false
-    @State private var alertMessage = ""
-
-    // MARK: - Helper Methods
-
-    /// Removes a player from the waitlist and updates other players' positions.
-    private func moveToCurrentSession(_ player: Player) {
-        // Ensure there is an active session before making any changes
-        guard let session = latestSession, sessionParticipants != nil else {
-            alertMessage = "No active session to move the player into."
-            showingAlert = true
-            return
-        }
-
-        guard let removedPosition = player.waitlistPosition else { return }
-
-        // Update the player's status and remove from waitlist
-        player.status = .playing
-        player.waitlistPosition = nil
-
-        // Adjust positions of remaining players in the waitlist
-        let affectedPlayers = waitlistPlayers.filter { ($0.waitlistPosition ?? 0) > removedPosition }
-        for affectedPlayer in affectedPlayers {
-            if let currentPos = affectedPlayer.waitlistPosition {
-                affectedPlayer.waitlistPosition = currentPos - 1
-            }
-        }
-
-        // Add the player to the session's participants without assigning a team
-        let sessionParticipantsRecord = SessionParticipant(session: session, player: player)
-        modelContext.insert(sessionParticipantsRecord)
-
-        // Save changes to the model context
-        do {
-            try modelContext.save()
-        } catch {
-            alertMessage = "Failed to move player to current session: \(error.localizedDescription)"
-            showingAlert = true
-        }
-    }
-
-    /// Moves a player to the bottom of the waitlist by updating their waitlistPosition.
-    private func moveToBottom(_ player: Player) {
-        guard let currentPosition = player.waitlistPosition else { return }
-
-        let playersBelow = waitlistPlayers.filter { ($0.waitlistPosition ?? 0) > currentPosition }
-        for belowPlayer in playersBelow {
-            if let pos = belowPlayer.waitlistPosition {
-                belowPlayer.waitlistPosition = pos - 1
-            }
-        }
-
-        let newMaxPosition = waitlistPlayers.count
-        player.waitlistPosition = newMaxPosition
-
-        do {
-            try modelContext.save()
-        } catch {
-            alertMessage = "Failed to move player to bottom of waitlist: \(error.localizedDescription)"
-            showingAlert = true
-        }
-    }
-    
-    /// Removes a player from the waitlist
-    private func removeFromWaitlist(_ player: Player) {
-        guard let removedPosition = player.waitlistPosition else { return }
-        
-        // Update the player's status and remove from waitlist
-        player.status = .notInSession
-        player.waitlistPosition = nil
-        
-        // Adjust positions of remaining players in the waitlist
-        let affectedPlayers = waitlistPlayers.filter { ($0.waitlistPosition ?? 0) > removedPosition }
-        for affectedPlayer in affectedPlayers {
-            if let currentPos = affectedPlayer.waitlistPosition {
-                affectedPlayer.waitlistPosition = currentPos - 1
-            }
-        }
-        
-        // Save changes to the model context
-        do {
-            try modelContext.save()
-        } catch {
-            alertMessage = "Failed to remove player from waitlist: \(error.localizedDescription)"
-            showingAlert = true
-        }
-    }
 }
 
 #Preview {
@@ -199,8 +90,9 @@ struct WaitlistView: View {
 
     do {
         let mockContainer = try ModelContainer(for: schema, configurations: [modelConfiguration])
-
         let context = mockContainer.mainContext
+        
+        // Insert sample data
         let season1 = Season(seasonNumber: 1)
         context.insert(season1)
         let season2 = Season(seasonNumber: 2)
@@ -212,9 +104,15 @@ struct WaitlistView: View {
         context.insert(Player(name: "Charlie", status: .onWaitlist, waitlistPosition: 3))
         context.insert(Player(name: "Denise", status: .onWaitlist, waitlistPosition: 1))
         context.insert(Player(name: "Eve", status: .onWaitlist, waitlistPosition: 4))
-
+        
+        // Create manager instances
+        let playerManager = PlayerManager(modelContext: context)
+        let seasonManager = SeasonSessionManager(modelContext: context)
+        
         return WaitlistView()
             .modelContainer(mockContainer)
+            .environmentObject(playerManager)
+            .environmentObject(seasonManager)
     } catch {
         fatalError("Could not create ModelContainer: \(error)")
     }

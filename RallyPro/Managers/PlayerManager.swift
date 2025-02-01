@@ -19,7 +19,7 @@ class PlayerManager: ObservableObject {
             print("Error fetching players: \(error)")
         }
     }
-
+    
     func filteredPlayers(searchText: String) -> [Player] {
         guard !searchText.isEmpty else {
             return allPlayers
@@ -29,10 +29,14 @@ class PlayerManager: ObservableObject {
         }
     }
     
+    var waitlistPlayers: [Player] {
+        allPlayers.filter { $0.status == .onWaitlist }
+                  .sorted { ($0.waitlistPosition ?? 0) < ($1.waitlistPosition ?? 0) }
+    }
+    
     func addToWaitlist(_ player: Player) {
         guard player.status == .notInSession else { return }
-        let currentMaxPosition = allPlayers
-            .filter { $0.status == .onWaitlist }
+        let currentMaxPosition = waitlistPlayers
             .compactMap { $0.waitlistPosition }
             .max() ?? 0
         player.status = .onWaitlist
@@ -73,18 +77,16 @@ class PlayerManager: ObservableObject {
         }
         let newPlayer = Player(name: trimmedName, status: status, isMale: isMale)
         if status == .onWaitlist {
-            let currentMaxPosition = allPlayers
-                .filter { $0.status == .onWaitlist }
+            let currentMaxPosition = waitlistPlayers
                 .compactMap { $0.waitlistPosition }
                 .max() ?? 0
             newPlayer.waitlistPosition = currentMaxPosition + 1
-        }
-        else if status == .playing {
+        } else if status == .playing {
             guard let session = latestSession else {
                 throw PlayerManagerError.noActiveSession
             }
-            let sessionParticipantsRecord = SessionParticipant(session: session, player: newPlayer)
-            modelContext.insert(sessionParticipantsRecord)
+            let sessionParticipant = SessionParticipant(session: session, player: newPlayer)
+            modelContext.insert(sessionParticipant)
         }
         modelContext.insert(newPlayer)
         try modelContext.save()
@@ -105,18 +107,14 @@ class PlayerManager: ObservableObject {
         
         switch (oldStatus, newStatus) {
         case (.notInSession, .onWaitlist):
-            let waitlistPlayers = allPlayers.filter { $0.status == .onWaitlist }
             let maxPosition = waitlistPlayers.compactMap { $0.waitlistPosition }.max() ?? 0
             player.waitlistPosition = maxPosition + 1
         
         case (.onWaitlist, .notInSession):
             if let removedPosition = player.waitlistPosition {
                 player.waitlistPosition = nil
-                let waitlistPlayers = allPlayers.filter { $0.status == .onWaitlist }
-                for waitlisted in waitlistPlayers {
-                    if let pos = waitlisted.waitlistPosition, pos > removedPosition {
-                        waitlisted.waitlistPosition = pos - 1
-                    }
+                for waitlisted in waitlistPlayers where (waitlisted.waitlistPosition ?? 0) > removedPosition {
+                    waitlisted.waitlistPosition = (waitlisted.waitlistPosition ?? 0) - 1
                 }
             }
         
@@ -126,15 +124,12 @@ class PlayerManager: ObservableObject {
             }
             if oldStatus == .onWaitlist, let removedPosition = player.waitlistPosition {
                 player.waitlistPosition = nil
-                let waitlistPlayers = allPlayers.filter { $0.status == .onWaitlist }
-                for waitlisted in waitlistPlayers {
-                    if let pos = waitlisted.waitlistPosition, pos > removedPosition {
-                        waitlisted.waitlistPosition = pos - 1
-                    }
+                for waitlisted in waitlistPlayers where (waitlisted.waitlistPosition ?? 0) > removedPosition {
+                    waitlisted.waitlistPosition = (waitlisted.waitlistPosition ?? 0) - 1
                 }
             }
-            let newParticipant = SessionParticipant(session: session, player: player)
-            modelContext.insert(newParticipant)
+            let sessionParticipant = SessionParticipant(session: session, player: player)
+            modelContext.insert(sessionParticipant)
         
         case (.playing, .notInSession), (.playing, .onWaitlist):
             guard let session = latestSession else {
@@ -150,7 +145,6 @@ class PlayerManager: ObservableObject {
             }
             modelContext.delete(participantRecord)
             if newStatus == .onWaitlist {
-                let waitlistPlayers = allPlayers.filter { $0.status == .onWaitlist }
                 let maxPosition = waitlistPlayers.compactMap { $0.waitlistPosition }.max() ?? 0
                 player.waitlistPosition = maxPosition + 1
             }
@@ -162,6 +156,54 @@ class PlayerManager: ObservableObject {
         player.name = trimmedName
         player.status = newStatus
         player.isMale = newIsMale
+        
+        try modelContext.save()
+        fetchAllPlayers()
+    }
+    
+    func movePlayerToCurrentSession(_ player: Player, session: Session?) throws {
+        guard let session = session else {
+            throw PlayerManagerError.noActiveSession
+        }
+        guard let removedPosition = player.waitlistPosition else { return }
+        
+        player.status = .playing
+        player.waitlistPosition = nil
+        
+        for affectedPlayer in waitlistPlayers where (affectedPlayer.waitlistPosition ?? 0) > removedPosition {
+            affectedPlayer.waitlistPosition = (affectedPlayer.waitlistPosition ?? 0) - 1
+        }
+        
+        let sessionParticipant = SessionParticipant(session: session, player: player)
+        modelContext.insert(sessionParticipant)
+        
+        try modelContext.save()
+        fetchAllPlayers()
+    }
+    
+    func movePlayerToBottom(_ player: Player) throws {
+        guard let currentPosition = player.waitlistPosition else { return }
+        
+        for belowPlayer in waitlistPlayers where (belowPlayer.waitlistPosition ?? 0) > currentPosition {
+            belowPlayer.waitlistPosition = (belowPlayer.waitlistPosition ?? 0) - 1
+        }
+        
+        let newMaxPosition = waitlistPlayers.count
+        player.waitlistPosition = newMaxPosition
+        
+        try modelContext.save()
+        fetchAllPlayers()
+    }
+    
+    func removeFromWaitlist(_ player: Player) throws {
+        guard let removedPosition = player.waitlistPosition else { return }
+        
+        player.status = .notInSession
+        player.waitlistPosition = nil
+        
+        for affectedPlayer in waitlistPlayers where (affectedPlayer.waitlistPosition ?? 0) > removedPosition {
+            affectedPlayer.waitlistPosition = (affectedPlayer.waitlistPosition ?? 0) - 1
+        }
         
         try modelContext.save()
         fetchAllPlayers()
