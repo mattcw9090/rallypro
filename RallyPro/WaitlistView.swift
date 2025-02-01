@@ -9,7 +9,7 @@ struct WaitlistView: View {
     @State private var alertMessage = ""
 
     var body: some View {
-        NavigationView {
+        NavigationStack {
             VStack {
                 List {
                     ForEach(playerManager.waitlistPlayers) { player in
@@ -32,23 +32,13 @@ struct WaitlistView: View {
                         .padding(.vertical, 5)
                         .swipeActions(edge: .trailing) {
                             Button {
-                                do {
-                                    try playerManager.movePlayerToCurrentSession(player, session: seasonManager.latestSession)
-                                } catch {
-                                    alertMessage = error.localizedDescription
-                                    showingAlert = true
-                                }
+                                movePlayerToSession(player)
                             } label: {
                                 Label("Move to Current Session", systemImage: "sportscourt")
                             }
 
                             Button {
-                                do {
-                                    try playerManager.movePlayerToBottom(player)
-                                } catch {
-                                    alertMessage = error.localizedDescription
-                                    showingAlert = true
-                                }
+                                movePlayerToBottom(player)
                             } label: {
                                 Label("Move to Bottom", systemImage: "arrow.down")
                             }
@@ -56,12 +46,7 @@ struct WaitlistView: View {
                         }
                         .swipeActions(edge: .leading) {
                             Button {
-                                do {
-                                    try playerManager.removeFromWaitlist(player)
-                                } catch {
-                                    alertMessage = error.localizedDescription
-                                    showingAlert = true
-                                }
+                                removePlayerFromWaitlist(player)
                             } label: {
                                 Label("Remove from Waitlist", systemImage: "minus.circle")
                             }
@@ -78,6 +63,33 @@ struct WaitlistView: View {
             }
         }
     }
+
+    private func movePlayerToSession(_ player: Player) {
+        do {
+            try playerManager.movePlayerFromWaitlistToCurrentSession(player, session: seasonManager.latestSession)
+        } catch {
+            alertMessage = error.localizedDescription
+            showingAlert = true
+        }
+    }
+
+    private func movePlayerToBottom(_ player: Player) {
+        do {
+            try playerManager.moveWaitlistPlayerToBottom(player)
+        } catch {
+            alertMessage = error.localizedDescription
+            showingAlert = true
+        }
+    }
+
+    private func removePlayerFromWaitlist(_ player: Player) {
+        do {
+            try playerManager.removeFromWaitlist(player)
+        } catch {
+            alertMessage = error.localizedDescription
+            showingAlert = true
+        }
+    }
 }
 
 #Preview {
@@ -87,26 +99,27 @@ struct WaitlistView: View {
     do {
         let mockContainer = try ModelContainer(for: schema, configurations: [modelConfiguration])
         let context = mockContainer.mainContext
-        
+
         let season1 = Season(seasonNumber: 1)
         context.insert(season1)
         let season2 = Season(seasonNumber: 2)
         context.insert(season2)
         context.insert(Session(sessionNumber: 1, season: season2))
         context.insert(Session(sessionNumber: 2, season: season1))
-        context.insert(Player(name: "Alice", status: .playing))
         context.insert(Player(name: "Bob", status: .onWaitlist, waitlistPosition: 2))
         context.insert(Player(name: "Charlie", status: .onWaitlist, waitlistPosition: 3))
         context.insert(Player(name: "Denise", status: .onWaitlist, waitlistPosition: 1))
         context.insert(Player(name: "Eve", status: .onWaitlist, waitlistPosition: 4))
-        
+
         let playerManager = PlayerManager(modelContext: context)
         let seasonManager = SeasonSessionManager(modelContext: context)
-        
-        return WaitlistView()
-            .modelContainer(mockContainer)
-            .environmentObject(playerManager)
-            .environmentObject(seasonManager)
+
+        return NavigationStack {
+            WaitlistView()
+                .modelContainer(mockContainer)
+                .environmentObject(playerManager)
+                .environmentObject(seasonManager)
+        }
     } catch {
         fatalError("Could not create ModelContainer: \(error)")
     }

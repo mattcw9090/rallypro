@@ -1,18 +1,6 @@
 import SwiftData
 import SwiftUI
 
-// Define errors related to season/session management.
-enum SeasonSessionError: LocalizedError {
-    case incompletePreviousSeason
-
-    var errorDescription: String? {
-        switch self {
-        case .incompletePreviousSeason:
-            return "All previous seasons must be marked as completed before adding a new season."
-        }
-    }
-}
-
 class SeasonSessionManager: ObservableObject {
     private var modelContext: ModelContext
 
@@ -90,5 +78,16 @@ class SeasonSessionManager: ObservableObject {
         season.isCompleted = completed
         try modelContext.save()
         fetchSeasons()
+    }
+}
+
+enum SeasonSessionError: LocalizedError {
+    case incompletePreviousSeason
+
+    var errorDescription: String? {
+        switch self {
+        case .incompletePreviousSeason:
+            return "All previous seasons must be marked as completed before adding a new season."
+        }
     }
 }

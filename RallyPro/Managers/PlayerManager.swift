@@ -50,26 +50,6 @@ class PlayerManager: ObservableObject {
         }
     }
     
-    enum PlayerManagerError: LocalizedError {
-        case duplicateName(String)
-        case noActiveSession
-        case participantTeamAssigned
-        case participantNotFound
-
-        var errorDescription: String? {
-            switch self {
-            case .duplicateName(let name):
-                return "A player with the name '\(name)' already exists. Please choose a different name."
-            case .noActiveSession:
-                return "No active session exists to perform this action."
-            case .participantTeamAssigned:
-                return "Please unassign the player from the team before changing their status."
-            case .participantNotFound:
-                return "Player is not found in the current session participants."
-            }
-        }
-    }
-    
     func addPlayer(name: String, status: Player.PlayerStatus, isMale: Bool, latestSession: Session?) throws {
         let trimmedName = name.trimmingCharacters(in: .whitespacesAndNewlines)
         if allPlayers.contains(where: { $0.name.lowercased() == trimmedName.lowercased() }) {
@@ -161,7 +141,7 @@ class PlayerManager: ObservableObject {
         fetchAllPlayers()
     }
     
-    func movePlayerToCurrentSession(_ player: Player, session: Session?) throws {
+    func movePlayerFromWaitlistToCurrentSession(_ player: Player, session: Session?) throws {
         guard let session = session else {
             throw PlayerManagerError.noActiveSession
         }
@@ -181,7 +161,7 @@ class PlayerManager: ObservableObject {
         fetchAllPlayers()
     }
     
-    func movePlayerToBottom(_ player: Player) throws {
+    func moveWaitlistPlayerToBottom(_ player: Player) throws {
         guard let currentPosition = player.waitlistPosition else { return }
         
         for belowPlayer in waitlistPlayers where (belowPlayer.waitlistPosition ?? 0) > currentPosition {
@@ -207,5 +187,25 @@ class PlayerManager: ObservableObject {
         
         try modelContext.save()
         fetchAllPlayers()
+    }
+}
+
+enum PlayerManagerError: LocalizedError {
+    case duplicateName(String)
+    case noActiveSession
+    case participantTeamAssigned
+    case participantNotFound
+
+    var errorDescription: String? {
+        switch self {
+        case .duplicateName(let name):
+            return "A player with the name '\(name)' already exists. Please choose a different name."
+        case .noActiveSession:
+            return "No active session exists to perform this action."
+        case .participantTeamAssigned:
+            return "Please unassign the player from the team before changing their status."
+        case .participantNotFound:
+            return "Player is not found in the current session participants."
+        }
     }
 }

@@ -10,7 +10,7 @@ struct SessionsView: View {
     @State private var alertMessage = ""
 
     var body: some View {
-        NavigationView {
+        NavigationStack {
             VStack {
                 if seasonManager.allSeasons.isEmpty {
                     emptyStateView
@@ -36,19 +36,17 @@ struct SessionsView: View {
                 .frame(width: 100, height: 100)
                 .foregroundColor(.gray)
                 .accessibilityHidden(true)
-            
+
             Text("No Seasons Available")
                 .font(.title2)
                 .foregroundColor(.gray)
-                .accessibilityLabel("No Seasons Available")
-            
+
             Text("Start by adding a new season to get started.")
                 .font(.body)
                 .foregroundColor(.secondary)
                 .multilineTextAlignment(.center)
                 .padding(.horizontal)
-                .accessibilityLabel("Start by adding a new season to get started.")
-            
+
             Button(action: addNewSeason) {
                 Text("Add New Season")
                     .font(.headline)
@@ -59,7 +57,6 @@ struct SessionsView: View {
                     .cornerRadius(8)
             }
             .padding(.horizontal)
-            .accessibilityLabel("Add New Season")
         }
         .padding()
         .transition(.opacity)
@@ -174,7 +171,6 @@ struct SeasonAccordionView: View {
             if !isCompleted {
                 HStack(spacing: 20) {
                     Button("Add Session", action: addSession)
-                        .buttonStyle(PlainButtonStyle())
                         .padding(.vertical, 5)
                         .padding(.horizontal, 10)
                         .background(Color.green)
@@ -183,7 +179,6 @@ struct SeasonAccordionView: View {
                         .font(.caption)
 
                     Button("Mark Complete", action: markComplete)
-                        .buttonStyle(PlainButtonStyle())
                         .padding(.vertical, 5)
                         .padding(.horizontal, 10)
                         .background(Color.orange)
@@ -194,7 +189,6 @@ struct SeasonAccordionView: View {
                 .padding(.top, 10)
             } else {
                 Button("Mark Incomplete", action: markIncomplete)
-                    .buttonStyle(PlainButtonStyle())
                     .padding(.vertical, 5)
                     .padding(.horizontal, 10)
                     .background(Color.red)
@@ -221,25 +215,27 @@ struct SeasonAccordionView: View {
 #Preview {
     let schema = Schema([Season.self, Session.self])
     let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: true)
-    
+
     do {
         let mockContainer = try ModelContainer(for: schema, configurations: [modelConfiguration])
         let context = mockContainer.mainContext
-        
+
         // Insert a sample season and session for preview.
         let season1 = Season(seasonNumber: 1, isCompleted: true)
         context.insert(season1)
         let session1 = Session(sessionNumber: 1, season: season1)
         context.insert(session1)
-        
+
         // Create managers using the same context.
         let playerManager = PlayerManager(modelContext: context)
         let seasonManager = SeasonSessionManager(modelContext: context)
-        
-        return SessionsView()
-            .modelContainer(mockContainer)
-            .environmentObject(seasonManager)
-            .environmentObject(playerManager)
+
+        return NavigationStack {
+            SessionsView()
+                .modelContainer(mockContainer)
+                .environmentObject(seasonManager)
+                .environmentObject(playerManager)
+        }
     } catch {
         fatalError("Could not create ModelContainer: \(error)")
     }

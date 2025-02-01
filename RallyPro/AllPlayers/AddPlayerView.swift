@@ -43,12 +43,10 @@ struct AddPlayerView: View {
                     .disabled(name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
                 }
             }
-            .alert(isPresented: $showingAlert) {
-                Alert(
-                    title: Text("Error"),
-                    message: Text(alertMessage),
-                    dismissButton: .default(Text("OK"))
-                )
+            .alert("Error", isPresented: $showingAlert) {
+                Button("OK", role: .cancel) { }
+            } message: {
+                Text(alertMessage)
             }
         }
     }
@@ -90,10 +88,12 @@ struct AddPlayerView: View {
         let playerManager = PlayerManager(modelContext: context)
         let seasonManager = SeasonSessionManager(modelContext: context)
         
-        return AddPlayerView()
-            .modelContainer(mockContainer)
-            .environmentObject(playerManager)
-            .environmentObject(seasonManager)
+        return NavigationStack {
+            AddPlayerView()
+                .modelContainer(mockContainer)
+                .environmentObject(playerManager)
+                .environmentObject(seasonManager)
+        }
     } catch {
         fatalError("Could not create ModelContainer: \(error)")
     }

@@ -15,27 +15,29 @@ struct SessionDetailView: View {
     @State private var selectedSegment: DetailSegment = .teams
 
     var body: some View {
-        VStack {
-            Picker("View", selection: $selectedSegment) {
-                ForEach(DetailSegment.allCases) { segment in
-                    Text(segment.rawValue).tag(segment)
+        NavigationStack {
+            VStack {
+                Picker("View", selection: $selectedSegment) {
+                    ForEach(DetailSegment.allCases) { segment in
+                        Text(segment.rawValue).tag(segment)
+                    }
                 }
-            }
-            .pickerStyle(.segmented)
-            .padding([.horizontal, .top])
+                .pickerStyle(.segmented)
+                .padding([.horizontal, .top])
 
-            switch selectedSegment {
-            case .teams:
-                TeamsView(session: session)
-            case .draws:
-                DrawsView(session: session)
-            case .results:
-                ResultsView(session: session)
-            }
+                switch selectedSegment {
+                case .teams:
+                    TeamsView(session: session)
+                case .draws:
+                    DrawsView(session: session)
+                case .results:
+                    ResultsView(session: session)
+                }
 
-            Spacer()
+                Spacer()
+            }
+            .navigationTitle("Season \(session.seasonNumber) Session \(session.sessionNumber)")
         }
-        .navigationTitle("Season \(session.seasonNumber) Session \(session.sessionNumber)")
     }
 }
 
@@ -69,8 +71,10 @@ struct SessionDetailView: View {
         context.insert(p3)
         context.insert(p4)
 
-        return SessionDetailView(session: session)
-            .modelContainer(mockContainer)
+        return NavigationStack {
+            SessionDetailView(session: session)
+                .modelContainer(mockContainer)
+        }
     } catch {
         fatalError("Could not create ModelContainer: \(error)")
     }

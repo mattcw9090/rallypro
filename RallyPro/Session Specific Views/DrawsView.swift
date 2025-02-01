@@ -33,7 +33,7 @@ struct DrawsView: View {
     }
 
     var body: some View {
-        NavigationView {
+        NavigationStack {
             let filteredMatches = allDoublesMatches.filter { $0.session == session }
             // Group matches by wave number
             let groupedMatches = Dictionary(grouping: filteredMatches, by: { $0.waveNumber })

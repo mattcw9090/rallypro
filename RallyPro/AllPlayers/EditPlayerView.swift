@@ -15,7 +15,7 @@ struct EditPlayerView: View {
     @State private var alertMessage = ""
 
     var body: some View {
-        NavigationView {
+        NavigationStack {
             Form {
                 Section(header: Text("Player Details")) {
                     TextField("Name", text: $editedName)
@@ -27,7 +27,7 @@ struct EditPlayerView: View {
                             Text(status.rawValue).tag(status)
                         }
                     }
-                    
+
                     Toggle("Is Male", isOn: $editedIsMale)
                 }
             }
@@ -86,10 +86,12 @@ struct EditPlayerView: View {
         let session = Session(sessionNumber: 1, season: season)
         context.insert(session)
 
-        return EditPlayerView(player: playerToEdit)
-            .modelContainer(mockContainer)
-            .environmentObject(PlayerManager(modelContext: context))
-            .environmentObject(SeasonSessionManager(modelContext: context))
+        return NavigationStack {
+            EditPlayerView(player: playerToEdit)
+                .modelContainer(mockContainer)
+                .environmentObject(PlayerManager(modelContext: context))
+                .environmentObject(SeasonSessionManager(modelContext: context))
+        }
     } catch {
         fatalError("Could not create ModelContainer: \(error)")
     }

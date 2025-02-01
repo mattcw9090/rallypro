@@ -6,7 +6,7 @@ struct SeasonalResultsView: View {
     let seasonNumber: Int
 
     var body: some View {
-        NavigationView {
+        NavigationStack {
             List {
                 // Header Row
                 HStack {
@@ -126,11 +126,13 @@ struct SeasonalResultsView: View {
         let playerManager = PlayerManager(modelContext: context)
         let seasonalResultsManager = SeasonalResultsManager(modelContext: context)
 
-        return SeasonalResultsView(seasonNumber: 4)
-            .modelContainer(container)
-            .environmentObject(seasonManager)
-            .environmentObject(playerManager)
-            .environmentObject(seasonalResultsManager)
+        return NavigationStack {
+            SeasonalResultsView(seasonNumber: 4)
+                .modelContainer(container)
+                .environmentObject(seasonManager)
+                .environmentObject(playerManager)
+                .environmentObject(seasonalResultsManager)
+        }
     } catch {
         fatalError("Preview setup failed: \(error)")
     }

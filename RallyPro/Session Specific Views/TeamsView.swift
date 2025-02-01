@@ -31,7 +31,7 @@ struct TeamsView: View {
     }
 
     var body: some View {
-        NavigationView {
+        NavigationStack {
             VStack {
                 List {
                     // Red Team Section
