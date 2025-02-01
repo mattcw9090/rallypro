@@ -4,46 +4,24 @@ import SwiftData
 struct ResultsView: View {
     let session: Session
 
-    @Query private var doublesMatches: [DoublesMatch]
-    @Query private var sessionParticipants: [SessionParticipant]
+    @EnvironmentObject var resultsManager: ResultsManager
 
-    init(session: Session) {
-        self.session = session
-        let sessionID = session.uniqueIdentifier
-        self._doublesMatches = Query(filter: #Predicate<DoublesMatch> { $0.session.uniqueIdentifier == sessionID })
-        self._sessionParticipants = Query(filter: #Predicate<SessionParticipant> { $0.session.uniqueIdentifier == sessionID })
-    }
-
-    // MARK: - Computed Properties
+    // MARK: - Computed Properties (Delegated to the Manager)
 
     private var completedMatches: [DoublesMatch] {
-        doublesMatches.filter { $0.isComplete }
+        resultsManager.completedMatches(for: session)
     }
 
     private var totalRedScore: Int {
-        completedMatches.reduce(0) { $0 + $1.redTeamScoreFirstSet + $1.redTeamScoreSecondSet }
+        resultsManager.totalRedScore(for: session)
     }
 
     private var totalBlackScore: Int {
-        completedMatches.reduce(0) { $0 + $1.blackTeamScoreFirstSet + $1.blackTeamScoreSecondSet }
+        resultsManager.totalBlackScore(for: session)
     }
 
-    /// Participant scores sorted by highest to lowest net score
     private var participantScores: [(String, Int)] {
-        sessionParticipants
-            .map { participant in
-                let netScore = completedMatches.filter {
-                    [$0.redPlayer1.id, $0.redPlayer2.id,
-                     $0.blackPlayer1.id, $0.blackPlayer2.id]
-                     .contains(participant.player.id)
-                }.reduce(0) { sum, match in
-                    let scoreDiff = (match.blackTeamScoreFirstSet + match.blackTeamScoreSecondSet)
-                                  - (match.redTeamScoreFirstSet + match.redTeamScoreSecondSet)
-                    return sum + (participant.team == .Black ? scoreDiff : -scoreDiff)
-                }
-                return (participant.player.name, netScore)
-            }
-            .sorted { $0.1 > $1.1 }
+        resultsManager.participantScores(for: session)
     }
 
     // MARK: - Body
@@ -58,13 +36,19 @@ struct ResultsView: View {
 
                 HStack {
                     VStack {
-                        Text("Red Team").font(.subheadline)
-                        Text("\(totalRedScore)").font(.title).foregroundColor(.red)
+                        Text("Red Team")
+                            .font(.subheadline)
+                        Text("\(totalRedScore)")
+                            .font(.title)
+                            .foregroundColor(.red)
                     }
                     Spacer()
                     VStack {
-                        Text("Black Team").font(.subheadline)
-                        Text("\(totalBlackScore)").font(.title).foregroundColor(.black)
+                        Text("Black Team")
+                            .font(.subheadline)
+                        Text("\(totalBlackScore)")
+                            .font(.title)
+                            .foregroundColor(.black)
                     }
                 }
                 .padding()
@@ -84,6 +68,9 @@ struct ResultsView: View {
                 }
             }
             .padding()
+        }
+        .onAppear {
+            resultsManager.refreshData()
         }
     }
 }
@@ -105,8 +92,6 @@ struct SessionResultsRowView: View {
     }
 }
 
-// MARK: - Preview
-
 #Preview {
     do {
         let schema = Schema([
@@ -120,59 +105,65 @@ struct SessionResultsRowView: View {
         let container = try ModelContainer(for: schema, configurations: [modelConfig])
         let context = container.mainContext
 
-        // Create Season & Session
+        // Create Season & Session.
         let season = Season(seasonNumber: 4)
         let session = Session(sessionNumber: 5, season: season)
         context.insert(season)
         context.insert(session)
 
-        // Create Players
+        // Create Players.
         let playerNames = ["Shin", "Suan Sian Foo", "Chris Fan", "CJ", "Nicson Hiew", "Issac Lai"]
         let players = playerNames.map { Player(name: $0) }
         players.forEach { context.insert($0) }
 
-        // Assign Players to Teams
+        // Create SessionParticipants and assign teams.
         let teams: [Team] = [.Black, .Black, .Red, .Red, .Black, .Red]
         let participants = zip(players, teams).map { SessionParticipant(session: session, player: $0.0, team: $0.1) }
         participants.forEach { context.insert($0) }
 
-        // Create DoublesMatches
-        let matches = [
-            DoublesMatch(
-                session: session,
-                waveNumber: 1,
-                redPlayer1: players[0],
-                redPlayer2: players[1],
-                blackPlayer1: players[2],
-                blackPlayer2: players[3],
-                redTeamScoreFirstSet: 21,
-                blackTeamScoreFirstSet: 15,
-                isComplete: true
-            ),
-            DoublesMatch(
-                session: session,
-                waveNumber: 1,
-                redPlayer1: players[4],
-                redPlayer2: players[5],
-                blackPlayer1: players[2],
-                blackPlayer2: players[3],
-                isComplete: false
-            ),
-            DoublesMatch(
-                session: session,
-                waveNumber: 2,
-                redPlayer1: players[1],
-                redPlayer2: players[0],
-                blackPlayer1: players[2],
-                blackPlayer2: players[3],
-                redTeamScoreFirstSet: 18,
-                blackTeamScoreFirstSet: 22,
-                isComplete: true
-            )
-        ]
-        matches.forEach { context.insert($0) }
+        // Create DoublesMatches.
+        let match1 = DoublesMatch(
+            session: session,
+            waveNumber: 1,
+            redPlayer1: players[0],
+            redPlayer2: players[1],
+            blackPlayer1: players[2],
+            blackPlayer2: players[3],
+            redTeamScoreFirstSet: 21,
+            blackTeamScoreFirstSet: 15,
+            redTeamScoreSecondSet: 21,
+            blackTeamScoreSecondSet: 15,
+            isComplete: true
+        )
+        let match2 = DoublesMatch(
+            session: session,
+            waveNumber: 1,
+            redPlayer1: players[4],
+            redPlayer2: players[5],
+            blackPlayer1: players[2],
+            blackPlayer2: players[3],
+            isComplete: false
+        )
+        let match3 = DoublesMatch(
+            session: session,
+            waveNumber: 2,
+            redPlayer1: players[1],
+            redPlayer2: players[0],
+            blackPlayer1: players[2],
+            blackPlayer2: players[3],
+            redTeamScoreFirstSet: 18,
+            blackTeamScoreFirstSet: 22,
+            isComplete: true
+        )
+        [match1, match2, match3].forEach { context.insert($0) }
+
+        try? context.save()
+
+        // Initialize the ResultsManager.
+        let resultsManager = ResultsManager(modelContext: context)
 
         return ResultsView(session: session)
+            .environmentObject(resultsManager)
             .modelContainer(container)
     } catch {
         fatalError("Preview setup failed: \(error)")

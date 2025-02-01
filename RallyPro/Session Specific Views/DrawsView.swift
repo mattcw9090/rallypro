@@ -4,40 +4,39 @@ import SwiftData
 struct DrawsView: View {
     let session: Session
 
-    @Query private var allDoublesMatches: [DoublesMatch]
-    @Query private var allParticipants: [SessionParticipant]
-
-    // Global editing toggle
-    @State private var isEditingPlayers = false
-
+    // Inject the DrawsManager via the environment.
+    @EnvironmentObject var drawsManager: DrawsManager
     @Environment(\.modelContext) private var modelContext
 
+    // Global editing toggle.
+    @State private var isEditingPlayers = false
+
+    // Computed properties using in‑memory filtering provided by the manager.
+    private var filteredMatches: [DoublesMatch] {
+        drawsManager.doublesMatches(for: session)
+    }
+    
     private var participants: [SessionParticipant] {
-        allParticipants.filter { $0.session == session }
+        drawsManager.participants(for: session)
     }
-
-    // Build red/black player arrays
+    
     private var redTeamMembers: [Player] {
-        participants.filter { $0.team == .Red }.map { $0.player }
+        drawsManager.redTeamMembers(for: session)
     }
+    
     private var blackTeamMembers: [Player] {
-        participants.filter { $0.team == .Black }.map { $0.player }
+        drawsManager.blackTeamMembers(for: session)
     }
-
-    // Calculate the current max wave
+    
     private var maxWaveNumber: Int {
-        allDoublesMatches
-            .filter { $0.session == session }
-            .map { $0.waveNumber }
-            .max() ?? 0
+        drawsManager.maxWaveNumber(for: session)
     }
 
     var body: some View {
         NavigationStack {
-            let filteredMatches = allDoublesMatches.filter { $0.session == session }
-            // Group matches by wave number
+            // Group matches by wave number.
             let groupedMatches = Dictionary(grouping: filteredMatches, by: { $0.waveNumber })
-
+            
             ScrollView {
                 LazyVStack(spacing: 16) {
                     ForEach(groupedMatches.keys.sorted(), id: \.self) { wave in
@@ -49,10 +48,10 @@ struct DrawsView: View {
                                 redTeamMembers: redTeamMembers,
                                 blackTeamMembers: blackTeamMembers,
                                 addMatchAction: {
-                                    addMatch(for: wave)
+                                    drawsManager.addMatch(for: session, wave: wave)
                                 },
                                 deleteMatchAction: { match in
-                                    deleteMatch(match)
+                                    drawsManager.deleteMatch(match, for: session)
                                 }
                             )
                             .padding(.horizontal)
@@ -66,7 +65,7 @@ struct DrawsView: View {
                 ToolbarItem(placement: .navigationBarLeading) {
                     Button(isEditingPlayers ? "Done" : "Edit") {
                         if isEditingPlayers {
-                            // Save changes before leaving edit mode
+                            // Save any pending changes before leaving edit mode.
                             try? modelContext.save()
                         }
                         withAnimation {
@@ -74,94 +73,14 @@ struct DrawsView: View {
                         }
                     }
                 }
-
-                // Add Wave button on the right (only in edit mode)
                 ToolbarItem(placement: .navigationBarTrailing) {
                     if isEditingPlayers {
                         Button("Add Wave") {
-                            addWave()
+                            drawsManager.addWave(for: session)
                         }
                     }
                 }
             }
-        }
-    }
-
-    // MARK: - Adding Waves & Matches
-
-    /// Creates a new wave with waveNumber = maxWaveNumber + 1, plus one empty match.
-    private func addWave() {
-        let newWaveNumber = maxWaveNumber + 1
-
-        let newMatch = DoublesMatch(
-            session: session,
-            waveNumber: newWaveNumber,
-            redPlayer1: redTeamMembers.first ?? Player(name: "Red Player A"),
-            redPlayer2: redTeamMembers.dropFirst().first ?? Player(name: "Red Player B"),
-            blackPlayer1: blackTeamMembers.first ?? Player(name: "Black Player A"),
-            blackPlayer2: blackTeamMembers.dropFirst().first ?? Player(name: "Black Player B")
-        )
-        modelContext.insert(newMatch)
-
-        do {
-            try modelContext.save()
-        } catch {
-            print("Error adding new wave: \(error.localizedDescription)")
-        }
-    }
-
-    /// Creates a new match within an existing wave.
-    private func addMatch(for wave: Int) {
-        let newMatch = DoublesMatch(
-            session: session,
-            waveNumber: wave,
-            redPlayer1: redTeamMembers.first ?? Player(name: "Red Player A"),
-            redPlayer2: redTeamMembers.dropFirst().first ?? Player(name: "Red Player B"),
-            blackPlayer1: blackTeamMembers.first ?? Player(name: "Black Player A"),
-            blackPlayer2: blackTeamMembers.dropFirst().first ?? Player(name: "Black Player B")
-        )
-        modelContext.insert(newMatch)
-
-        do {
-            try modelContext.save()
-        } catch {
-            print("Error adding new match: \(error.localizedDescription)")
-        }
-    }
-
-    // MARK: - Deleting Matches & Reordering Waves
-
-    /// Delete the given match, then shift wave numbers if that wave is now empty.
-    private func deleteMatch(_ match: DoublesMatch) {
-        let deletedWaveNumber = match.waveNumber
-
-        modelContext.delete(match)
-        do {
-            try modelContext.save()
-        } catch {
-            print("Error deleting match: \(error.localizedDescription)")
-        }
-
-        reorderWavesAfterDeletingWaveIfNeeded(deletedWaveNumber)
-    }
-
-    /// If the wave is empty after deletion, shift all wave numbers above it by -1.
-    private func reorderWavesAfterDeletingWaveIfNeeded(_ wave: Int) {
-        // Check if wave is now empty
-        let isWaveEmpty = !allDoublesMatches.contains { $0.session == session && $0.waveNumber == wave }
-        guard isWaveEmpty else { return }
-
-        // Wave is empty -> shift subsequent waves downward
-        let matchesToShift = allDoublesMatches.filter {
-            $0.session == session && $0.waveNumber > wave
-        }
-        for match in matchesToShift {
-            match.waveNumber -= 1
-        }
-        do {
-            try modelContext.save()
-        } catch {
-            print("Error shifting wave numbers: \(error.localizedDescription)")
         }
     }
 }
@@ -171,18 +90,18 @@ struct DrawsView: View {
 struct WaveView: View {
     let title: String
     let matches: [DoublesMatch]
-
-    // Passed down from DrawsView
+    
+    // Passed down from DrawsView.
     let isEditingPlayers: Bool
-
+    
     let redTeamMembers: [Player]
     let blackTeamMembers: [Player]
-
-    // Handler for adding a match in this wave
+    
+    // Handler for adding a match in this wave.
     let addMatchAction: () -> Void
-    // Handler for deleting a match in this wave
+    // Handler for deleting a match.
     let deleteMatchAction: (DoublesMatch) -> Void
-
+    
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
@@ -190,10 +109,9 @@ struct WaveView: View {
                     .font(.headline)
                     .padding(.horizontal, 8)
                     .padding(.vertical, 4)
-
+                
                 Spacer()
-
-                // Show "Add Match" button inline if editing
+                
                 if isEditingPlayers {
                     Button(action: addMatchAction) {
                         Text("Add Match")
@@ -206,7 +124,7 @@ struct WaveView: View {
                     .transition(.opacity)
                 }
             }
-
+            
             VStack(spacing: 12) {
                 ForEach(matches, id: \.id) { match in
                     MatchView(
@@ -232,35 +150,33 @@ struct MatchView: View {
     @Bindable var match: DoublesMatch
     
     @FocusState private var activeScoreField: ScoreField?
-
+    
     private enum ScoreField {
         case redFirst, blackFirst, redSecond, blackSecond
     }
-
+    
     let isEditingPlayers: Bool
-
+    
     let redTeamMembers: [Player]
     let blackTeamMembers: [Player]
-
-    // Callback up to the parent to handle deletion
+    
+    // Callback to delete the match.
     let deleteMatchAction: (DoublesMatch) -> Void
-
-    // Score states
+    
+    // Local states for score input.
     @State private var redFirstSetScore = ""
     @State private var blackFirstSetScore = ""
     @State private var redSecondSetScore = ""
     @State private var blackSecondSetScore = ""
-
-    // Alert
+    
+    // Alert state.
     @State private var showingAlert = false
     @State private var alertMessage = ""
-
+    
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             matchHeader
-
-            // If we're in editing mode, always show the score input, regardless of match completion.
-            // Otherwise, if the match is complete, show final inline score.
+            
             if isEditingPlayers {
                 scoreInputView
             } else if match.isComplete {
@@ -285,13 +201,12 @@ struct MatchView: View {
     }
 }
 
-// MARK: - Subviews & Private Helpers
+// MARK: - MatchView Subviews & Helpers
 
 extension MatchView {
-    /// The row showing the two red players vs. two black players, plus a delete button (in edit mode).
     private var matchHeader: some View {
         HStack {
-            // Red side (two players)
+            // Red team (two players)
             VStack(alignment: .leading, spacing: 6) {
                 teamPlayerNameView(
                     currentPlayer: match.redPlayer1,
@@ -305,11 +220,11 @@ extension MatchView {
                 )
             }
             .frame(maxWidth: .infinity, alignment: .leading)
-
+            
             Text("vs")
                 .bold()
-
-            // Black side (two players)
+            
+            // Black team (two players)
             VStack(alignment: .trailing, spacing: 6) {
                 teamPlayerNameView(
                     currentPlayer: match.blackPlayer1,
@@ -323,8 +238,7 @@ extension MatchView {
                 )
             }
             .frame(maxWidth: .infinity, alignment: .trailing)
-
-            // Delete button on the far right if editing
+            
             if isEditingPlayers {
                 Button(role: .destructive) {
                     deleteMatchAction(match)
@@ -337,16 +251,13 @@ extension MatchView {
         }
         .padding(.vertical, 4)
     }
-
-    /// A helper that shows either a plain text or a menu for editing a player's name.
-    /// If `team == .Red`, it will show redTeamMembers; if `.Black`, blackTeamMembers.
+    
     private func teamPlayerNameView(
         currentPlayer: Player,
         team: Team,
         updateAction: @escaping (Player) -> Void
     ) -> some View {
         let relevantTeamMembers = (team == .Red) ? redTeamMembers : blackTeamMembers
-        
         return Group {
             if isEditingPlayers {
                 Menu {
@@ -357,7 +268,7 @@ extension MatchView {
                     }
                 } label: {
                     Text(currentPlayer.name)
-                        .underline() // visually indicate it's editable
+                        .underline()
                         .foregroundColor(team == .Red ? .red : .black)
                 }
             } else {
@@ -366,45 +277,38 @@ extension MatchView {
             }
         }
     }
-
-    /// Score Input (compact layout)
+    
     @ViewBuilder
     private var scoreInputView: some View {
         HStack(spacing: 16) {
-            // ----- SET 1 -----
+            // Set 1
             VStack(spacing: 4) {
                 Text("Set 1")
                     .font(.caption)
-                
                 HStack(spacing: 4) {
-                    // Red first-set score
                     TextField("R", text: $redFirstSetScore)
                         .keyboardType(.numberPad)
                         .textFieldStyle(.roundedBorder)
                         .frame(width: 40)
                         .focused($activeScoreField, equals: .redFirst)
-                        .onChange(of: redFirstSetScore) { oldValue, newValue in
-                            // 1) Enforce max 2 digits
+                        .onChange(of: redFirstSetScore) { _, newValue in
                             if newValue.count > 2 {
                                 redFirstSetScore = String(newValue.prefix(2))
                             }
-                            // 2) Move focus when we have exactly 2 digits
                             if redFirstSetScore.count == 2 {
                                 activeScoreField = .blackFirst
                             }
-                            // 3) Update underlying model
                             updateScoreFields()
                         }
                     
                     Text("-")
                     
-                    // Black first-set score
                     TextField("B", text: $blackFirstSetScore)
                         .keyboardType(.numberPad)
                         .textFieldStyle(.roundedBorder)
                         .frame(width: 40)
                         .focused($activeScoreField, equals: .blackFirst)
-                        .onChange(of: blackFirstSetScore) { oldValue, newValue in
+                        .onChange(of: blackFirstSetScore) { _, newValue in
                             if newValue.count > 2 {
                                 blackFirstSetScore = String(newValue.prefix(2))
                             }
@@ -415,20 +319,18 @@ extension MatchView {
                         }
                 }
             }
-
-            // ----- SET 2 -----
+            
+            // Set 2
             VStack(spacing: 4) {
                 Text("Set 2")
                     .font(.caption)
-                
                 HStack(spacing: 4) {
-                    // Red second-set score
                     TextField("R", text: $redSecondSetScore)
                         .keyboardType(.numberPad)
                         .textFieldStyle(.roundedBorder)
                         .frame(width: 40)
                         .focused($activeScoreField, equals: .redSecond)
-                        .onChange(of: redSecondSetScore) { oldValue, newValue in
+                        .onChange(of: redSecondSetScore) { _, newValue in
                             if newValue.count > 2 {
                                 redSecondSetScore = String(newValue.prefix(2))
                             }
@@ -437,39 +339,29 @@ extension MatchView {
                             }
                             updateScoreFields()
                         }
-
+                    
                     Text("-")
-
-                    // Black second-set score
+                    
                     TextField("B", text: $blackSecondSetScore)
                         .keyboardType(.numberPad)
                         .textFieldStyle(.roundedBorder)
                         .frame(width: 40)
                         .focused($activeScoreField, equals: .blackSecond)
-                        .onChange(of: blackSecondSetScore) { oldValue, newValue in
+                        .onChange(of: blackSecondSetScore) { _, newValue in
                             if newValue.count > 2 {
                                 blackSecondSetScore = String(newValue.prefix(2))
                             }
-                            // Optionally dismiss keyboard when final text field is filled:
-                            // if blackSecondSetScore.count == 2 {
-                            //     activeScoreField = nil
-                            // }
                             updateScoreFields()
                         }
                 }
             }
-
+            
             Spacer()
         }
         .padding(.top, 4)
     }
-}
-
-// MARK: - Logic & Computed Properties
-
-extension MatchView {
+    
     private func initializeScores() {
-        // Populate local text fields from match data
         if match.redTeamScoreFirstSet != 0 || match.blackTeamScoreFirstSet != 0 {
             redFirstSetScore = "\(match.redTeamScoreFirstSet)"
             blackFirstSetScore = "\(match.blackTeamScoreFirstSet)"
@@ -479,21 +371,18 @@ extension MatchView {
             blackSecondSetScore = "\(match.blackTeamScoreSecondSet)"
         }
     }
-
-    /// Called whenever any of the score text fields change.
+    
     private func updateScoreFields() {
-        match.redTeamScoreFirstSet   = Int(redFirstSetScore)   ?? 0
+        match.redTeamScoreFirstSet = Int(redFirstSetScore) ?? 0
         match.blackTeamScoreFirstSet = Int(blackFirstSetScore) ?? 0
-        match.redTeamScoreSecondSet  = Int(redSecondSetScore)  ?? 0
+        match.redTeamScoreSecondSet = Int(redSecondSetScore) ?? 0
         match.blackTeamScoreSecondSet = Int(blackSecondSetScore) ?? 0
-
-        // Mark as complete if both sets have scores
+        
         let set1Complete = (!redFirstSetScore.isEmpty && !blackFirstSetScore.isEmpty)
         let set2Complete = (!redSecondSetScore.isEmpty && !blackSecondSetScore.isEmpty)
         match.isComplete = set1Complete && set2Complete
     }
-
-    /// Update methods for each specific position
+    
     private func updateRedPlayer1(to newPlayer: Player) {
         do {
             match.redPlayer1 = newPlayer
@@ -503,7 +392,7 @@ extension MatchView {
             showingAlert = true
         }
     }
-
+    
     private func updateRedPlayer2(to newPlayer: Player) {
         do {
             match.redPlayer2 = newPlayer
@@ -513,7 +402,7 @@ extension MatchView {
             showingAlert = true
         }
     }
-
+    
     private func updateBlackPlayer1(to newPlayer: Player) {
         do {
             match.blackPlayer1 = newPlayer
@@ -523,7 +412,7 @@ extension MatchView {
             showingAlert = true
         }
     }
-
+    
     private func updateBlackPlayer2(to newPlayer: Player) {
         do {
             match.blackPlayer2 = newPlayer
@@ -533,7 +422,15 @@ extension MatchView {
             showingAlert = true
         }
     }
-
+    
+    private var winningTeam: Team? {
+        let redTotal = match.redTeamScoreFirstSet + match.redTeamScoreSecondSet
+        let blackTotal = match.blackTeamScoreFirstSet + match.blackTeamScoreSecondSet
+        if redTotal > blackTotal { return .Red }
+        else if blackTotal > redTotal { return .Black }
+        else { return nil }
+    }
+    
     private var winningTeamColor: Color {
         switch winningTeam {
         case .Red:
@@ -544,65 +441,42 @@ extension MatchView {
             return Color.clear
         }
     }
-
-    private var winningTeam: Team? {
-        let redTotal = match.redTeamScoreFirstSet + match.redTeamScoreSecondSet
-        let blackTotal = match.blackTeamScoreFirstSet + match.blackTeamScoreSecondSet
-
-        if redTotal > blackTotal {
-            return .Red
-        } else if blackTotal > redTotal {
-            return .Black
-        } else {
-            return nil
-        }
-    }
-
+    
     private var matchScore: String {
         "\(match.redTeamScoreFirstSet)-\(match.blackTeamScoreFirstSet), " +
         "\(match.redTeamScoreSecondSet)-\(match.blackTeamScoreSecondSet)"
     }
 }
 
-// MARK: - Preview
-
 #Preview {
-    let schema = Schema([
-        Season.self,
-        Session.self,
-        Player.self,
-        SessionParticipant.self,
-        DoublesMatch.self
-    ])
-    let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: true)
-
+    let schema = Schema([Season.self, Session.self, Player.self, SessionParticipant.self, DoublesMatch.self])
+    let config = ModelConfiguration(schema: schema, isStoredInMemoryOnly: true)
+    
     do {
-        let mockContainer = try ModelContainer(for: schema, configurations: [modelConfiguration])
-        let context = mockContainer.mainContext
-
-        // Create mock data
+        let container = try ModelContainer(for: schema, configurations: config)
+        let context = container.mainContext
+        
+        // Create mock Season and Session.
         let season = Season(seasonNumber: 4)
         context.insert(season)
-
         let session = Session(sessionNumber: 5, season: season)
         context.insert(session)
-
-        let players = ["Shin", "Suan Sian Foo", "Chris Fan", "CJ", "Nicson Hiew", "Issac Lai"]
-            .map { Player(name: $0) }
+        
+        // Create some Players.
+        let playerNames = ["Shin", "Suan Sian Foo", "Chris Fan", "CJ", "Nicson", "Issac"]
+        let players = playerNames.map { Player(name: $0) }
         players.forEach { context.insert($0) }
-
-        // Mock participants
+        
+        // Create SessionParticipants.
         let participant1 = SessionParticipant(session: session, player: players[0], team: .Red)
         let participant2 = SessionParticipant(session: session, player: players[1], team: .Red)
         let participant3 = SessionParticipant(session: session, player: players[2], team: .Black)
         let participant4 = SessionParticipant(session: session, player: players[3], team: .Black)
         let participant5 = SessionParticipant(session: session, player: players[4], team: .Red)
         let participant6 = SessionParticipant(session: session, player: players[5], team: .Black)
-        [participant1, participant2, participant3, participant4, participant5, participant6].forEach {
-            context.insert($0)
-        }
-
-        // Example wave 1
+        [participant1, participant2, participant3, participant4, participant5, participant6].forEach { context.insert($0) }
+        
+        // Create some mock matches.
         let match1 = DoublesMatch(
             session: session,
             waveNumber: 1,
@@ -624,8 +498,6 @@ extension MatchView {
             blackPlayer1: players[3],
             blackPlayer2: players[5]
         )
-
-        // Example wave 2
         let match3 = DoublesMatch(
             session: session,
             waveNumber: 2,
@@ -636,14 +508,17 @@ extension MatchView {
             redTeamScoreFirstSet: 18,
             blackTeamScoreFirstSet: 21
         )
-
         [match1, match2, match3].forEach { context.insert($0) }
-
+        
         try? context.save()
-
+        
+        // Initialize the DrawsManager.
+        let drawsManager = DrawsManager(modelContext: context)
+        
         return DrawsView(session: session)
-            .modelContainer(mockContainer)
+            .environmentObject(drawsManager)
+            .modelContainer(container)
     } catch {
-        fatalError("Could not create ModelContainer: \(error)")
+        fatalError("Failed to create preview container: \(error)")
     }
 }
