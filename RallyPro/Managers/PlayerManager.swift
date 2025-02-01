@@ -5,6 +5,11 @@ class PlayerManager: ObservableObject {
     private var modelContext: ModelContext
 
     @Published var allPlayers: [Player] = []
+    
+    var waitlistPlayers: [Player] {
+        allPlayers.filter { $0.status == .onWaitlist }
+                  .sorted { ($0.waitlistPosition ?? 0) < ($1.waitlistPosition ?? 0) }
+    }
 
     init(modelContext: ModelContext) {
         self.modelContext = modelContext
@@ -20,18 +25,13 @@ class PlayerManager: ObservableObject {
         }
     }
     
-    func filteredPlayers(searchText: String) -> [Player] {
+    func filterPlayers(searchText: String) -> [Player] {
         guard !searchText.isEmpty else {
             return allPlayers
         }
         return allPlayers.filter { player in
             player.name.localizedCaseInsensitiveContains(searchText)
         }
-    }
-    
-    var waitlistPlayers: [Player] {
-        allPlayers.filter { $0.status == .onWaitlist }
-                  .sorted { ($0.waitlistPosition ?? 0) < ($1.waitlistPosition ?? 0) }
     }
     
     func addToWaitlist(_ player: Player) {

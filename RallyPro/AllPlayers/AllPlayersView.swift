@@ -12,7 +12,7 @@ struct AllPlayersView: View {
     var body: some View {
         NavigationView {
             List {
-                ForEach(playerManager.filteredPlayers(searchText: searchText)) { player in
+                ForEach(playerManager.filterPlayers(searchText: searchText)) { player in
                     PlayerRowView(player: player)
                         .swipeActions(edge: .trailing) { swipeActions(for: player) }
                         .onTapGesture { selectedPlayerForEditing = player }
