@@ -10,14 +10,6 @@ struct AllPlayersView: View {
     @State private var selectedPlayerForEditing: Player?
     @State private var searchText = ""
     
-    // MARK: - Computed Properties
-    private var latestWaitlistPosition: Int? {
-        playerManager.allPlayers
-            .filter { $0.status == .onWaitlist }
-            .compactMap { $0.waitlistPosition }
-            .max()
-    }
-
     var body: some View {
         NavigationView {
             List {
@@ -53,24 +45,12 @@ struct AllPlayersView: View {
         Group {
             if player.status == .notInSession {
                 Button {
-                    addToWaitlist(player)
+                    playerManager.addToWaitlist(player)
                 } label: {
                     Label("Add to Waitlist", systemImage: "list.bullet")
                 }
                 .tint(.orange)
             }
-        }
-    }
-    
-    // MARK: - Methods
-    private func addToWaitlist(_ player: Player) {
-        player.status = .onWaitlist
-        player.waitlistPosition = (latestWaitlistPosition ?? 0) + 1
-        
-        do {
-            try modelContext.save()
-        } catch {
-            print("Error adding player to waitlist: \(error)")
         }
     }
 }
