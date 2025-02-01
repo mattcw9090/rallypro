@@ -4,76 +4,68 @@ import SwiftData
 struct AllPlayersView: View {
     @EnvironmentObject var playerManager: PlayerManager
     @Environment(\.modelContext) private var modelContext
-
+    
     // MARK: - State
-
     @State private var showingAddPlayerSheet = false
     @State private var selectedPlayerForEditing: Player?
     @State private var searchText = ""
-
-    // MARK: - Queries
     
-    // Latest Waitlist Position Query
+    // MARK: - Computed Properties
     private var latestWaitlistPosition: Int? {
         playerManager.allPlayers
             .filter { $0.status == .onWaitlist }
             .compactMap { $0.waitlistPosition }
             .max()
     }
-    
-    // MARK: - Body
 
     var body: some View {
         NavigationView {
             List {
-                ForEach(playerManager.filteredPlayers(searchText: searchText)) { player in
-                    Button {
-                        selectedPlayerForEditing = player
-                    } label: {
-                        PlayerRowView(player: player)
-                    }
-                    .swipeActions(edge: .trailing) {
-                        if player.status == .notInSession {
-                            Button {
-                                addToWaitlist(player)
-                            } label: {
-                                Label("Add to Waitlist", systemImage: "list.bullet")
-                            }
-                            .tint(.orange)
-                        }
-                    }
-                }
+                playerListContent
             }
             .navigationTitle("All Players")
-            // 1. Add the .searchable modifier
             .searchable(text: $searchText, placement: .navigationBarDrawer(displayMode: .always))
-            .toolbar {
-                ToolbarItem(placement: .primaryAction) {
-                    Button {
-                        showingAddPlayerSheet = true
-                    } label: {
-                        Label("Add Player", systemImage: "plus")
-                    }
+            .toolbar { toolbarContent }
+            .sheet(isPresented: $showingAddPlayerSheet) { AddPlayerView() }
+            .sheet(item: $selectedPlayerForEditing) { EditPlayerView(player: $0) }
+            .onAppear { playerManager.fetchAllPlayers() }
+        }
+    }
+    
+    // MARK: - View Components
+    private var playerListContent: some View {
+        ForEach(playerManager.filteredPlayers(searchText: searchText)) { player in
+            PlayerRowView(player: player)
+                .swipeActions(edge: .trailing) { swipeActions(for: player) }
+                .onTapGesture { selectedPlayerForEditing = player }
+        }
+    }
+    
+    private var toolbarContent: some ToolbarContent {
+        ToolbarItem(placement: .primaryAction) {
+            Button("Add Player", systemImage: "plus") {
+                showingAddPlayerSheet = true
+            }
+        }
+    }
+    
+    private func swipeActions(for player: Player) -> some View {
+        Group {
+            if player.status == .notInSession {
+                Button {
+                    addToWaitlist(player)
+                } label: {
+                    Label("Add to Waitlist", systemImage: "list.bullet")
                 }
-            }
-            .sheet(isPresented: $showingAddPlayerSheet) {
-                AddPlayerView()
-            }
-            .sheet(item: $selectedPlayerForEditing) { player in
-                EditPlayerView(player: player)
-            }
-            .onAppear {
-                playerManager.fetchAllPlayers()
+                .tint(.orange)
             }
         }
     }
     
     // MARK: - Methods
-    
     private func addToWaitlist(_ player: Player) {
         player.status = .onWaitlist
-        let nextPosition = (latestWaitlistPosition ?? 0) + 1
-        player.waitlistPosition = nextPosition
+        player.waitlistPosition = (latestWaitlistPosition ?? 0) + 1
         
         do {
             try modelContext.save()
@@ -83,25 +75,28 @@ struct AllPlayersView: View {
     }
 }
 
+// MARK: - Preview
 #Preview {
     let schema = Schema([Player.self])
-    let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: true)
-
+    let config = ModelConfiguration(isStoredInMemoryOnly: true)
+    
     do {
-        let mockContainer = try ModelContainer(for: schema, configurations: [modelConfiguration])
-        let mockManager = PlayerManager(modelContext: mockContainer.mainContext)
+        let container = try ModelContainer(for: schema, configurations: config)
+        let manager = PlayerManager(modelContext: container.mainContext)
         
-        // Insert Mock Data
-        let context = mockContainer.mainContext
-        context.insert(Player(name: "Alice", status: .playing, isMale: false))
-        context.insert(Player(name: "Bob", status: .onWaitlist, waitlistPosition: 2, isMale: true))
-        context.insert(Player(name: "Charlie", status: .notInSession, isMale: true))
-        context.insert(Player(name: "Denise", status: .onWaitlist, waitlistPosition: 1, isMale: false))
-
+        // Insert mock data
+        let mockPlayers = [
+            Player(name: "Alice", status: .playing, isMale: false),
+            Player(name: "Bob", status: .onWaitlist, waitlistPosition: 2, isMale: true),
+            Player(name: "Charlie", status: .notInSession, isMale: true),
+            Player(name: "Denise", status: .onWaitlist, waitlistPosition: 1, isMale: false)
+        ]
+        mockPlayers.forEach { container.mainContext.insert($0) }
+        
         return AllPlayersView()
-            .environmentObject(mockManager)
-            .modelContainer(mockContainer)
+            .environmentObject(manager)
+            .modelContainer(container)
     } catch {
-        fatalError("Could not create ModelContainer: \(error)")
+        fatalError("Failed to create preview container: \(error)")
     }
 }
