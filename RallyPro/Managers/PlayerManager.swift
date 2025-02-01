@@ -12,7 +12,7 @@ class PlayerManager: ObservableObject {
     }
 
     func fetchAllPlayers() {
-        let descriptor = FetchDescriptor<Player>(sortBy: [SortDescriptor(\Player.name)])
+        let descriptor = FetchDescriptor<Player>(sortBy: [SortDescriptor(\.name)])
         do {
             allPlayers = try modelContext.fetch(descriptor)
         } catch {

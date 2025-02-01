@@ -20,7 +20,7 @@ struct SessionsView: View {
             }
             .navigationTitle("Sessions")
             .alert("Cannot Add Season", isPresented: $showAlert) {
-                Button("OK", role: .cancel) {}
+                Button("OK", role: .cancel) { }
             } message: {
                 Text(alertMessage)
             }
@@ -95,41 +95,39 @@ struct SessionsView: View {
     }
 
     private func addNewSeason() {
-        guard seasonManager.allSeasons.allSatisfy(\.isCompleted) else {
-            alertMessage = "All previous seasons must be marked as completed before adding a new season."
+        do {
+            try seasonManager.createNewSeason()
+        } catch {
+            alertMessage = error.localizedDescription
             showAlert = true
-            return
         }
-
-        let nextSeasonNumber = (seasonManager.latestSeason?.seasonNumber ?? 0) + 1
-        let newSeason = Season(seasonNumber: nextSeasonNumber)
-        let newSession = Session(sessionNumber: 1, season: newSeason)
-        modelContext.insert(newSeason)
-        modelContext.insert(newSession)
-
-        seasonManager.fetchSeasons()
-        seasonManager.fetchSessions()
     }
 
     private func addSession(to season: Season) {
-        let nextSessionNumber = (seasonManager.latestSession?.sessionNumber ?? 0) + 1
-        let newSession = Session(sessionNumber: nextSessionNumber, season: season)
-        modelContext.insert(newSession)
-        seasonManager.fetchSessions()
+        do {
+            try seasonManager.createSession(for: season)
+        } catch {
+            print("Error creating session: \(error)")
+        }
     }
 
     private func markSeasonComplete(_ season: Season) {
-        season.isCompleted = true
-        seasonManager.fetchSeasons()
+        do {
+            try seasonManager.updateSeasonCompletion(season, completed: true)
+        } catch {
+            print("Error updating season: \(error)")
+        }
     }
 
     private func markSeasonIncomplete(_ season: Season) {
         guard let latest = seasonManager.latestSeason, season.id == latest.id else { return }
-        season.isCompleted = false
-        seasonManager.fetchSeasons()
+        do {
+            try seasonManager.updateSeasonCompletion(season, completed: false)
+        } catch {
+            print("Error updating season: \(error)")
+        }
     }
 }
-
 
 struct SeasonAccordionView: View {
     @Binding var isExpanded: Bool
@@ -137,7 +135,6 @@ struct SeasonAccordionView: View {
     let sessions: [Session]
     let isCompleted: Bool
     let markIncomplete: () -> Void
-
     let addSession: () -> Void
     let markComplete: () -> Void
 
@@ -149,7 +146,7 @@ struct SeasonAccordionView: View {
                     .foregroundColor(.gray)
                     .padding(.vertical, 5)
             } else {
-                // Existing sessions listing
+                // List each session
                 ForEach(sessions) { session in
                     NavigationLink(destination: SessionDetailView(session: session)) {
                         HStack {
@@ -160,8 +157,7 @@ struct SeasonAccordionView: View {
                         .padding(.vertical, 5)
                     }
                 }
-                
-                // NEW: Seasonal Results row
+                // Navigation link for seasonal results
                 NavigationLink(
                     destination: SeasonalResultsView(seasonNumber: seasonNumber)
                 ) {
@@ -174,7 +170,7 @@ struct SeasonAccordionView: View {
                 }
             }
 
-            // Buttons for adding session and/or marking season complete/incomplete
+            // Buttons for adding a session and marking complete/incomplete
             if !isCompleted {
                 HStack(spacing: 20) {
                     Button("Add Session", action: addSession)
@@ -196,8 +192,7 @@ struct SeasonAccordionView: View {
                         .font(.caption)
                 }
                 .padding(.top, 10)
-            }
-            else {
+            } else {
                 Button("Mark Incomplete", action: markIncomplete)
                     .buttonStyle(PlainButtonStyle())
                     .padding(.vertical, 5)
@@ -231,18 +226,20 @@ struct SeasonAccordionView: View {
         let mockContainer = try ModelContainer(for: schema, configurations: [modelConfiguration])
         let context = mockContainer.mainContext
         
+        // Insert a sample season and session for preview.
         let season1 = Season(seasonNumber: 1, isCompleted: true)
         context.insert(season1)
         let session1 = Session(sessionNumber: 1, season: season1)
         context.insert(session1)
         
+        // Create managers using the same context.
         let playerManager = PlayerManager(modelContext: context)
         let seasonManager = SeasonSessionManager(modelContext: context)
         
         return SessionsView()
             .modelContainer(mockContainer)
-            .environmentObject(playerManager)
             .environmentObject(seasonManager)
+            .environmentObject(playerManager)
     } catch {
         fatalError("Could not create ModelContainer: \(error)")
     }
