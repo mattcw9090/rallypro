@@ -13,15 +13,6 @@ struct AllPlayersView: View {
 
     // MARK: - Queries
     
-    private var filteredPlayers: [Player] {
-        guard !searchText.isEmpty else {
-            return playerManager.allPlayers
-        }
-        return playerManager.allPlayers.filter { player in
-            player.name.localizedCaseInsensitiveContains(searchText)
-        }
-    }
-    
     // Latest Waitlist Position Query
     private var latestWaitlistPosition: Int? {
         playerManager.allPlayers
@@ -35,7 +26,7 @@ struct AllPlayersView: View {
     var body: some View {
         NavigationView {
             List {
-                ForEach(filteredPlayers) { player in
+                ForEach(playerManager.filteredPlayers(searchText: searchText)) { player in
                     Button {
                         selectedPlayerForEditing = player
                     } label: {

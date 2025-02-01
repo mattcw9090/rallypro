@@ -20,4 +20,13 @@ class PlayerManager: ObservableObject{
             print("Error fetching players: \(error)")
         }
     }
+    
+    func filteredPlayers(searchText: String) -> [Player] {
+        guard !searchText.isEmpty else {
+            return allPlayers
+        }
+        return allPlayers.filter { player in
+            player.name.localizedCaseInsensitiveContains(searchText)
+        }
+    }
 }
