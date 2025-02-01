@@ -81,18 +81,10 @@ struct EditPlayerView: View {
         let mockContainer = try ModelContainer(for: schema, configurations: [modelConfiguration])
         let context = mockContainer.mainContext
         let playerToEdit = Player(name: "Charlie", status: .playing, isMale: true)
-        context.insert(Player(name: "Alice", status: .playing, isMale: false))
-        context.insert(Player(name: "Bob", status: .onWaitlist, waitlistPosition: 2, isMale: true))
-        context.insert(playerToEdit)
-        context.insert(Player(name: "Denise", status: .onWaitlist, waitlistPosition: 1, isMale: false))
-        
         let season = Season(seasonNumber: 1)
         context.insert(season)
         let session = Session(sessionNumber: 1, season: season)
         context.insert(session)
-        
-        let participant = SessionParticipant(session: session, player: playerToEdit, team: .Red)
-        context.insert(participant)
 
         return EditPlayerView(player: playerToEdit)
             .modelContainer(mockContainer)

@@ -8,13 +8,13 @@ struct AddPlayerView: View {
     @EnvironmentObject var seasonManager: SeasonSessionManager
 
     @State private var name: String = ""
-    @State private var status: Player.PlayerStatus = .notInSession
+    @State private var status: Player.PlayerStatus = .onWaitlist
     @State private var showingAlert = false
     @State private var alertMessage = ""
     @State private var isMale: Bool = true
 
     var body: some View {
-        NavigationView {
+        NavigationStack {
             Form {
                 Section(header: Text("Player Details")) {
                     TextField("Name", text: $name)

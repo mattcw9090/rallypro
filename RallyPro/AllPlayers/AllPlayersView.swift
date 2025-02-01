@@ -2,37 +2,49 @@ import SwiftUI
 import SwiftData
 
 struct AllPlayersView: View {
-    @EnvironmentObject var playerManager: PlayerManager
     @Environment(\.modelContext) private var modelContext
-
+    @EnvironmentObject var playerManager: PlayerManager
+    
     @State private var showingAddPlayerSheet = false
     @State private var selectedPlayerForEditing: Player?
     @State private var searchText = ""
-
+    
     var body: some View {
-        NavigationView {
+        NavigationStack {
             List {
                 ForEach(playerManager.filterPlayers(searchText: searchText)) { player in
                     PlayerRowView(player: player)
-                        .swipeActions(edge: .trailing) { swipeActions(for: player) }
-                        .onTapGesture { selectedPlayerForEditing = player }
+                        .swipeActions(edge: .trailing) {
+                            swipeActions(for: player)
+                        }
+                        .onTapGesture {
+                            selectedPlayerForEditing = player
+                        }
                 }
             }
             .navigationTitle("All Players")
             .searchable(text: $searchText, placement: .navigationBarDrawer(displayMode: .always))
             .toolbar {
                 ToolbarItem(placement: .primaryAction) {
-                    Button("Add Player", systemImage: "plus") {
+                    Button {
                         showingAddPlayerSheet = true
+                    } label: {
+                        Label("Add Player", systemImage: "plus")
                     }
                 }
             }
-            .sheet(isPresented: $showingAddPlayerSheet) { AddPlayerView() }
-            .sheet(item: $selectedPlayerForEditing) { EditPlayerView(player: $0) }
-            .onAppear { playerManager.fetchAllPlayers() }
+            .sheet(isPresented: $showingAddPlayerSheet) {
+                AddPlayerView()
+            }
+            .sheet(item: $selectedPlayerForEditing) { player in
+                EditPlayerView(player: player)
+            }
+            .onAppear {
+                playerManager.fetchAllPlayers()
+            }
         }
     }
-
+    
     @ViewBuilder
     private func swipeActions(for player: Player) -> some View {
         if player.status == .notInSession {
@@ -48,7 +60,7 @@ struct AllPlayersView: View {
 
 struct PlayerRowView: View {
     let player: Player
-
+    
     var body: some View {
         HStack {
             Image(systemName: "person.circle.fill")
