@@ -4,59 +4,50 @@ import SwiftData
 struct AllPlayersView: View {
     @EnvironmentObject var playerManager: PlayerManager
     @Environment(\.modelContext) private var modelContext
-    
-    // MARK: - State
+
     @State private var showingAddPlayerSheet = false
     @State private var selectedPlayerForEditing: Player?
     @State private var searchText = ""
-    
+
     var body: some View {
         NavigationView {
             List {
-                playerListContent
+                ForEach(playerManager.filteredPlayers(searchText: searchText)) { player in
+                    PlayerRowView(player: player)
+                        .swipeActions(edge: .trailing) { swipeActions(for: player) }
+                        .onTapGesture { selectedPlayerForEditing = player }
+                }
             }
             .navigationTitle("All Players")
             .searchable(text: $searchText, placement: .navigationBarDrawer(displayMode: .always))
-            .toolbar { toolbarContent }
+            .toolbar {
+                ToolbarItem(placement: .primaryAction) {
+                    Button("Add Player", systemImage: "plus") {
+                        showingAddPlayerSheet = true
+                    }
+                }
+            }
             .sheet(isPresented: $showingAddPlayerSheet) { AddPlayerView() }
             .sheet(item: $selectedPlayerForEditing) { EditPlayerView(player: $0) }
             .onAppear { playerManager.fetchAllPlayers() }
         }
     }
-    
-    // MARK: - View Components
-    private var playerListContent: some View {
-        ForEach(playerManager.filteredPlayers(searchText: searchText)) { player in
-            PlayerRowView(player: player)
-                .swipeActions(edge: .trailing) { swipeActions(for: player) }
-                .onTapGesture { selectedPlayerForEditing = player }
-        }
-    }
-    
-    private var toolbarContent: some ToolbarContent {
-        ToolbarItem(placement: .primaryAction) {
-            Button("Add Player", systemImage: "plus") {
-                showingAddPlayerSheet = true
-            }
-        }
-    }
-    
+
+    @ViewBuilder
     private func swipeActions(for player: Player) -> some View {
-        Group {
-            if player.status == .notInSession {
-                Button {
-                    playerManager.addToWaitlist(player)
-                } label: {
-                    Label("Add to Waitlist", systemImage: "list.bullet")
-                }
-                .tint(.orange)
+        if player.status == .notInSession {
+            Button {
+                playerManager.addToWaitlist(player)
+            } label: {
+                Label("Add to Waitlist", systemImage: "list.bullet")
             }
+            .tint(.orange)
         }
     }
 }
 
 struct PlayerRowView: View {
-    var player: Player
+    let player: Player
 
     var body: some View {
         HStack {
@@ -68,7 +59,6 @@ struct PlayerRowView: View {
             VStack(alignment: .leading) {
                 Text(player.name)
                     .font(.body)
-                
                 Text(player.status.rawValue)
                     .font(.caption)
                     .foregroundColor(.gray)
@@ -78,7 +68,6 @@ struct PlayerRowView: View {
     }
 }
 
-// MARK: - Preview
 #Preview {
     let schema = Schema([Player.self])
     let config = ModelConfiguration(isStoredInMemoryOnly: true)
