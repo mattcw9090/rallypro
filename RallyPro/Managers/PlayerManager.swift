@@ -12,7 +12,7 @@ class PlayerManager: ObservableObject {
     }
 
     func fetchAllPlayers() {
-        let descriptor = FetchDescriptor<Player>(sortBy: [SortDescriptor(\.name)])
+        let descriptor = FetchDescriptor<Player>(sortBy: [SortDescriptor(\Player.name)])
         do {
             allPlayers = try modelContext.fetch(descriptor)
         } catch {
@@ -96,7 +96,6 @@ class PlayerManager: ObservableObject {
                       newStatus: Player.PlayerStatus,
                       newIsMale: Bool,
                       latestSession: Session?) throws {
-        // Trim the new name and ensure uniqueness.
         let trimmedName = newName.trimmingCharacters(in: .whitespacesAndNewlines)
         if allPlayers.contains(where: { $0.id != player.id && $0.name.lowercased() == trimmedName.lowercased() }) {
             throw PlayerManagerError.duplicateName(trimmedName)
@@ -106,14 +105,11 @@ class PlayerManager: ObservableObject {
         
         switch (oldStatus, newStatus) {
         case (.notInSession, .onWaitlist):
-            // When moving from not in session to waitlist,
-            // assign the player a waitlist position at the end.
             let waitlistPlayers = allPlayers.filter { $0.status == .onWaitlist }
             let maxPosition = waitlistPlayers.compactMap { $0.waitlistPosition }.max() ?? 0
             player.waitlistPosition = maxPosition + 1
-            
+        
         case (.onWaitlist, .notInSession):
-            // When leaving the waitlist, remove the position and update others.
             if let removedPosition = player.waitlistPosition {
                 player.waitlistPosition = nil
                 let waitlistPlayers = allPlayers.filter { $0.status == .onWaitlist }
@@ -123,14 +119,12 @@ class PlayerManager: ObservableObject {
                     }
                 }
             }
-            
+        
         case (.notInSession, .playing), (.onWaitlist, .playing):
-            // To move into playing status, a latest session must exist.
             guard let session = latestSession else {
                 throw PlayerManagerError.noActiveSession
             }
             if oldStatus == .onWaitlist, let removedPosition = player.waitlistPosition {
-                // If the player was waitlisted, remove them from the waitlist and update positions.
                 player.waitlistPosition = nil
                 let waitlistPlayers = allPlayers.filter { $0.status == .onWaitlist }
                 for waitlisted in waitlistPlayers {
@@ -139,19 +133,15 @@ class PlayerManager: ObservableObject {
                     }
                 }
             }
-            // Insert a new session participant record.
             let newParticipant = SessionParticipant(session: session, player: player)
             modelContext.insert(newParticipant)
-            
+        
         case (.playing, .notInSession), (.playing, .onWaitlist):
-            // Removing a player from playing requires deleting the participant record.
             guard let session = latestSession else {
                 throw PlayerManagerError.noActiveSession
             }
-            // Fetch all session participants without a predicate.
             let descriptor = FetchDescriptor<SessionParticipant>()
             let allParticipants = try modelContext.fetch(descriptor)
-            // Now filter in memory.
             guard let participantRecord = allParticipants.first(where: { $0.session == session && $0.player == player }) else {
                 throw PlayerManagerError.participantNotFound
             }
@@ -160,17 +150,15 @@ class PlayerManager: ObservableObject {
             }
             modelContext.delete(participantRecord)
             if newStatus == .onWaitlist {
-                // If switching to waitlist, assign a new waitlist position.
                 let waitlistPlayers = allPlayers.filter { $0.status == .onWaitlist }
                 let maxPosition = waitlistPlayers.compactMap { $0.waitlistPosition }.max() ?? 0
                 player.waitlistPosition = maxPosition + 1
             }
-            
+        
         default:
             break
         }
         
-        // Finally, update the player's basic properties.
         player.name = trimmedName
         player.status = newStatus
         player.isMale = newIsMale

@@ -13,7 +13,7 @@ class SeasonSessionManager: ObservableObject {
 
     func fetchSeasons() {
         let descriptor = FetchDescriptor<Season>(
-            sortBy: [SortDescriptor(\.seasonNumber, order: .reverse)]
+            sortBy: [SortDescriptor(\Season.seasonNumber, order: .reverse)]
         )
         do {
             allSeasons = try modelContext.fetch(descriptor)
@@ -29,7 +29,7 @@ class SeasonSessionManager: ObservableObject {
     var latestSession: Session? {
         guard let season = latestSeason else { return nil }
         let sessionDescriptor = FetchDescriptor<Session>(
-            sortBy: [SortDescriptor(\.sessionNumber, order: .reverse)]
+            sortBy: [SortDescriptor(\Session.sessionNumber, order: .reverse)]
         )
         do {
             let sessions = try modelContext.fetch(sessionDescriptor)
