@@ -1,10 +1,14 @@
 import SwiftUI
 import SwiftData
 
+// MARK: - Alert Helper
+
 struct AlertMessage: Identifiable {
     let id = UUID()
     let message: String
 }
+
+// MARK: - TeamsView
 
 struct TeamsView: View {
     let session: Session
@@ -13,137 +17,175 @@ struct TeamsView: View {
     @State private var alertMessage: AlertMessage?
     @State private var selectedNumberOfWaves: Int = 5
     @State private var selectedNumberOfCourts: Int = 2
+    
+    // This state holds the measured size of the snapshot view.
+    @State private var contentSize: CGSize = .zero
 
-    var body: some View {
-        NavigationStack {
-            VStack {
-                List {
-                    // MARK: - Red Team Section
-                    Section(header: teamHeader(text: "Red Team", color: .red, count: teamsManager.redTeamMembers.count)) {
-                        ForEach(teamsManager.redTeamMembers, id: \.id) { player in
-                            TeamMemberRow(name: player.name, team: .Red)
-                                .swipeActions(edge: .trailing, allowsFullSwipe: false) {
-                                    Button("Unassign") {
-                                        teamsManager.updateTeam(for: player, to: nil)
-                                    }
-                                    .tint(.gray)
-                                    Button("Black") {
-                                        teamsManager.updateTeam(for: player, to: .Black)
-                                    }
-                                    .tint(.black)
-                                }
-                        }
-                    }
-                    
-                    // MARK: - Black Team Section
-                    Section(header: teamHeader(text: "Black Team", color: .black, count: teamsManager.blackTeamMembers.count)) {
-                        ForEach(teamsManager.blackTeamMembers, id: \.id) { player in
-                            TeamMemberRow(name: player.name, team: .Black)
-                                .swipeActions(edge: .trailing, allowsFullSwipe: false) {
-                                    Button("Unassign") {
-                                        teamsManager.updateTeam(for: player, to: nil)
-                                    }
-                                    .tint(.gray)
-                                    Button("Red") {
-                                        teamsManager.updateTeam(for: player, to: .Red)
-                                    }
-                                    .tint(.red)
-                                }
-                        }
-                    }
-                    
-                    // MARK: - Unassigned Section
-                    Section(header: teamHeader(text: "Unassigned", color: .gray, count: teamsManager.unassignedMembers.count)) {
-                        ForEach(teamsManager.unassignedMembers, id: \.id) { player in
-                            Text(player.name)
-                                .font(.body)
-                                .padding(.vertical, 5)
-                                .swipeActions(edge: .leading, allowsFullSwipe: false) {
-                                    Button("Waitlist") {
-                                        teamsManager.moveToWaitlist(player: player)
-                                    }
-                                    .tint(.orange)
-                                }
-                                .swipeActions(edge: .trailing, allowsFullSwipe: false) {
-                                    Button("Black") {
-                                        teamsManager.updateTeam(for: player, to: .Black)
-                                    }
-                                    .tint(.black)
-                                    Button("Red") {
-                                        teamsManager.updateTeam(for: player, to: .Red)
-                                    }
-                                    .tint(.red)
-                                }
-                        }
-                    }
-                }
-                .listStyle(InsetGroupedListStyle())
-                
-                // MARK: - Controls for Waves and Courts
-                HStack(spacing: 20) {
-                    VStack(alignment: .leading, spacing: 5) {
-                        Text("Waves")
-                            .font(.subheadline)
-                            .foregroundColor(.gray)
-                        Picker("Number of Waves", selection: $selectedNumberOfWaves) {
-                            ForEach(1...10, id: \.self) { number in
-                                Text("\(number)").tag(number)
+    // ---------------------------------------------
+    // Main interactive display content using a List.
+    // (This preserves the swipe actions for assigning team members.)
+    // ---------------------------------------------
+    private var displayContent: some View {
+        List {
+            // Red Team Section
+            Section(header: teamHeader(text: "Red Team", color: .red, count: teamsManager.redTeamMembers.count)) {
+                ForEach(teamsManager.redTeamMembers, id: \.id) { player in
+                    TeamMemberRow(name: player.name, team: .Red)
+                        .swipeActions(edge: .trailing, allowsFullSwipe: false) {
+                            Button("Unassign") {
+                                teamsManager.updateTeam(for: player, to: nil)
                             }
-                        }
-                        .pickerStyle(MenuPickerStyle())
-                        .labelsHidden()
-                    }
-                    
-                    VStack(alignment: .leading, spacing: 5) {
-                        Text("Courts")
-                            .font(.subheadline)
-                            .foregroundColor(.gray)
-                        Picker("Number of Courts", selection: $selectedNumberOfCourts) {
-                            ForEach(1...10, id: \.self) { number in
-                                Text("\(number)").tag(number)
+                            .tint(.gray)
+                            Button("Black") {
+                                teamsManager.updateTeam(for: player, to: .Black)
                             }
+                            .tint(.black)
                         }
-                        .pickerStyle(MenuPickerStyle())
-                        .labelsHidden()
-                    }
-                    
-                    Button(action: {
-                        if teamsManager.validateTeams() {
-                            teamsManager.generateDraws(
-                                numberOfWaves: selectedNumberOfWaves,
-                                numberOfCourts: selectedNumberOfCourts
-                            )
-                            alertMessage = AlertMessage(message: "Done trying draws. Check console for details.")
-                        } else {
-                            alertMessage = AlertMessage(message: "Team validation failed.")
-                        }
-                    }) {
-                        Text("Generate Draws")
-                            .font(.headline)
-                            .frame(maxWidth: .infinity)
-                            .padding()
-                            .background(Color.blue)
-                            .foregroundColor(.white)
-                            .cornerRadius(10)
-                    }
                 }
-                .padding(.horizontal, 40)
-                .padding(.top, 10)
+            }
+            // Black Team Section
+            Section(header: teamHeader(text: "Black Team", color: .black, count: teamsManager.blackTeamMembers.count)) {
+                ForEach(teamsManager.blackTeamMembers, id: \.id) { player in
+                    TeamMemberRow(name: player.name, team: .Black)
+                        .swipeActions(edge: .trailing, allowsFullSwipe: false) {
+                            Button("Unassign") {
+                                teamsManager.updateTeam(for: player, to: nil)
+                            }
+                            .tint(.gray)
+                            Button("Red") {
+                                teamsManager.updateTeam(for: player, to: .Red)
+                            }
+                            .tint(.red)
+                        }
+                }
+            }
+            // Unassigned Section
+            Section(header: teamHeader(text: "Unassigned", color: .gray, count: teamsManager.unassignedMembers.count)) {
+                ForEach(teamsManager.unassignedMembers, id: \.id) { player in
+                    Text(player.name)
+                        .font(.body)
+                        .padding(.vertical, 5)
+                        .swipeActions(edge: .leading, allowsFullSwipe: false) {
+                            Button("Waitlist") {
+                                teamsManager.moveToWaitlist(player: player)
+                            }
+                            .tint(.orange)
+                        }
+                        .swipeActions(edge: .trailing, allowsFullSwipe: false) {
+                            Button("Black") {
+                                teamsManager.updateTeam(for: player, to: .Black)
+                            }
+                            .tint(.black)
+                            Button("Red") {
+                                teamsManager.updateTeam(for: player, to: .Red)
+                            }
+                            .tint(.red)
+                        }
+                }
+            }
+            // Additional controls for generating draws.
+            Section {
+                controlsView
             }
         }
-        .onAppear {
-            teamsManager.setSession(session)
-        }
-        .alert(item: $alertMessage) { alert in
-            Alert(
-                title: Text("Alert"),
-                message: Text(alert.message),
-                dismissButton: .default(Text("OK"))
-            )
-        }
+        .listStyle(InsetGroupedListStyle())
     }
     
-    // MARK: - UI Helper
+    // ---------------------------------------------
+    // Snapshot content used only for screenshot.
+    // (This view includes only red and black teams.)
+    // ---------------------------------------------
+    private var snapshotContent: some View {
+        VStack(spacing: 16) {
+            teamSectionView(for: teamsManager.redTeamMembers, team: .Red, headerTitle: "Red Team")
+            teamSectionView(for: teamsManager.blackTeamMembers, team: .Black, headerTitle: "Black Team")
+        }
+        .padding()
+        .background(Color(UIColor.systemBackground))
+        // Capture its full size for the snapshot.
+        .captureSize($contentSize)
+    }
+    
+    // ---------------------------------------------
+    // Controls view (for Waves, Courts, and Generate Draws)
+    // ---------------------------------------------
+    private var controlsView: some View {
+        HStack(spacing: 20) {
+            VStack(alignment: .leading, spacing: 5) {
+                Text("Waves")
+                    .font(.subheadline)
+                    .foregroundColor(.gray)
+                Picker("Number of Waves", selection: $selectedNumberOfWaves) {
+                    ForEach(1...10, id: \.self) { number in
+                        Text("\(number)").tag(number)
+                    }
+                }
+                .pickerStyle(MenuPickerStyle())
+                .labelsHidden()
+            }
+            VStack(alignment: .leading, spacing: 5) {
+                Text("Courts")
+                    .font(.subheadline)
+                    .foregroundColor(.gray)
+                Picker("Number of Courts", selection: $selectedNumberOfCourts) {
+                    ForEach(1...10, id: \.self) { number in
+                        Text("\(number)").tag(number)
+                    }
+                }
+                .pickerStyle(MenuPickerStyle())
+                .labelsHidden()
+            }
+            Button(action: {
+                if teamsManager.validateTeams() {
+                    teamsManager.generateDraws(
+                        numberOfWaves: selectedNumberOfWaves,
+                        numberOfCourts: selectedNumberOfCourts
+                    )
+                    alertMessage = AlertMessage(message: "Done trying draws. Check console for details.")
+                } else {
+                    alertMessage = AlertMessage(message: "Team validation failed.")
+                }
+            }) {
+                Text("Generate Draws")
+                    .font(.headline)
+                    .frame(maxWidth: .infinity)
+                    .padding()
+                    .background(Color.blue)
+                    .foregroundColor(.white)
+                    .cornerRadius(10)
+            }
+        }
+        .padding(.horizontal, 20)
+        .padding(.top, 10)
+    }
+    
+    // ---------------------------------------------
+    // A helper function that returns a section view for a team.
+    // (Used in the snapshot view.)
+    // ---------------------------------------------
+    private func teamSectionView(for players: [Player], team: Team?, headerTitle: String) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack {
+                Circle()
+                    .fill(color(for: team))
+                    .frame(width: 10, height: 10)
+                Text("\(headerTitle) (\(players.count))")
+                    .font(.headline)
+                    .foregroundColor(color(for: team))
+            }
+            ForEach(players, id: \.id) { player in
+                TeamMemberRow(name: player.name, team: team)
+            }
+        }
+        .padding()
+        .frame(maxWidth: .infinity)
+        .background(Color(UIColor.secondarySystemBackground))
+        .cornerRadius(10)
+    }
+    
+    // ---------------------------------------------
+    // Header helper used in the List sections.
+    // ---------------------------------------------
     private func teamHeader(text: String, color: Color, count: Int) -> some View {
         HStack {
             Circle()
@@ -153,34 +195,93 @@ struct TeamsView: View {
                 .font(.headline)
                 .foregroundColor(color)
         }
+        .padding(.vertical, 4)
+    }
+    
+    private func color(for team: Team?) -> Color {
+        if let team = team {
+            switch team {
+            case .Red:
+                return .red
+            case .Black:
+                return .black
+            }
+        }
+        return .gray
+    }
+    
+    // ---------------------------------------------
+    // Main body.
+    // ---------------------------------------------
+    var body: some View {
+        NavigationStack {
+            // Use a ZStack so that the interactive List is visible
+            // while the snapshot view is laid out offscreen.
+            ZStack {
+                displayContent
+                snapshotContent.hidden() // hidden but still measured
+            }
+            .navigationTitle("Teams")
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    // The snapshot button – when tapped, uses the snapshotContent.
+                    Button {
+                        // Ensure we have a valid snapshot size.
+                        guard contentSize != .zero else { return }
+                        let image = snapshotContent.snapshot(targetSize: contentSize)
+                        UIImageWriteToSavedPhotosAlbum(image, nil, nil, nil)
+                    } label: {
+                        Image(systemName: "square.and.arrow.down")
+                    }
+                }
+            }
+            .onAppear {
+                teamsManager.setSession(session)
+            }
+            .alert(item: $alertMessage) { alert in
+                Alert(
+                    title: Text("Alert"),
+                    message: Text(alert.message),
+                    dismissButton: .default(Text("OK"))
+                )
+            }
+        }
     }
 }
 
+// MARK: - TeamMemberRow
+
 struct TeamMemberRow: View {
     let name: String
-    let team: Team
+    // For team-specific styling, this view accepts an optional team.
+    // If nil, the text is shown in gray.
+    let team: Team?
 
     var body: some View {
         HStack {
             Image(systemName: "person.fill")
-                .foregroundColor(teamColor)
+                .foregroundColor(color(for: team))
                 .frame(width: 30, height: 30)
             Text(name)
                 .font(.body)
                 .padding(.leading, 5)
+            Spacer()
         }
         .padding(.vertical, 5)
     }
-
-    private var teamColor: Color {
-        switch team {
-        case .Red:   return .red
-        case .Black: return .black
+    
+    private func color(for team: Team?) -> Color {
+        if let team = team {
+            switch team {
+            case .Red:
+                return .red
+            case .Black:
+                return .black
+            }
         }
+        return .gray
     }
 }
-
-
 
 #Preview {
     let schema = Schema([Season.self, Session.self, Player.self, SessionParticipant.self, DoublesMatch.self])
