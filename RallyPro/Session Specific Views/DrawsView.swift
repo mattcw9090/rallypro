@@ -8,8 +8,8 @@ struct DrawsView: View {
     @EnvironmentObject var drawsManager: DrawsManager
     @Environment(\.modelContext) private var modelContext
 
-    // Global editing toggle.
     @State private var isEditingPlayers = false
+    @State private var contentSize: CGSize = .zero
 
     // Computed properties using in‑memory filtering provided by the manager.
     private var filteredMatches: [DoublesMatch] {
@@ -31,34 +31,37 @@ struct DrawsView: View {
     private var maxWaveNumber: Int {
         drawsManager.maxWaveNumber(for: session)
     }
-
+    
+    /// The scrollable content is extracted here so it can be rendered off‑screen.
+    private var snapshotContent: some View {
+        let groupedMatches = Dictionary(grouping: filteredMatches, by: { $0.waveNumber })
+        return VStack(spacing: 16) {
+            ForEach(groupedMatches.keys.sorted(), id: \.self) { wave in
+                if let matches = groupedMatches[wave] {
+                    WaveView(
+                        title: "Wave \(wave)",
+                        matches: matches,
+                        isEditingPlayers: isEditingPlayers,
+                        redTeamMembers: redTeamMembers,
+                        blackTeamMembers: blackTeamMembers,
+                        addMatchAction: {
+                            drawsManager.addMatch(for: session, wave: wave)
+                        },
+                        deleteMatchAction: { match in
+                            drawsManager.deleteMatch(match, for: session)
+                        }
+                    )
+                    .padding(.horizontal)
+                }
+            }
+        }
+    }
+    
     var body: some View {
         NavigationStack {
-            // Group matches by wave number.
-            let groupedMatches = Dictionary(grouping: filteredMatches, by: { $0.waveNumber })
-            
             ScrollView {
-                LazyVStack(spacing: 16) {
-                    ForEach(groupedMatches.keys.sorted(), id: \.self) { wave in
-                        if let matches = groupedMatches[wave] {
-                            WaveView(
-                                title: "Wave \(wave)",
-                                matches: matches,
-                                isEditingPlayers: isEditingPlayers,
-                                redTeamMembers: redTeamMembers,
-                                blackTeamMembers: blackTeamMembers,
-                                addMatchAction: {
-                                    drawsManager.addMatch(for: session, wave: wave)
-                                },
-                                deleteMatchAction: { match in
-                                    drawsManager.deleteMatch(match, for: session)
-                                }
-                            )
-                            .padding(.horizontal)
-                        }
-                    }
-                }
-                .padding(.vertical)
+                snapshotContent
+                    .captureSize($contentSize)
             }
             .navigationTitle("Draws")
             .toolbar {
@@ -73,6 +76,20 @@ struct DrawsView: View {
                         }
                     }
                 }
+                // Right: Snapshot button.
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button {
+                        // Ensure we have a valid content size.
+                        guard contentSize != .zero else { return }
+                        // Capture the full scrollable content as an image.
+                        let image = snapshotContent.snapshot(targetSize: contentSize)
+                        // Save the image to the photo library.
+                        UIImageWriteToSavedPhotosAlbum(image, nil, nil, nil)
+                    } label: {
+                        Image(systemName: "square.and.arrow.down")
+                    }
+                }
+                // Right: "Add Wave" button (only when editing).
                 ToolbarItem(placement: .navigationBarTrailing) {
                     if isEditingPlayers {
                         Button("Add Wave") {
