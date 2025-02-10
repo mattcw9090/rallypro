@@ -4,39 +4,110 @@ import SwiftData
 struct SeasonalResultsView: View {
     @EnvironmentObject var seasonalResultsManager: SeasonalResultsManager
     let seasonNumber: Int
+    
+    // State for capturing the snapshot view’s full size.
+    @State private var contentSize: CGSize = .zero
 
+    // ----------------------------------------------------
+    // displayContent: The interactive view using a List.
+    // ----------------------------------------------------
+    private var displayContent: some View {
+        List {
+            // Header Row
+            HStack {
+                Text("Player")
+                    .font(.headline)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                Text("Sessions")
+                    .font(.headline)
+                    .frame(width: 80, alignment: .trailing)
+                Text("Avg Score")
+                    .font(.headline)
+                    .frame(width: 80, alignment: .trailing)
+            }
+            .padding(.vertical, 10)
+            
+            // Aggregated player results.
+            ForEach(seasonalResultsManager.aggregatedPlayers(forSeasonNumber: seasonNumber), id: \.player.id) { item in
+                HStack {
+                    Text(item.player.name)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                    Text("\(item.sessionCount)")
+                        .frame(width: 80, alignment: .trailing)
+                    Text(String(format: "%.1f", item.finalAverageScore))
+                        .frame(width: 80, alignment: .trailing)
+                }
+                .padding(.vertical, 5)
+            }
+        }
+        .listStyle(InsetGroupedListStyle())
+    }
+    
+    // ----------------------------------------------------
+    // snapshotContent: A hidden view built with VStacks that
+    // reproduces the layout of the seasonal results.
+    // ----------------------------------------------------
+    private var snapshotContent: some View {
+        VStack(spacing: 0) {
+            // Header Row
+            HStack {
+                Text("Player")
+                    .font(.headline)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                Text("Sessions")
+                    .font(.headline)
+                    .frame(width: 80, alignment: .trailing)
+                Text("Avg Score")
+                    .font(.headline)
+                    .frame(width: 80, alignment: .trailing)
+            }
+            .padding(.vertical, 10)
+            Divider()
+            
+            // Aggregated results rows.
+            ForEach(seasonalResultsManager.aggregatedPlayers(forSeasonNumber: seasonNumber), id: \.player.id) { item in
+                HStack {
+                    Text(item.player.name)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                    Text("\(item.sessionCount)")
+                        .frame(width: 80, alignment: .trailing)
+                    Text(String(format: "%.1f", item.finalAverageScore))
+                        .frame(width: 80, alignment: .trailing)
+                }
+                .padding(.vertical, 5)
+                Divider()
+            }
+        }
+        .padding()
+        .background(Color(UIColor.systemBackground))
+        // Capture the complete size of this view for snapshotting.
+        .captureSize($contentSize)
+    }
+    
+    // ----------------------------------------------------
+    // Main Body
+    // ----------------------------------------------------
     var body: some View {
         NavigationStack {
-            List {
-                // Header Row
-                HStack {
-                    Text("Player")
-                        .font(.headline)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                    Text("Sessions")
-                        .font(.headline)
-                        .frame(width: 80, alignment: .trailing)
-                    Text("Avg Score")
-                        .font(.headline)
-                        .frame(width: 80, alignment: .trailing)
-                }
-                .padding(.vertical, 10)
-
-                // For each aggregated player result.
-                ForEach(seasonalResultsManager.aggregatedPlayers(forSeasonNumber: seasonNumber), id: \.player.id) { item in
-                    HStack {
-                        Text(item.player.name)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                        Text("\(item.sessionCount)")
-                            .frame(width: 80, alignment: .trailing)
-                        Text(String(format: "%.1f", item.finalAverageScore))
-                            .frame(width: 80, alignment: .trailing)
+            // A ZStack lets us show the interactive display while
+            // also laying out the snapshot view (hidden) offscreen.
+            ZStack {
+                displayContent
+                snapshotContent.hidden() // hidden but measured for snapshotting.
+            }
+            .navigationTitle("Season \(seasonNumber) Results")
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    // Snapshot Button: Renders the snapshotContent into an image.
+                    Button {
+                        guard contentSize != .zero else { return }
+                        let image = snapshotContent.snapshot(targetSize: contentSize)
+                        UIImageWriteToSavedPhotosAlbum(image, nil, nil, nil)
+                    } label: {
+                        Image(systemName: "square.and.arrow.down")
                     }
-                    .padding(.vertical, 5)
                 }
             }
-            .listStyle(InsetGroupedListStyle())
-            .navigationTitle("Season \(seasonNumber) Results")
         }
     }
 }

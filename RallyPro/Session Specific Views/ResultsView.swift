@@ -6,6 +6,9 @@ struct ResultsView: View {
 
     @EnvironmentObject var resultsManager: ResultsManager
 
+    // State for capturing the snapshot view’s size.
+    @State private var contentSize: CGSize = .zero
+
     // MARK: - Computed Properties (Delegated to the Manager)
 
     private var completedMatches: [DoublesMatch] {
@@ -24,16 +27,15 @@ struct ResultsView: View {
         resultsManager.participantScores(for: session)
     }
 
-    // MARK: - Body
+    // MARK: - Display Content (Interactive View)
 
-    var body: some View {
+    private var displayContent: some View {
         VStack(spacing: 20) {
-            // Team Scores
+            // Team Scores Section
             VStack {
                 Text("Team Scores")
                     .font(.headline)
                     .padding(.vertical)
-
                 HStack {
                     VStack {
                         Text("Red Team")
@@ -57,20 +59,93 @@ struct ResultsView: View {
             .cornerRadius(10)
             .padding()
 
-            // Player Net Contributions
+            // Player Net Contributions Section (using a List)
             VStack(alignment: .leading) {
                 Text("Player's Net Score Differences")
                     .font(.headline)
                     .padding(.bottom, 10)
-
                 List(participantScores, id: \.0) { (name, score) in
+                    SessionResultsRowView(playerName: name, playerScore: score)
+                }
+                .listStyle(InsetGroupedListStyle())
+            }
+            .padding()
+        }
+    }
+
+    // MARK: - Snapshot Content (For Screenshot)
+    // This view uses only VStacks so that its full size is measured.
+    private var snapshotContent: some View {
+        VStack(spacing: 20) {
+            // Team Scores Section
+            VStack {
+                Text("Team Scores")
+                    .font(.headline)
+                    .padding(.vertical)
+                HStack {
+                    VStack {
+                        Text("Red Team")
+                            .font(.subheadline)
+                        Text("\(totalRedScore)")
+                            .font(.title)
+                            .foregroundColor(.red)
+                    }
+                    Spacer()
+                    VStack {
+                        Text("Black Team")
+                            .font(.subheadline)
+                        Text("\(totalBlackScore)")
+                            .font(.title)
+                            .foregroundColor(.black)
+                    }
+                }
+                .padding()
+            }
+            .background(Color(.systemGray6))
+            .cornerRadius(10)
+            .padding()
+
+            // Player Net Contributions Section
+            VStack(alignment: .leading, spacing: 10) {
+                Text("Player's Net Score Differences")
+                    .font(.headline)
+                    .padding(.bottom, 10)
+                ForEach(participantScores, id: \.0) { (name, score) in
                     SessionResultsRowView(playerName: name, playerScore: score)
                 }
             }
             .padding()
         }
-        .onAppear {
-            resultsManager.refreshData()
+        .background(Color(UIColor.systemBackground))
+        // Measure the full size of this snapshot view.
+        .captureSize($contentSize)
+    }
+
+    // MARK: - Body
+
+    var body: some View {
+        NavigationStack {
+            // Use a ZStack to show the interactive display while also laying out the hidden snapshot view.
+            ZStack {
+                displayContent
+                snapshotContent.hidden() // not visible but measured
+            }
+            .navigationTitle("Results")
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    // Snapshot Button: When tapped, renders snapshotContent into an image.
+                    Button {
+                        guard contentSize != .zero else { return }
+                        let image = snapshotContent.snapshot(targetSize: contentSize)
+                        UIImageWriteToSavedPhotosAlbum(image, nil, nil, nil)
+                    } label: {
+                        Image(systemName: "square.and.arrow.down")
+                    }
+                }
+            }
+            .onAppear {
+                resultsManager.refreshData()
+            }
         }
     }
 }
