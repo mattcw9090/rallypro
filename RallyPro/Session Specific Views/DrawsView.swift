@@ -32,8 +32,8 @@ struct DrawsView: View {
         drawsManager.maxWaveNumber(for: session)
     }
     
-    /// The scrollable content is extracted here so it can be rendered off‑screen.
-    private var snapshotContent: some View {
+    /// This is the interactive (display) content.
+    private var displayContent: some View {
         let groupedMatches = Dictionary(grouping: filteredMatches, by: { $0.waveNumber })
         return VStack(spacing: 16) {
             ForEach(groupedMatches.keys.sorted(), id: \.self) { wave in
@@ -57,14 +57,31 @@ struct DrawsView: View {
         }
     }
     
+    /// The snapshot content is simply our displayContent (with a background)
+    /// plus the captureSize modifier so that its natural size is measured.
+    private var snapshotContent: some View {
+        displayContent
+            .background(Color(UIColor.systemBackground))
+            .captureSize($contentSize)
+    }
+    
     var body: some View {
         NavigationStack {
-            ScrollView {
-                snapshotContent
-                    .captureSize($contentSize)
+            ZStack {
+                // The interactive content is wrapped in a ScrollView.
+                ScrollView {
+                    displayContent
+                }
             }
+            // Overlay the snapshot view (hidden and non-interactive)
+            .overlay(
+                snapshotContent
+                    .hidden()
+                    .allowsHitTesting(false)
+            )
             .navigationTitle("Draws")
             .toolbar {
+                // Left: Edit / Done button.
                 ToolbarItem(placement: .navigationBarLeading) {
                     Button(isEditingPlayers ? "Done" : "Edit") {
                         if isEditingPlayers {
@@ -81,9 +98,7 @@ struct DrawsView: View {
                     Button {
                         // Ensure we have a valid content size.
                         guard contentSize != .zero else { return }
-                        // Capture the full scrollable content as an image.
                         let image = snapshotContent.snapshot(targetSize: contentSize)
-                        // Save the image to the photo library.
                         UIImageWriteToSavedPhotosAlbum(image, nil, nil, nil)
                     } label: {
                         Image(systemName: "square.and.arrow.down")

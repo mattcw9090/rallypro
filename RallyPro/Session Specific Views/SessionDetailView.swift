@@ -11,35 +11,39 @@ enum DetailSegment: String, CaseIterable, Identifiable {
 
 struct SessionDetailView: View {
     let session: Session
-
     @State private var selectedSegment: DetailSegment = .teams
 
     var body: some View {
         NavigationStack {
-            VStack {
+            VStack(spacing: 0) {
                 Picker("View", selection: $selectedSegment) {
                     ForEach(DetailSegment.allCases) { segment in
                         Text(segment.rawValue).tag(segment)
                     }
                 }
                 .pickerStyle(.segmented)
-                .padding([.horizontal, .top])
+                .padding(.horizontal)
+                .padding(.top)
 
-                switch selectedSegment {
-                case .teams:
-                    TeamsView(session: session)
-                case .draws:
-                    DrawsView(session: session)
-                case .results:
-                    ResultsView(session: session)
+                Divider()
+
+                Group {
+                    switch selectedSegment {
+                    case .teams:
+                        TeamsView(session: session)
+                    case .draws:
+                        DrawsView(session: session)
+                    case .results:
+                        ResultsView(session: session)
+                    }
                 }
-
-                Spacer()
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
             .navigationTitle("Season \(session.seasonNumber) Session \(session.sessionNumber)")
         }
     }
 }
+
 
 #Preview {
     let schema = Schema([Season.self, Session.self, Player.self, SessionParticipant.self])
@@ -70,9 +74,16 @@ struct SessionDetailView: View {
         context.insert(p2)
         context.insert(p3)
         context.insert(p4)
+        
+        let teamsManager = TeamsManager(modelContext: context)
+        let drawsManager = DrawsManager(modelContext: context)
+        let resultsManager = ResultsManager(modelContext: context)
 
         return NavigationStack {
             SessionDetailView(session: session)
+                .environmentObject(teamsManager)
+                .environmentObject(drawsManager)
+                .environmentObject(resultsManager)
                 .modelContainer(mockContainer)
         }
     } catch {

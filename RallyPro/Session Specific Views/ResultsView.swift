@@ -11,10 +11,6 @@ struct ResultsView: View {
 
     // MARK: - Computed Properties (Delegated to the Manager)
 
-    private var completedMatches: [DoublesMatch] {
-        resultsManager.completedMatches(for: session)
-    }
-
     private var totalRedScore: Int {
         resultsManager.totalRedScore(for: session)
     }
@@ -59,54 +55,8 @@ struct ResultsView: View {
             .cornerRadius(10)
             .padding()
 
-            // Player Net Contributions Section (using a List)
-            VStack(alignment: .leading) {
-                Text("Player's Net Score Differences")
-                    .font(.headline)
-                    .padding(.bottom, 10)
-                List(participantScores, id: \.0) { (name, score) in
-                    SessionResultsRowView(playerName: name, playerScore: score)
-                }
-                .listStyle(InsetGroupedListStyle())
-            }
-            .padding()
-        }
-    }
-
-    // MARK: - Snapshot Content (For Screenshot)
-    // This view uses only VStacks so that its full size is measured.
-    private var snapshotContent: some View {
-        VStack(spacing: 20) {
-            // Team Scores Section
-            VStack {
-                Text("Team Scores")
-                    .font(.headline)
-                    .padding(.vertical)
-                HStack {
-                    VStack {
-                        Text("Red Team")
-                            .font(.subheadline)
-                        Text("\(totalRedScore)")
-                            .font(.title)
-                            .foregroundColor(.red)
-                    }
-                    Spacer()
-                    VStack {
-                        Text("Black Team")
-                            .font(.subheadline)
-                        Text("\(totalBlackScore)")
-                            .font(.title)
-                            .foregroundColor(.black)
-                    }
-                }
-                .padding()
-            }
-            .background(Color(.systemGray6))
-            .cornerRadius(10)
-            .padding()
-
             // Player Net Contributions Section
-            VStack(alignment: .leading, spacing: 10) {
+            VStack(alignment: .leading) {
                 Text("Player's Net Score Differences")
                     .font(.headline)
                     .padding(.bottom, 10)
@@ -116,36 +66,45 @@ struct ResultsView: View {
             }
             .padding()
         }
-        .background(Color(UIColor.systemBackground))
-        // Measure the full size of this snapshot view.
-        .captureSize($contentSize)
+    }
+
+    // MARK: - Snapshot Content (For Screenshot)
+    // This view uses the same content as displayContent with a background
+    // and a captureSize modifier so its natural size is measured.
+    private var snapshotContent: some View {
+        displayContent
+            .background(Color(UIColor.systemBackground))
+            .captureSize($contentSize)
     }
 
     // MARK: - Body
 
     var body: some View {
-        NavigationStack {
-            // Use a ZStack to show the interactive display while also laying out the hidden snapshot view.
-            ZStack {
-                displayContent
-                snapshotContent.hidden() // not visible but measured
-            }
-            .navigationTitle("Results")
-            .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    // Snapshot Button: When tapped, renders snapshotContent into an image.
-                    Button {
-                        guard contentSize != .zero else { return }
-                        let image = snapshotContent.snapshot(targetSize: contentSize)
-                        UIImageWriteToSavedPhotosAlbum(image, nil, nil, nil)
-                    } label: {
-                        Image(systemName: "square.and.arrow.down")
-                    }
+        // Do not wrap in a NavigationStack here!
+        ZStack {
+            displayContent
+        }
+        // Overlay the snapshot content so that it does not affect layout.
+        .overlay(
+            snapshotContent
+                .hidden()
+                .allowsHitTesting(false)
+        )
+        .navigationTitle("Results")
+        .toolbar {
+            ToolbarItem(placement: .navigationBarTrailing) {
+                // Snapshot Button: When tapped, renders snapshotContent into an image.
+                Button {
+                    guard contentSize != .zero else { return }
+                    let image = snapshotContent.snapshot(targetSize: contentSize)
+                    UIImageWriteToSavedPhotosAlbum(image, nil, nil, nil)
+                } label: {
+                    Image(systemName: "square.and.arrow.down")
                 }
             }
-            .onAppear {
-                resultsManager.refreshData()
-            }
+        }
+        .onAppear {
+            resultsManager.refreshData()
         }
     }
 }
@@ -166,6 +125,7 @@ struct SessionResultsRowView: View {
         .padding(.vertical, 5)
     }
 }
+
 
 #Preview {
     do {

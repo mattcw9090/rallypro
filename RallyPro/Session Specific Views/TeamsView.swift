@@ -8,8 +8,6 @@ struct AlertMessage: Identifiable {
     let message: String
 }
 
-// MARK: - TeamsView
-
 struct TeamsView: View {
     let session: Session
     @EnvironmentObject var teamsManager: TeamsManager
@@ -21,10 +19,7 @@ struct TeamsView: View {
     // This state holds the measured size of the snapshot view.
     @State private var contentSize: CGSize = .zero
 
-    // ---------------------------------------------
     // Main interactive display content using a List.
-    // (This preserves the swipe actions for assigning team members.)
-    // ---------------------------------------------
     private var displayContent: some View {
         List {
             // Red Team Section
@@ -91,10 +86,7 @@ struct TeamsView: View {
         .listStyle(InsetGroupedListStyle())
     }
     
-    // ---------------------------------------------
-    // Snapshot content used only for screenshot.
-    // (This view includes only red and black teams.)
-    // ---------------------------------------------
+    // Snapshot content used for screenshot (but hidden from the user)
     private var snapshotContent: some View {
         VStack(spacing: 16) {
             teamSectionView(for: teamsManager.redTeamMembers, team: .Red, headerTitle: "Red Team")
@@ -106,9 +98,7 @@ struct TeamsView: View {
         .captureSize($contentSize)
     }
     
-    // ---------------------------------------------
     // Controls view (for Waves, Courts, and Generate Draws)
-    // ---------------------------------------------
     private var controlsView: some View {
         HStack(spacing: 20) {
             VStack(alignment: .leading, spacing: 5) {
@@ -159,10 +149,7 @@ struct TeamsView: View {
         .padding(.top, 10)
     }
     
-    // ---------------------------------------------
-    // A helper function that returns a section view for a team.
-    // (Used in the snapshot view.)
-    // ---------------------------------------------
+    // Helper functions for headers and team sections...
     private func teamSectionView(for players: [Player], team: Team?, headerTitle: String) -> some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack {
@@ -183,9 +170,6 @@ struct TeamsView: View {
         .cornerRadius(10)
     }
     
-    // ---------------------------------------------
-    // Header helper used in the List sections.
-    // ---------------------------------------------
     private func teamHeader(text: String, color: Color, count: Int) -> some View {
         HStack {
             Circle()
@@ -210,44 +194,43 @@ struct TeamsView: View {
         return .gray
     }
     
-    // ---------------------------------------------
-    // Main body.
-    // ---------------------------------------------
     var body: some View {
-        NavigationStack {
-            // Use a ZStack so that the interactive List is visible
-            // while the snapshot view is laid out offscreen.
-            ZStack {
-                displayContent
-                snapshotContent.hidden() // hidden but still measured
-            }
-            .navigationTitle("Teams")
-            .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    // The snapshot button – when tapped, uses the snapshotContent.
-                    Button {
-                        // Ensure we have a valid snapshot size.
-                        guard contentSize != .zero else { return }
-                        let image = snapshotContent.snapshot(targetSize: contentSize)
-                        UIImageWriteToSavedPhotosAlbum(image, nil, nil, nil)
-                    } label: {
-                        Image(systemName: "square.and.arrow.down")
-                    }
+        ZStack {
+            displayContent
+        }
+        // Place snapshotContent in an overlay that doesn’t affect layout:
+        .overlay(
+            snapshotContent
+                .hidden()               // Keep it invisible.
+                .allowsHitTesting(false) // Ensure it doesn't interfere with interactions.
+        )
+        .navigationTitle("Teams")
+        .toolbar {
+            ToolbarItem(placement: .navigationBarTrailing) {
+                Button {
+                    guard contentSize != .zero else { return }
+                    let image = snapshotContent.snapshot(targetSize: contentSize)
+                    UIImageWriteToSavedPhotosAlbum(image, nil, nil, nil)
+                } label: {
+                    Image(systemName: "square.and.arrow.down")
                 }
             }
-            .onAppear {
-                teamsManager.setSession(session)
-            }
-            .alert(item: $alertMessage) { alert in
-                Alert(
-                    title: Text("Alert"),
-                    message: Text(alert.message),
-                    dismissButton: .default(Text("OK"))
-                )
-            }
+        }
+        .onAppear {
+            teamsManager.setSession(session)
+        }
+        .alert(item: $alertMessage) { alert in
+            Alert(
+                title: Text("Alert"),
+                message: Text(alert.message),
+                dismissButton: .default(Text("OK"))
+            )
         }
     }
+
 }
+
+
 
 // MARK: - TeamMemberRow
 
