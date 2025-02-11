@@ -10,7 +10,7 @@ struct ResultsView: View {
     @State private var contentSize: CGSize = .zero
 
     // MARK: - Computed Properties (Delegated to the Manager)
-
+    
     private var totalRedScore: Int {
         resultsManager.totalRedScore(for: session)
     }
@@ -24,7 +24,7 @@ struct ResultsView: View {
     }
 
     // MARK: - Display Content (Interactive View)
-
+    
     private var displayContent: some View {
         VStack(spacing: 20) {
             // Team Scores Section
@@ -53,19 +53,23 @@ struct ResultsView: View {
             }
             .background(Color(.systemGray6))
             .cornerRadius(10)
-            .padding()
-
+            .padding(.horizontal)
+            
             // Player Net Contributions Section
             VStack(alignment: .leading) {
                 Text("Player's Net Score Differences")
                     .font(.headline)
                     .padding(.bottom, 10)
-                ForEach(participantScores, id: \.0) { (name, score) in
-                    SessionResultsRowView(playerName: name, playerScore: score)
+                // Use LazyVStack if you have many rows
+                LazyVStack(alignment: .leading, spacing: 10) {
+                    ForEach(participantScores, id: \.0) { (name, score) in
+                        SessionResultsRowView(playerName: name, playerScore: score)
+                    }
                 }
             }
-            .padding()
+            .padding(.horizontal)
         }
+        .padding(.vertical)
     }
 
     // MARK: - Snapshot Content (For Screenshot)
@@ -78,10 +82,9 @@ struct ResultsView: View {
     }
 
     // MARK: - Body
-
     var body: some View {
-        // Do not wrap in a NavigationStack here!
-        ZStack {
+        // Wrap your content in a ScrollView so it won’t force the parent view to expand.
+        ScrollView {
             displayContent
         }
         // Overlay the snapshot content so that it does not affect layout.
@@ -125,7 +128,6 @@ struct SessionResultsRowView: View {
         .padding(.vertical, 5)
     }
 }
-
 
 #Preview {
     do {
