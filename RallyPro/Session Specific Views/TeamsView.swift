@@ -218,6 +218,7 @@ struct TeamsView: View {
         }
         .onAppear {
             teamsManager.setSession(session)
+            teamsManager.refreshData()
         }
         .alert(item: $alertMessage) { alert in
             Alert(

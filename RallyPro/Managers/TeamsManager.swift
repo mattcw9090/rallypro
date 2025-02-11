@@ -186,7 +186,7 @@ class TeamsManager: ObservableObject {
     }
 
     /// Refresh all data from the persistent store.
-    private func refreshData() {
+    func refreshData() {
         fetchAllPlayers()
         fetchAllParticipants()
         fetchAllDoublesMatches()
