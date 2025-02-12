@@ -36,6 +36,7 @@ struct TeamsView: View {
                             }
                             .tint(.black)
                         }
+                        .listRowSeparator(.hidden)
                 }
             }
             // Black Team Section
@@ -52,6 +53,7 @@ struct TeamsView: View {
                             }
                             .tint(.red)
                         }
+                        .listRowSeparator(.hidden)
                 }
             }
             // Unassigned Section
@@ -81,6 +83,8 @@ struct TeamsView: View {
             // Additional controls for generating draws.
             Section {
                 controlsView
+                    .listRowInsets(EdgeInsets(top: 20, leading: 0, bottom: 20, trailing: 0))
+                    .listRowSeparator(.hidden)
             }
         }
         .listStyle(InsetGroupedListStyle())

@@ -23,7 +23,7 @@ struct SessionDetailView: View {
                 }
                 .pickerStyle(.segmented)
                 .padding(.horizontal)
-                .padding(.top)
+                .padding([.top, .bottom])
 
                 Divider()
 
