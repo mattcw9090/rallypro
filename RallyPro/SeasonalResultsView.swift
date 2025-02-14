@@ -89,25 +89,22 @@ struct SeasonalResultsView: View {
     // ----------------------------------------------------
     var body: some View {
         NavigationStack {
-            // A ZStack lets us show the interactive display while
-            // also laying out the snapshot view (hidden) offscreen.
-            ZStack {
-                displayContent
-                snapshotContent.hidden() // hidden but measured for snapshotting.
-            }
-            .navigationTitle("Season \(seasonNumber) Results")
-            .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    // Snapshot Button: Renders the snapshotContent into an image.
-                    Button {
-                        guard contentSize != .zero else { return }
-                        let image = snapshotContent.snapshot(targetSize: contentSize)
-                        UIImageWriteToSavedPhotosAlbum(image, nil, nil, nil)
-                    } label: {
-                        Image(systemName: "square.and.arrow.down")
+            displayContent
+                .navigationTitle("Season \(seasonNumber) Results")
+                .toolbar {
+                    ToolbarItem(placement: .navigationBarTrailing) {
+                        // Snapshot Button: Renders the snapshotContent into an image.
+                        Button {
+                            guard contentSize != .zero else { return }
+                            let image = snapshotContent.snapshot(targetSize: contentSize)
+                            UIImageWriteToSavedPhotosAlbum(image, nil, nil, nil)
+                        } label: {
+                            Image(systemName: "square.and.arrow.down")
+                        }
                     }
                 }
-            }
+                // Add snapshotContent as an overlay with 0 opacity so it doesn't affect layout.
+                .overlay(snapshotContent.opacity(0))
         }
     }
 }
