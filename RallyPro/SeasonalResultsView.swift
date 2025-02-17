@@ -7,13 +7,31 @@ struct SeasonalResultsView: View {
     
     // State for capturing the snapshot view’s full size.
     @State private var contentSize: CGSize = .zero
-
+    // Track hidden players by their IDs.
+    @State private var hiddenPlayerIDs: Set<UUID> = []
+    
+    // Base aggregated results from the manager.
+    private var aggregatedResults: [(player: Player, sessionCount: Int, matchCount: Int, finalAverageScore: Double)] {
+        seasonalResultsManager.aggregatedPlayers(forSeasonNumber: seasonNumber)
+    }
+    
+    // Filter out any players that have been hidden.
+    private var filteredResults: [(player: Player, sessionCount: Int, matchCount: Int, finalAverageScore: Double)] {
+        aggregatedResults.filter { !hiddenPlayerIDs.contains($0.player.id) }
+    }
+    
     // ----------------------------------------------------
     // displayContent: The interactive view using a List.
     // ----------------------------------------------------
     private var displayContent: some View {
-        List {
-            // Header Row
+        // Pre-compute the filtered results and determine min/max scores.
+        let results = filteredResults
+        let scores = results.map { $0.finalAverageScore }
+        let minScore = scores.min() ?? 0
+        let maxScore = scores.max() ?? 1
+        
+        return List {
+            // Header Row.
             HStack {
                 Text("Player")
                     .font(.headline)
@@ -27,8 +45,14 @@ struct SeasonalResultsView: View {
             }
             .padding(.vertical, 10)
             
-            // Aggregated player results.
-            ForEach(seasonalResultsManager.aggregatedPlayers(forSeasonNumber: seasonNumber), id: \.player.id) { item in
+            // Aggregated player results with a swipe-to-hide action.
+            ForEach(results, id: \.player.id) { item in
+                // Normalize finalAverageScore to a fraction between 0 (red) and 1 (green).
+                let fraction: Double = (maxScore > minScore)
+                    ? (item.finalAverageScore - minScore) / (maxScore - minScore)
+                    : 0.5
+                let rowColor = Color(red: 1 - fraction, green: fraction, blue: 0).opacity(0.3)
+                
                 HStack {
                     Text(item.player.name)
                         .frame(maxWidth: .infinity, alignment: .leading)
@@ -38,6 +62,15 @@ struct SeasonalResultsView: View {
                         .frame(width: 80, alignment: .trailing)
                 }
                 .padding(.vertical, 5)
+                .listRowBackground(rowColor)
+                .swipeActions(edge: .trailing) {
+                    Button(role: .destructive) {
+                        // Hide this player.
+                        hiddenPlayerIDs.insert(item.player.id)
+                    } label: {
+                        Label("Hide", systemImage: "eye.slash")
+                    }
+                }
             }
         }
         .listStyle(InsetGroupedListStyle())
@@ -48,8 +81,14 @@ struct SeasonalResultsView: View {
     // reproduces the layout of the seasonal results.
     // ----------------------------------------------------
     private var snapshotContent: some View {
-        VStack(spacing: 0) {
-            // Header Row
+        // Use the same filtered results for consistency.
+        let results = filteredResults
+        let scores = results.map { $0.finalAverageScore }
+        let minScore = scores.min() ?? 0
+        let maxScore = scores.max() ?? 1
+        
+        return VStack(spacing: 0) {
+            // Header Row.
             HStack {
                 Text("Player")
                     .font(.headline)
@@ -65,7 +104,12 @@ struct SeasonalResultsView: View {
             Divider()
             
             // Aggregated results rows.
-            ForEach(seasonalResultsManager.aggregatedPlayers(forSeasonNumber: seasonNumber), id: \.player.id) { item in
+            ForEach(results, id: \.player.id) { item in
+                let fraction: Double = (maxScore > minScore)
+                    ? (item.finalAverageScore - minScore) / (maxScore - minScore)
+                    : 0.5
+                let rowColor = Color(red: 1 - fraction, green: fraction, blue: 0).opacity(0.3)
+                
                 HStack {
                     Text(item.player.name)
                         .frame(maxWidth: .infinity, alignment: .leading)
@@ -75,6 +119,7 @@ struct SeasonalResultsView: View {
                         .frame(width: 80, alignment: .trailing)
                 }
                 .padding(.vertical, 5)
+                .background(rowColor)
                 Divider()
             }
         }
@@ -92,6 +137,14 @@ struct SeasonalResultsView: View {
             displayContent
                 .navigationTitle("Season \(seasonNumber) Results")
                 .toolbar {
+                    // "Show All" button appears only when some players are hidden.
+                    if !hiddenPlayerIDs.isEmpty {
+                        ToolbarItem(placement: .navigationBarLeading) {
+                            Button("Show All") {
+                                hiddenPlayerIDs.removeAll()
+                            }
+                        }
+                    }
                     ToolbarItem(placement: .navigationBarTrailing) {
                         // Snapshot Button: Renders the snapshotContent into an image.
                         Button {
@@ -103,7 +156,7 @@ struct SeasonalResultsView: View {
                         }
                     }
                 }
-                // Add snapshotContent as an overlay with 0 opacity so it doesn't affect layout.
+                // Overlay snapshotContent (hidden) for image capture.
                 .overlay(snapshotContent.opacity(0))
         }
     }
@@ -122,15 +175,15 @@ struct SeasonalResultsView: View {
         let container = try ModelContainer(for: schema, configurations: [modelConfig])
         let context = container.mainContext
 
-        // Create Season
+        // Create Season.
         let season = Season(seasonNumber: 4)
         context.insert(season)
 
-        // Create Sessions
+        // Create Sessions.
         let sessions = (1...2).map { Session(sessionNumber: $0, season: season) }
         sessions.forEach { context.insert($0) }
 
-        // Create Players
+        // Create Players.
         let playerNames = ["Shin", "Suan", "Chris", "CJ"]
         let players = playerNames.map { Player(name: $0) }
         players.forEach { context.insert($0) }
@@ -146,7 +199,7 @@ struct SeasonalResultsView: View {
         }
         (participantsSession1 + participantsSession2).forEach { context.insert($0) }
 
-        // Create DoublesMatches
+        // Create DoublesMatches.
         let matches = [
             DoublesMatch(
                 session: sessions[0],
