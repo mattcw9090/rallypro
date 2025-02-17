@@ -5,10 +5,11 @@ struct PaymentsView: View {
     let session: Session
     @Environment(\.modelContext) private var modelContext
     
-    // A temporary state for editing the court cost as text.
     @State private var courtCostText: String = ""
+    @State private var shuttleNumberText: String = ""
+    @State private var costPerShuttleText: String = ""
     
-    // Computed properties based on the number of session participants.
+    // Computed properties based on session data.
     var numberOfParticipants: Int {
         session.participants.count
     }
@@ -21,8 +22,12 @@ struct PaymentsView: View {
         (Double(numberOfParticipants) / 2.0) * 10
     }
     
+    var shuttleCost: Double {
+        Double(session.numberOfShuttles) * session.costPerShuttle
+    }
+    
     var netIncome: Double {
-        participantsPayment - session.courtCost - payout
+        participantsPayment - session.courtCost - payout - shuttleCost
     }
     
     var body: some View {
@@ -34,7 +39,7 @@ struct PaymentsView: View {
                         .font(.headline)
                         .padding(.bottom, 4)
                     
-                    // Court Cost row with highlighted TextField
+                    // Court Cost Row
                     HStack {
                         Text("Court Cost")
                             .fontWeight(.semibold)
@@ -62,6 +67,68 @@ struct PaymentsView: View {
                     
                     Divider()
                     
+                    // Shuttle Cost Group
+                    Text("Shuttle Costs")
+                        .font(.subheadline)
+                        .fontWeight(.semibold)
+                    
+                    HStack {
+                        Text("Number of Shuttles")
+                        Spacer()
+                        TextField("0", text: $shuttleNumberText, onCommit: {
+                            if let num = Int(shuttleNumberText) {
+                                session.numberOfShuttles = num
+                            } else {
+                                session.numberOfShuttles = 0
+                            }
+                            try? modelContext.save()
+                        })
+                        .padding(8)
+                        .background(
+                            RoundedRectangle(cornerRadius: 8)
+                                .fill(Color(UIColor.systemBackground))
+                        )
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 8)
+                                .stroke(Color.accentColor, lineWidth: 2)
+                        )
+                        .keyboardType(.numberPad)
+                        .frame(width: 100)
+                    }
+                    
+                    HStack {
+                        Text("Cost per Shuttle")
+                        Spacer()
+                        TextField("0.00", text: $costPerShuttleText, onCommit: {
+                            if let cost = Double(costPerShuttleText) {
+                                session.costPerShuttle = cost
+                            } else {
+                                session.costPerShuttle = 0
+                            }
+                            try? modelContext.save()
+                        })
+                        .padding(8)
+                        .background(
+                            RoundedRectangle(cornerRadius: 8)
+                                .fill(Color(UIColor.systemBackground))
+                        )
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 8)
+                                .stroke(Color.accentColor, lineWidth: 2)
+                        )
+                        .keyboardType(.decimalPad)
+                        .frame(width: 100)
+                    }
+                    
+                    HStack {
+                        Text("Total Shuttle Cost")
+                        Spacer()
+                        Text(String(format: "$%.2f", shuttleCost))
+                    }
+                    
+                    Divider()
+                    
+                    // Payment Summary
                     HStack {
                         Text("Participants Payment")
                         Spacer()
@@ -69,7 +136,7 @@ struct PaymentsView: View {
                     }
                     
                     HStack {
-                        Text("Winning Team Payout")
+                        Text("Payout")
                         Spacer()
                         Text(String(format: "$%.2f", payout))
                     }
@@ -113,7 +180,6 @@ struct PaymentsView: View {
                         }
                         .padding(.horizontal)
                         .padding(.vertical, 8)
-                        
                         Divider()
                     }
                 }
@@ -125,14 +191,15 @@ struct PaymentsView: View {
         }
         .navigationTitle("Payments")
         .onAppear {
-            // Initialize the text field with the persistent court cost value.
+            // Initialize text fields with persistent values.
             courtCostText = String(format: "%.2f", session.courtCost)
+            shuttleNumberText = String(session.numberOfShuttles)
+            costPerShuttleText = String(format: "%.2f", session.costPerShuttle)
         }
     }
 }
 
 #Preview {
-    // Update your preview to include a Session with participants having a payment status.
     let schema = Schema([Season.self, Session.self, Player.self, SessionParticipant.self])
     let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: true)
     
@@ -143,7 +210,10 @@ struct PaymentsView: View {
         let season = Season(seasonNumber: 4)
         context.insert(season)
         let session = Session(sessionNumber: 5, season: season)
+        // Set initial persistent values.
         session.courtCost = 50.0
+        session.numberOfShuttles = 2
+        session.costPerShuttle = 15.0
         context.insert(session)
         
         // Insert some mock players.

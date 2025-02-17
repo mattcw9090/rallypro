@@ -16,6 +16,8 @@ class Session {
     var participants: [SessionParticipant] = []
     
     var courtCost: Double = 0.0
+    var numberOfShuttles: Int = 0
+    var costPerShuttle: Double = 0.0
 
     init(sessionNumber: Int, season: Season) {
         self.sessionNumber = sessionNumber
