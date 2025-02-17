@@ -4,11 +4,11 @@ import SwiftData
 struct PaymentsView: View {
     let session: Session
     @Environment(\.modelContext) private var modelContext
-    
+
     @State private var courtCostText: String = ""
     @State private var shuttleNumberText: String = ""
     @State private var costPerShuttleText: String = ""
-    
+
     // Computed properties based on session data.
     var numberOfParticipants: Int {
         session.participants.count
@@ -30,6 +30,26 @@ struct PaymentsView: View {
         participantsPayment - session.courtCost - payout - shuttleCost
     }
     
+    // Function to commit changes for all text fields.
+    private func commitChanges() {
+        if let cost = Double(courtCostText) {
+            session.courtCost = cost
+        } else {
+            session.courtCost = 0
+        }
+        if let num = Int(shuttleNumberText) {
+            session.numberOfShuttles = num
+        } else {
+            session.numberOfShuttles = 0
+        }
+        if let costPer = Double(costPerShuttleText) {
+            session.costPerShuttle = costPer
+        } else {
+            session.costPerShuttle = 0
+        }
+        try? modelContext.save()
+    }
+    
     var body: some View {
         ScrollView {
             VStack(spacing: 20) {
@@ -44,25 +64,18 @@ struct PaymentsView: View {
                         Text("Court Cost")
                             .fontWeight(.semibold)
                         Spacer()
-                        TextField("Enter cost", text: $courtCostText, onCommit: {
-                            if let cost = Double(courtCostText) {
-                                session.courtCost = cost
-                            } else {
-                                session.courtCost = 0
-                            }
-                            try? modelContext.save()
-                        })
-                        .padding(8)
-                        .background(
-                            RoundedRectangle(cornerRadius: 8)
-                                .fill(Color(UIColor.systemBackground))
-                        )
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 8)
-                                .stroke(Color.accentColor, lineWidth: 2)
-                        )
-                        .keyboardType(.decimalPad)
-                        .frame(width: 100)
+                        TextField("Enter cost", text: $courtCostText)
+                            .padding(8)
+                            .background(
+                                RoundedRectangle(cornerRadius: 8)
+                                    .fill(Color(UIColor.systemBackground))
+                            )
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 8)
+                                    .stroke(Color.accentColor, lineWidth: 2)
+                            )
+                            .keyboardType(.decimalPad)
+                            .frame(width: 100)
                     }
                     
                     Divider()
@@ -75,49 +88,35 @@ struct PaymentsView: View {
                     HStack {
                         Text("Number of Shuttles")
                         Spacer()
-                        TextField("0", text: $shuttleNumberText, onCommit: {
-                            if let num = Int(shuttleNumberText) {
-                                session.numberOfShuttles = num
-                            } else {
-                                session.numberOfShuttles = 0
-                            }
-                            try? modelContext.save()
-                        })
-                        .padding(8)
-                        .background(
-                            RoundedRectangle(cornerRadius: 8)
-                                .fill(Color(UIColor.systemBackground))
-                        )
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 8)
-                                .stroke(Color.accentColor, lineWidth: 2)
-                        )
-                        .keyboardType(.numberPad)
-                        .frame(width: 100)
+                        TextField("0", text: $shuttleNumberText)
+                            .padding(8)
+                            .background(
+                                RoundedRectangle(cornerRadius: 8)
+                                    .fill(Color(UIColor.systemBackground))
+                            )
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 8)
+                                    .stroke(Color.accentColor, lineWidth: 2)
+                            )
+                            .keyboardType(.numberPad)
+                            .frame(width: 100)
                     }
                     
                     HStack {
                         Text("Cost per Shuttle")
                         Spacer()
-                        TextField("0.00", text: $costPerShuttleText, onCommit: {
-                            if let cost = Double(costPerShuttleText) {
-                                session.costPerShuttle = cost
-                            } else {
-                                session.costPerShuttle = 0
-                            }
-                            try? modelContext.save()
-                        })
-                        .padding(8)
-                        .background(
-                            RoundedRectangle(cornerRadius: 8)
-                                .fill(Color(UIColor.systemBackground))
-                        )
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 8)
-                                .stroke(Color.accentColor, lineWidth: 2)
-                        )
-                        .keyboardType(.decimalPad)
-                        .frame(width: 100)
+                        TextField("0.00", text: $costPerShuttleText)
+                            .padding(8)
+                            .background(
+                                RoundedRectangle(cornerRadius: 8)
+                                    .fill(Color(UIColor.systemBackground))
+                            )
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 8)
+                                    .stroke(Color.accentColor, lineWidth: 2)
+                            )
+                            .keyboardType(.decimalPad)
+                            .frame(width: 100)
                     }
                     
                     HStack {
@@ -195,6 +194,20 @@ struct PaymentsView: View {
             courtCostText = String(format: "%.2f", session.courtCost)
             shuttleNumberText = String(session.numberOfShuttles)
             costPerShuttleText = String(format: "%.2f", session.costPerShuttle)
+        }
+        // Add a keyboard toolbar with a "Done" button.
+        .toolbar {
+            ToolbarItemGroup(placement: .keyboard) {
+                Spacer()
+                Button("Done") {
+                    commitChanges()
+                    // Dismiss the keyboard.
+                    UIApplication.shared.sendAction(
+                        #selector(UIResponder.resignFirstResponder),
+                        to: nil, from: nil, for: nil
+                    )
+                }
+            }
         }
     }
 }
