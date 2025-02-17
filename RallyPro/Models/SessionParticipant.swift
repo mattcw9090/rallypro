@@ -10,13 +10,13 @@ enum Team: String, Codable {
 class SessionParticipant {
     @Attribute(.unique)
     var compositeKey: String
-    
+
     @Relationship
     var session: Session
-    
+
     @Relationship
     var player: Player
-    
+
     var teamRawValue: String?
     var team: Team? {
         get {
@@ -29,6 +29,8 @@ class SessionParticipant {
             teamRawValue = newValue?.rawValue
         }
     }
+    
+    var hasPaid: Bool = false
 
     init(session: Session, player: Player, team: Team? = nil) {
         self.session = session

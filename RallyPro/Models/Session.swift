@@ -11,8 +11,8 @@ class Session {
 
     @Relationship
     var season: Season
-    
-    @Relationship
+
+    @Relationship(inverse: \SessionParticipant.session)
     var participants: [SessionParticipant] = []
 
     init(sessionNumber: Int, season: Season) {

@@ -5,6 +5,7 @@ enum DetailSegment: String, CaseIterable, Identifiable {
     case teams = "Teams"
     case draws = "Draws"
     case results = "Results"
+    case payments = "Payments"
     
     var id: String { rawValue }
 }
@@ -35,6 +36,8 @@ struct SessionDetailView: View {
                         DrawsView(session: session)
                     case .results:
                         ResultsView(session: session)
+                    case .payments:
+                        PaymentsView(session: session)  // Show the PaymentsView
                     }
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -44,7 +47,6 @@ struct SessionDetailView: View {
     }
 }
 
-
 #Preview {
     let schema = Schema([Season.self, Session.self, Player.self, SessionParticipant.self])
     let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: true)
@@ -53,28 +55,24 @@ struct SessionDetailView: View {
         let mockContainer = try ModelContainer(for: schema, configurations: [modelConfiguration])
         let context = mockContainer.mainContext
 
-        // Insert mock data
         let season = Season(seasonNumber: 4)
         context.insert(season)
         let session = Session(sessionNumber: 5, season: season)
         context.insert(session)
-        let playerRed  = Player(name: "Shin Hean")
-        let playerRed2 = Player(name: "Suan Sian Foo")
-        let playerBlk  = Player(name: "Chris Fan")
-        let playerBlk2 = Player(name: "CJ")
-        context.insert(playerRed)
-        context.insert(playerRed2)
-        context.insert(playerBlk)
-        context.insert(playerBlk2)
-        let p1 = SessionParticipant(session: session, player: playerRed,  team: .Red)
-        let p2 = SessionParticipant(session: session, player: playerRed2, team: .Red)
-        let p3 = SessionParticipant(session: session, player: playerBlk,  team: .Black)
-        let p4 = SessionParticipant(session: session, player: playerBlk2, team: .Black)
-        context.insert(p1)
-        context.insert(p2)
-        context.insert(p3)
-        context.insert(p4)
         
+        // Insert mock players.
+        let player1 = Player(name: "Alice")
+        let player2 = Player(name: "Bob")
+        context.insert(player1)
+        context.insert(player2)
+        
+        // Create SessionParticipants.
+        let sp1 = SessionParticipant(session: session, player: player1)
+        let sp2 = SessionParticipant(session: session, player: player2)
+        context.insert(sp1)
+        context.insert(sp2)
+        
+        // Create any necessary managers.
         let teamsManager = TeamsManager(modelContext: context)
         let drawsManager = DrawsManager(modelContext: context)
         let resultsManager = ResultsManager(modelContext: context)
