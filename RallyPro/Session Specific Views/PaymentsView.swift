@@ -4,29 +4,130 @@ import SwiftData
 struct PaymentsView: View {
     let session: Session
     @Environment(\.modelContext) private var modelContext
-
+    
+    // A temporary state for editing the court cost as text.
+    @State private var courtCostText: String = ""
+    
+    // Computed properties based on the number of session participants.
+    var numberOfParticipants: Int {
+        session.participants.count
+    }
+    
+    var participantsPayment: Double {
+        Double(numberOfParticipants) * 25
+    }
+    
+    var payout: Double {
+        (Double(numberOfParticipants) / 2.0) * 10
+    }
+    
+    var netIncome: Double {
+        participantsPayment - session.courtCost - payout
+    }
+    
     var body: some View {
-        List {
-            ForEach(session.participants, id: \.compositeKey) { participant in
-                HStack {
-                    Text(participant.player.name)
-                    Spacer()
-                    Toggle(isOn: Binding(
-                        get: { participant.hasPaid },
-                        set: { newValue in
-                            participant.hasPaid = newValue
+        ScrollView {
+            VStack(spacing: 20) {
+                // Financial Summary Card
+                VStack(alignment: .leading, spacing: 16) {
+                    Text("Financial Summary")
+                        .font(.headline)
+                        .padding(.bottom, 4)
+                    
+                    // Court Cost row with highlighted TextField
+                    HStack {
+                        Text("Court Cost")
+                            .fontWeight(.semibold)
+                        Spacer()
+                        TextField("Enter cost", text: $courtCostText, onCommit: {
+                            if let cost = Double(courtCostText) {
+                                session.courtCost = cost
+                            } else {
+                                session.courtCost = 0
+                            }
                             try? modelContext.save()
-                        }
-                    )) {
-                        Text("Paid")
+                        })
+                        .padding(8)
+                        .background(
+                            RoundedRectangle(cornerRadius: 8)
+                                .fill(Color(UIColor.systemBackground))
+                        )
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 8)
+                                .stroke(Color.accentColor, lineWidth: 2)
+                        )
+                        .keyboardType(.decimalPad)
+                        .frame(width: 100)
                     }
-                    .labelsHidden()
+                    
+                    Divider()
+                    
+                    HStack {
+                        Text("Participants Payment")
+                        Spacer()
+                        Text(String(format: "$%.2f", participantsPayment))
+                    }
+                    
+                    HStack {
+                        Text("Winning Team Payout")
+                        Spacer()
+                        Text(String(format: "$%.2f", payout))
+                    }
+                    
+                    Divider()
+                    
+                    HStack {
+                        Text("Net Income")
+                            .fontWeight(.bold)
+                        Spacer()
+                        Text(String(format: "$%.2f", netIncome))
+                            .fontWeight(.bold)
+                    }
                 }
-                .padding(.vertical, 8)
+                .padding()
+                .background(.ultraThinMaterial)
+                .cornerRadius(12)
+                .shadow(radius: 4)
+                .padding(.horizontal)
+                
+                // Participants List Card
+                VStack(alignment: .leading, spacing: 0) {
+                    Text("Participants")
+                        .font(.headline)
+                        .padding(.horizontal)
+                        .padding(.vertical, 8)
+                    
+                    ForEach(session.participants, id: \.compositeKey) { participant in
+                        HStack {
+                            Text(participant.player.name)
+                                .font(.body)
+                            Spacer()
+                            Toggle("", isOn: Binding(
+                                get: { participant.hasPaid },
+                                set: { newValue in
+                                    participant.hasPaid = newValue
+                                    try? modelContext.save()
+                                }
+                            ))
+                            .toggleStyle(SwitchToggleStyle(tint: .blue))
+                        }
+                        .padding(.horizontal)
+                        .padding(.vertical, 8)
+                        
+                        Divider()
+                    }
+                }
+                .background(Color(UIColor.secondarySystemBackground))
+                .cornerRadius(12)
+                .padding(.horizontal)
             }
+            .padding(.vertical)
         }
-        .listStyle(InsetGroupedListStyle())
         .navigationTitle("Payments")
+        .onAppear {
+            // Initialize the text field with the persistent court cost value.
+            courtCostText = String(format: "%.2f", session.courtCost)
+        }
     }
 }
 
@@ -42,6 +143,7 @@ struct PaymentsView: View {
         let season = Season(seasonNumber: 4)
         context.insert(season)
         let session = Session(sessionNumber: 5, season: season)
+        session.courtCost = 50.0
         context.insert(session)
         
         // Insert some mock players.
@@ -56,6 +158,7 @@ struct PaymentsView: View {
         context.insert(sp1)
         context.insert(sp2)
         
+        // Ensure the session's participants relationship is updated.
         session.participants = [sp1, sp2]
         
         return PaymentsView(session: session)
