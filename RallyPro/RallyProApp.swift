@@ -1,8 +1,21 @@
 import SwiftUI
+import FirebaseCore
 import SwiftData
+
+// Create AppDelegate to initialize Firebase
+class AppDelegate: NSObject, UIApplicationDelegate {
+    func application(_ application: UIApplication,
+                     didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey : Any]? = nil) -> Bool {
+        FirebaseApp.configure()
+        return true
+    }
+}
 
 @main
 struct RallyProApp: App {
+    // Register AppDelegate
+    @UIApplicationDelegateAdaptor(AppDelegate.self) var delegate
+
     var sharedModelContainer: ModelContainer = {
         let schema = Schema([Player.self, Season.self, Session.self, SessionParticipant.self, DoublesMatch.self])
         let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
