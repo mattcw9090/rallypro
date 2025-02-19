@@ -1,5 +1,6 @@
 import SwiftUI
 import SwiftData
+import FirebaseAuth
 
 struct SessionsView: View {
     @EnvironmentObject var seasonManager: SeasonSessionManager
@@ -18,6 +19,17 @@ struct SessionsView: View {
                 }
             }
             .navigationTitle("Sessions")
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button("Sign Out") {
+                        do {
+                            try Auth.auth().signOut()
+                        } catch {
+                            print("Error signing out: \(error.localizedDescription)")
+                        }
+                    }
+                }
+            }
             .alert("Cannot Add Season", isPresented: $showAlert) {
                 Button("OK", role: .cancel) { }
             } message: {

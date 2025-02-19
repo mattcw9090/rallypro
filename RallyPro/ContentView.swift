@@ -22,20 +22,6 @@ struct ContentView: View {
                         Label("All Players", systemImage: "person.3.fill")
                     }
             }
-            
-            // Example sign out button (you can choose its placement)
-            VStack {
-                HStack {
-                    Spacer()
-                    if session.currentUser != nil {
-                        Button("Sign Out") {
-                            session.signOut()
-                        }
-                        .padding()
-                    }
-                }
-                Spacer()
-            }
         }
         .fullScreenCover(isPresented: Binding<Bool>(
             get: { session.currentUser == nil },
