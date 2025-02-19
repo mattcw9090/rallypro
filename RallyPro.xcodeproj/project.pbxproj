@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		FBA2EC102D6631ED00F3F4DB /* FirebaseAuth in Frameworks */ = {isa = PBXBuildFile; productRef = FBA2EC0F2D6631ED00F3F4DB /* FirebaseAuth */; };
 		FBAB55072D64DB6900F7816B /* FirebaseAnalytics in Frameworks */ = {isa = PBXBuildFile; productRef = FBAB55062D64DB6900F7816B /* FirebaseAnalytics */; };
 		FBAB55092D64DB6900F7816B /* FirebaseAppCheck in Frameworks */ = {isa = PBXBuildFile; productRef = FBAB55082D64DB6900F7816B /* FirebaseAppCheck */; };
 /* End PBXBuildFile section */
@@ -42,6 +43,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				FBAB55092D64DB6900F7816B /* FirebaseAppCheck in Frameworks */,
+				FBA2EC102D6631ED00F3F4DB /* FirebaseAuth in Frameworks */,
 				FBAB55072D64DB6900F7816B /* FirebaseAnalytics in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -53,6 +55,7 @@
 			isa = PBXGroup;
 			children = (
 				FB36CC4B2D3CE8230013B8D6 /* RallyPro */,
+				FBA2EC0E2D6631ED00F3F4DB /* Frameworks */,
 				FB36CC4A2D3CE8230013B8D6 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -63,6 +66,13 @@
 				FB36CC492D3CE8230013B8D6 /* RallyPro.app */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		FBA2EC0E2D6631ED00F3F4DB /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Frameworks;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -87,6 +97,7 @@
 			packageProductDependencies = (
 				FBAB55062D64DB6900F7816B /* FirebaseAnalytics */,
 				FBAB55082D64DB6900F7816B /* FirebaseAppCheck */,
+				FBA2EC0F2D6631ED00F3F4DB /* FirebaseAuth */,
 			);
 			productName = RallyPro;
 			productReference = FB36CC492D3CE8230013B8D6 /* RallyPro.app */;
@@ -370,6 +381,11 @@
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
+		FBA2EC0F2D6631ED00F3F4DB /* FirebaseAuth */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = FBAB55052D64DB6900F7816B /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseAuth;
+		};
 		FBAB55062D64DB6900F7816B /* FirebaseAnalytics */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = FBAB55052D64DB6900F7816B /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;

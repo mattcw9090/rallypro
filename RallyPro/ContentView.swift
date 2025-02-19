@@ -2,22 +2,46 @@ import SwiftUI
 import SwiftData
 
 struct ContentView: View {
-    var body: some View {
-        TabView {
-            SessionsView()
-                .tabItem {
-                    Label("Sessions", systemImage: "list.bullet")
-                }
+    @StateObject var session = SessionStore()
 
-            WaitlistView()
-                .tabItem {
-                    Label("Waitlist", systemImage: "person.fill.badge.plus")
-                }
+    var body: some View {
+        ZStack {
+            TabView {
+                SessionsView()
+                    .tabItem {
+                        Label("Sessions", systemImage: "list.bullet")
+                    }
+                
+                WaitlistView()
+                    .tabItem {
+                        Label("Waitlist", systemImage: "person.fill.badge.plus")
+                    }
+                
+                AllPlayersView()
+                    .tabItem {
+                        Label("All Players", systemImage: "person.3.fill")
+                    }
+            }
             
-            AllPlayersView()
-                .tabItem {
-                    Label("All Players", systemImage: "person.3.fill")
+            // Example sign out button (you can choose its placement)
+            VStack {
+                HStack {
+                    Spacer()
+                    if session.currentUser != nil {
+                        Button("Sign Out") {
+                            session.signOut()
+                        }
+                        .padding()
+                    }
                 }
+                Spacer()
+            }
+        }
+        .fullScreenCover(isPresented: Binding<Bool>(
+            get: { session.currentUser == nil },
+            set: { _ in }
+        )) {
+            AuthView()
         }
     }
 }

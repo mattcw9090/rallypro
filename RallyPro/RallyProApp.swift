@@ -1,5 +1,6 @@
 import SwiftUI
 import FirebaseCore
+import FirebaseAuth
 import SwiftData
 
 // Create AppDelegate to initialize Firebase
