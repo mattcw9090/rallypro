@@ -12,37 +12,59 @@ struct SettingsView: View {
     var body: some View {
         NavigationView {
             Form {
-                Section(header: Text("Account Info")) {
+                // MARK: - Account Info Section
+                Section(header: sectionHeader("Account Info")) {
                     if let user = session.currentUser {
-                        Text("Logged in as: \(user.email ?? "Unknown")")
+                        HStack {
+                            Image(systemName: "person.crop.circle.fill")
+                                .font(.title2)
+                                .foregroundColor(.blue)
+                            Text(user.email ?? "Unknown")
+                                .font(.body)
+                        }
                     } else {
                         Text("No user logged in.")
+                            .foregroundColor(.secondary)
                     }
                 }
                 
-                Section(header: Text("Update Email")) {
+                // MARK: - Update Email Section
+                Section(header: sectionHeader("Update Email")) {
                     TextField("New Email", text: $newEmail)
                         .keyboardType(.emailAddress)
                         .autocapitalization(.none)
-                    Button("Update Email") {
-                        updateEmail()
+                        .modifier(RoundedFieldModifier())
+                    
+                    Button(action: updateEmail) {
+                        Text("Update Email")
+                            .frame(maxWidth: .infinity)
                     }
+                    .buttonStyle(PrimaryButtonStyle())
                 }
                 
-                Section(header: Text("Update Password")) {
+                // MARK: - Update Password Section
+                Section(header: sectionHeader("Update Password")) {
                     SecureField("New Password", text: $newPassword)
-                    Button("Update Password") {
-                        updatePassword()
+                        .modifier(RoundedFieldModifier())
+                    
+                    Button(action: updatePassword) {
+                        Text("Update Password")
+                            .frame(maxWidth: .infinity)
                     }
+                    .buttonStyle(PrimaryButtonStyle())
                 }
                 
+                // MARK: - Sign Out Section
                 Section {
-                    Button("Sign Out") {
-                        session.signOut()
+                    Button(action: { session.signOut() }) {
+                        Text("Sign Out")
+                            .frame(maxWidth: .infinity)
                     }
                     .foregroundColor(.red)
+                    .buttonStyle(BorderlessButtonStyle())
                 }
                 
+                // MARK: - Status Messages
                 if let errorMessage = errorMessage {
                     Section {
                         Text(errorMessage)
@@ -57,11 +79,22 @@ struct SettingsView: View {
                     }
                 }
             }
+            .listStyle(InsetGroupedListStyle())
             .navigationTitle("Settings")
         }
     }
     
-    // Updated email update using sendEmailVerification(beforeUpdatingEmail:)
+    // MARK: - Helper Section Header
+    private func sectionHeader(_ title: String) -> some View {
+        HStack {
+            Text(title)
+                .font(.headline)
+                .foregroundColor(.primary)
+            Spacer()
+        }
+    }
+    
+    // MARK: - Email Update Function
     private func updateEmail() {
         guard !newEmail.isEmpty else {
             errorMessage = "Please enter a new email address."
@@ -86,7 +119,7 @@ struct SettingsView: View {
         }
     }
     
-    // Password update remains the same.
+    // MARK: - Password Update Function
     private func updatePassword() {
         guard !newPassword.isEmpty else {
             errorMessage = "Please enter a new password."
@@ -103,5 +136,26 @@ struct SettingsView: View {
                 errorMessage = nil
             }
         }
+    }
+}
+
+// MARK: - Custom Modifiers & Styles
+
+struct RoundedFieldModifier: ViewModifier {
+    func body(content: Content) -> some View {
+        content
+            .padding(10)
+            .background(Color(UIColor.secondarySystemBackground))
+            .cornerRadius(8)
+    }
+}
+
+struct PrimaryButtonStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .padding()
+            .background(Color.blue.opacity(configuration.isPressed ? 0.7 : 1.0))
+            .foregroundColor(.white)
+            .cornerRadius(8)
     }
 }

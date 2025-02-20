@@ -10,67 +10,93 @@ struct AuthView: View {
     @State private var isSignUpMode = false
 
     var body: some View {
-        VStack(spacing: 20) {
-            Text("Welcome to RallyPro")
-                .font(.largeTitle)
-                .bold()
+        ZStack {
+            // Background gradient for visual appeal.
+            LinearGradient(gradient: Gradient(colors: [Color.blue.opacity(0.3), Color.purple.opacity(0.3)]),
+                           startPoint: .topLeading,
+                           endPoint: .bottomTrailing)
+                .edgesIgnoringSafeArea(.all)
             
-            TextField("Email", text: $email)
-                .keyboardType(.emailAddress)
-                .autocapitalization(.none)
-                .padding()
-                .background(Color(UIColor.secondarySystemBackground))
-                .cornerRadius(5)
-            
-            SecureField("Password", text: $password)
-                .padding()
-                .background(Color(UIColor.secondarySystemBackground))
-                .cornerRadius(5)
-            
-            if let errorMessage = errorMessage {
-                Text(errorMessage)
-                    .foregroundColor(.red)
-                    .multilineTextAlignment(.center)
-            }
-            
-            Button(action: {
-                authenticate()
-            }) {
-                Text(isSignUpMode ? "Sign Up" : "Sign In")
-                    .foregroundColor(.white)
+            VStack(spacing: 20) {
+                Text("Welcome to RallyPro")
+                    .font(.largeTitle)
+                    .fontWeight(.bold)
+                    .padding(.bottom, 20)
+                
+                VStack(spacing: 15) {
+                    // Email input with icon.
+                    HStack {
+                        Image(systemName: "envelope.fill")
+                            .foregroundColor(.gray)
+                        TextField("Email", text: $email)
+                            .keyboardType(.emailAddress)
+                            .autocapitalization(.none)
+                    }
                     .padding()
-                    .frame(maxWidth: .infinity)
-                    .background(Color.blue)
-                    .cornerRadius(5)
-            }
-            
-            Button(action: {
-                isSignUpMode.toggle()
-            }) {
-                Text(isSignUpMode ? "Already have an account? Sign In" : "Don't have an account? Sign Up")
-                    .foregroundColor(.blue)
-            }
-            
-            // New Google Sign-In button
-            Button(action: {
-                signInWithGoogle()
-            }) {
-                HStack {
-                    Image(systemName: "g.circle.fill")
-                        .font(.title)
-                    Text("Sign in with Google")
-                        .fontWeight(.semibold)
+                    .background(Color.white)
+                    .cornerRadius(8)
+                    
+                    // Password input with icon.
+                    HStack {
+                        Image(systemName: "lock.fill")
+                            .foregroundColor(.gray)
+                        SecureField("Password", text: $password)
+                    }
+                    .padding()
+                    .background(Color.white)
+                    .cornerRadius(8)
                 }
-                .foregroundColor(.white)
-                .padding()
-                .frame(maxWidth: .infinity)
-                .background(Color.red)
-                .cornerRadius(5)
+                .padding(.horizontal, 20)
+                
+                // Error message display.
+                if let errorMessage = errorMessage {
+                    Text(errorMessage)
+                        .foregroundColor(.red)
+                        .multilineTextAlignment(.center)
+                        .padding(.horizontal, 20)
+                }
+                
+                // Sign In/Sign Up button.
+                Button(action: authenticate) {
+                    Text(isSignUpMode ? "Sign Up" : "Sign In")
+                        .fontWeight(.semibold)
+                        .frame(maxWidth: .infinity)
+                        .padding()
+                        .background(Color.blue)
+                        .foregroundColor(.white)
+                        .cornerRadius(8)
+                }
+                .padding(.horizontal, 20)
+                
+                // Toggle authentication mode.
+                Button(action: { isSignUpMode.toggle() }) {
+                    Text(isSignUpMode ? "Already have an account? Sign In" : "Don't have an account? Sign Up")
+                        .foregroundColor(.blue)
+                }
+                
+                // Google Sign-In button.
+                Button(action: signInWithGoogle) {
+                    HStack {
+                        Image(systemName: "g.circle.fill")
+                            .font(.title)
+                        Text("Sign in with Google")
+                            .fontWeight(.semibold)
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding()
+                    .background(Color.red)
+                    .foregroundColor(.white)
+                    .cornerRadius(8)
+                }
+                .padding(.horizontal, 20)
+                
+                Spacer()
             }
+            .padding(.top, 50)
         }
-        .padding()
     }
     
+    // MARK: - Email/Password Authentication
     private func authenticate() {
         errorMessage = nil
         if isSignUpMode {
@@ -94,45 +120,35 @@ struct AuthView: View {
     
     // MARK: - Google Sign-In Functionality
     private func signInWithGoogle() {
-        // Ensure the Firebase client ID is available.
         guard let clientID = FirebaseApp.app()?.options.clientID else {
             errorMessage = "Missing client ID."
             return
         }
         
-        // Create a configuration object with the client ID.
         let config = GIDConfiguration(clientID: clientID)
         GIDSignIn.sharedInstance.configuration = config
         
-        // Retrieve the presenting view controller.
         let rootViewController = self.getRootViewController()
         
-        // Start the Google Sign-In process.
         GIDSignIn.sharedInstance.signIn(withPresenting: rootViewController) { signInResult, error in
             if let error = error {
                 self.errorMessage = error.localizedDescription
                 return
             }
             
-            // Ensure we have a valid user.
             guard let user = signInResult?.user else {
                 self.errorMessage = "Google Sign-In failed: No user information."
                 return
             }
             
-            // Safely unwrap the ID token.
             guard let idToken = user.idToken?.tokenString else {
                 self.errorMessage = "Google Sign-In failed: Missing ID token."
                 return
             }
             
-            // The access token is non-optional.
             let accessToken = user.accessToken.tokenString
-            
-            // Create a Firebase credential using the tokens.
             let credential = GoogleAuthProvider.credential(withIDToken: idToken, accessToken: accessToken)
             
-            // Sign in with Firebase using the Google credential.
             Auth.auth().signIn(with: credential) { authResult, error in
                 if let error = error {
                     self.errorMessage = error.localizedDescription
@@ -143,7 +159,6 @@ struct AuthView: View {
             }
         }
     }
-
 }
 
 // MARK: - Helper Extension to Retrieve the Root View Controller
