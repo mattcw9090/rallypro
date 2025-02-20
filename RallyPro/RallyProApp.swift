@@ -2,13 +2,21 @@ import SwiftUI
 import FirebaseCore
 import FirebaseAuth
 import SwiftData
+import GoogleSignIn
 
-// Create AppDelegate to initialize Firebase
+// Create AppDelegate to initialize Firebase and handle Google Sign-In callbacks.
 class AppDelegate: NSObject, UIApplicationDelegate {
     func application(_ application: UIApplication,
                      didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey : Any]? = nil) -> Bool {
         FirebaseApp.configure()
         return true
+    }
+    
+    // Handle the callback URL for Google Sign-In.
+    @available(iOS 9.0, *)
+    func application(_ app: UIApplication, open url: URL,
+                     options: [UIApplication.OpenURLOptionsKey: Any] = [:]) -> Bool {
+        return GIDSignIn.sharedInstance.handle(url)
     }
 }
 
