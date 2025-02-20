@@ -21,6 +21,12 @@ struct ContentView: View {
                     .tabItem {
                         Label("All Players", systemImage: "person.3.fill")
                     }
+                
+                SettingsView()
+                    .tabItem {
+                        Label("Settings", systemImage: "gear")
+                    }
+                    .environmentObject(session)
             }
         }
         .fullScreenCover(isPresented: Binding<Bool>(
@@ -31,6 +37,7 @@ struct ContentView: View {
         }
     }
 }
+
 
 #Preview {
     let schema = Schema([Player.self, Season.self, Session.self, SessionParticipant.self, DoublesMatch.self])
