@@ -4,18 +4,13 @@ import FirebaseAuth
 import GoogleSignIn
 import AuthenticationServices
 import CryptoKit
-import FirebaseFirestore
 
 struct AuthView: View {
     @State private var email = ""
     @State private var password = ""
     @State private var errorMessage: String?
     @State private var isSignUpMode = false
-    
-    // NEW: Additional fields for user profile
-    @State private var firstName = ""
-    @State private var lastName = ""
-    
+
     // Used to hold a reference to the Apple Sign In coordinator so it stays alive until completion.
     @State private var appleSignInCoordinator: AppleSignInCoordinator?
     
@@ -56,28 +51,7 @@ struct AuthView: View {
                     .background(Color.white)
                     .cornerRadius(8)
                     
-                    // NEW: Show additional fields if sign-up
-                    if isSignUpMode {
-                        HStack {
-                            Image(systemName: "person.fill")
-                                .foregroundColor(.gray)
-                            TextField("First Name", text: $firstName)
-                                .autocapitalization(.words)
-                        }
-                        .padding()
-                        .background(Color.white)
-                        .cornerRadius(8)
-
-                        HStack {
-                            Image(systemName: "person.fill")
-                                .foregroundColor(.gray)
-                            TextField("Last Name", text: $lastName)
-                                .autocapitalization(.words)
-                        }
-                        .padding()
-                        .background(Color.white)
-                        .cornerRadius(8)
-                    }
+                    // Removed additional profile fields for sign-up.
                 }
                 .padding(.horizontal, 20)
                 
@@ -154,22 +128,8 @@ struct AuthView: View {
                     self.errorMessage = error.localizedDescription
                     return
                 }
-                // If user creation was successful, store extra info in Firestore
-                guard let user = result?.user else { return }
-                
-                let db = Firestore.firestore()
-                db.collection("users").document(user.uid).setData([
-                    "email": user.email ?? "",
-                    "firstName": self.firstName,
-                    "lastName": self.lastName,
-                    "createdAt": FieldValue.serverTimestamp()
-                ]) { err in
-                    if let err = err {
-                        self.errorMessage = "Error saving user data: \(err.localizedDescription)"
-                    } else {
-                        print("User profile successfully created in Firestore!")
-                    }
-                }
+                // User creation successful.
+                // Profile info handling removed.
             }
         } else {
             Auth.auth().signIn(withEmail: email, password: password) { result, error in
@@ -177,7 +137,7 @@ struct AuthView: View {
                     self.errorMessage = error.localizedDescription
                     return
                 }
-                // Successful sign-in; do any post-sign-in logic if needed
+                // Successful sign-in; perform any additional logic if needed.
             }
         }
     }
@@ -234,7 +194,6 @@ struct AuthView: View {
         request.requestedScopes = [.fullName, .email]
         request.nonce = hashedNonce
         
-        // Create and hold onto the coordinator so it isn't deallocated immediately.
         let coordinator = AppleSignInCoordinator(currentNonce: nonce) { error in
             if let error = error {
                 self.errorMessage = error.localizedDescription
@@ -299,7 +258,6 @@ class AppleSignInCoordinator: NSObject, ASAuthorizationControllerDelegate, ASAut
     }
     
     func presentationAnchor(for controller: ASAuthorizationController) -> ASPresentationAnchor {
-        // Return the app’s main window.
         guard let window = UIApplication.shared.connectedScenes
                 .compactMap({ $0 as? UIWindowScene })
                 .first?.windows.first else {
@@ -319,11 +277,9 @@ class AppleSignInCoordinator: NSObject, ASAuthorizationControllerDelegate, ASAut
                 onComplete?(NSError(domain: "", code: 0, userInfo: [NSLocalizedDescriptionKey: "Unable to fetch identity token."]))
                 return
             }
-            // Initialize a Firebase credential.
             let credential = OAuthProvider.appleCredential(withIDToken: idTokenString,
                                                            rawNonce: nonce,
                                                            fullName: appleIDCredential.fullName)
-            // Sign in with Firebase.
             Auth.auth().signIn(with: credential) { authResult, error in
                 self.onComplete?(error)
             }

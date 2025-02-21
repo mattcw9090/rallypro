@@ -4,7 +4,6 @@ import FirebaseAuth
 import GoogleSignIn
 import AuthenticationServices
 import CryptoKit
-import FirebaseFirestore  // <--- NEW
 
 struct SettingsView: View {
     @EnvironmentObject var session: SessionStore
@@ -14,13 +13,11 @@ struct SettingsView: View {
     @State private var errorMessage: String?
     @State private var successMessage: String?
     
-    // New state for deletion alert and holding the Apple linking coordinator.
+    // State for deletion alert and holding the Apple linking coordinator.
     @State private var showDeleteAlert = false
     @State private var appleLinkingCoordinator: AppleLinkingCoordinator?
     
-    // NEW: Profile data from Firestore
-    @State private var fetchedFirstName = ""
-    @State private var fetchedLastName = ""
+    // Removed profile info state properties.
     
     // Computed property to check if email/password is already linked.
     private var isPasswordLinked: Bool {
@@ -46,19 +43,7 @@ struct SettingsView: View {
                     }
                 }
                 
-                // MARK: - Profile Info (from Firestore)
-                Section(header: sectionHeader("Profile Info")) {
-                    TextField("First Name", text: $fetchedFirstName)
-                        .modifier(RoundedFieldModifier())
-                    TextField("Last Name", text: $fetchedLastName)
-                        .modifier(RoundedFieldModifier())
-                    
-                    Button(action: saveUserProfile) {
-                        Text("Save Profile")
-                            .frame(maxWidth: .infinity)
-                    }
-                    .buttonStyle(PrimaryButtonStyle())
-                }
+                // Removed Profile Info Section
                 
                 // MARK: - Email/Password Linking or Updating Section
                 if isPasswordLinked {
@@ -167,53 +152,6 @@ struct SettingsView: View {
             .listStyle(InsetGroupedListStyle())
             .navigationTitle("Settings")
         }
-        // When the view appears, load the Firestore user profile
-        .onAppear {
-            loadUserProfile()
-        }
-    }
-    
-    // MARK: - Firestore Profile: Load & Save
-    private func loadUserProfile() {
-        guard let currentUser = session.currentUser else {
-            return
-        }
-        
-        let db = Firestore.firestore()
-        let docRef = db.collection("users").document(currentUser.uid)
-        
-        docRef.getDocument { document, error in
-            if let error = error {
-                self.errorMessage = "Error loading user profile: \(error.localizedDescription)"
-                return
-            }
-            
-            guard let document = document, document.exists,
-                  let data = document.data() else {
-                self.errorMessage = "No profile data found."
-                return
-            }
-            
-            // Parse data
-            self.fetchedFirstName = data["firstName"] as? String ?? ""
-            self.fetchedLastName = data["lastName"] as? String ?? ""
-        }
-    }
-    
-    private func saveUserProfile() {
-        guard let currentUser = session.currentUser else { return }
-        
-        let db = Firestore.firestore()
-        db.collection("users").document(currentUser.uid).updateData([
-            "firstName": fetchedFirstName,
-            "lastName": fetchedLastName
-        ]) { error in
-            if let error = error {
-                self.errorMessage = "Error updating profile: \(error.localizedDescription)"
-            } else {
-                self.successMessage = "Profile updated successfully."
-            }
-        }
     }
     
     // Computed properties to check if a provider is already linked.
@@ -279,7 +217,7 @@ struct SettingsView: View {
         }
     }
     
-    // MARK: - New Function for Linking Email/Password Credentials
+    // MARK: - Linking Email/Password Credentials
     private func linkEmailPasswordAccount() {
         guard let user = Auth.auth().currentUser else {
             errorMessage = "No user logged in."
