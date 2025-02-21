@@ -22,9 +22,9 @@ class AppDelegate: NSObject, UIApplicationDelegate {
 
 @main
 struct RallyProApp: App {
-    // Register AppDelegate
     @UIApplicationDelegateAdaptor(AppDelegate.self) var delegate
 
+    // Shared model container (unchanged).
     var sharedModelContainer: ModelContainer = {
         let schema = Schema([Player.self, Season.self, Session.self, SessionParticipant.self, DoublesMatch.self])
         let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
@@ -35,7 +35,7 @@ struct RallyProApp: App {
         }
     }()
 
-    @StateObject private var session = SessionStore()
+    @StateObject private var authManager = AuthManager()
     @StateObject private var playerManager: PlayerManager
     @StateObject private var seasonSessionManager: SeasonSessionManager
     @StateObject private var seasonalResultsManager: SeasonalResultsManager
@@ -56,7 +56,7 @@ struct RallyProApp: App {
     var body: some Scene {
         WindowGroup {
             RootView()
-                .environmentObject(session)
+                .environmentObject(authManager)
                 .environmentObject(playerManager)
                 .environmentObject(seasonSessionManager)
                 .environmentObject(seasonalResultsManager)

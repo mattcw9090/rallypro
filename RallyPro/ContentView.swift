@@ -2,8 +2,6 @@ import SwiftUI
 import SwiftData
 
 struct ContentView: View {
-    @EnvironmentObject var session: SessionStore
-
     var body: some View {
         ZStack {
             TabView {
