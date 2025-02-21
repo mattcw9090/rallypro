@@ -13,33 +13,25 @@ struct SettingsView: View {
         NavigationView {
             Form {
                 // MARK: - Account Info Section
-                Section(header: sectionHeader("Account Info")) {
+                Section(header: Text("Account Info")) {
                     if let user = authManager.currentUser {
-                        HStack {
-                            Image(systemName: "person.crop.circle.fill")
-                                .font(.title2)
-                                .foregroundColor(.blue)
-                            Text(user.email ?? "Unknown")
-                                .font(.body)
-                        }
+                        Text(user.email ?? "Unknown")
                     } else {
                         Text("No user logged in.")
                             .foregroundColor(.secondary)
                     }
                 }
                 
-                // MARK: - Email/Password Linking or Updating Section
+                // MARK: - Email/Password Linking or Updating
                 if isPasswordLinked {
-                    Section(header: sectionHeader("Update Email & Password")) {
+                    Section(header: Text("Update Email & Password")) {
                         TextField("New Email", text: $newEmail)
                             .keyboardType(.emailAddress)
                             .autocapitalization(.none)
-                            .modifier(RoundedFieldModifier())
                         
                         SecureField("New Password", text: $newPassword)
-                            .modifier(RoundedFieldModifier())
                         
-                        Button(action: {
+                        Button("Update Email") {
                             authManager.updateEmail(newEmail: newEmail) { error in
                                 if let error = error {
                                     self.errorMessage = error.localizedDescription
@@ -49,13 +41,9 @@ struct SettingsView: View {
                                     self.errorMessage = nil
                                 }
                             }
-                        }) {
-                            Text("Update Email")
-                                .frame(maxWidth: .infinity)
                         }
-                        .buttonStyle(PrimaryButtonStyle())
                         
-                        Button(action: {
+                        Button("Update Password") {
                             authManager.updatePassword(newPassword: newPassword) { error in
                                 if let error = error {
                                     self.errorMessage = error.localizedDescription
@@ -65,23 +53,17 @@ struct SettingsView: View {
                                     self.errorMessage = nil
                                 }
                             }
-                        }) {
-                            Text("Update Password")
-                                .frame(maxWidth: .infinity)
                         }
-                        .buttonStyle(PrimaryButtonStyle())
                     }
                 } else {
-                    Section(header: sectionHeader("Link Email & Password")) {
+                    Section(header: Text("Link Email & Password")) {
                         TextField("Email", text: $newEmail)
                             .keyboardType(.emailAddress)
                             .autocapitalization(.none)
-                            .modifier(RoundedFieldModifier())
                         
                         SecureField("Password", text: $newPassword)
-                            .modifier(RoundedFieldModifier())
                         
-                        Button(action: {
+                        Button("Link Email & Password") {
                             authManager.linkEmailPassword(email: newEmail, password: newPassword) { error in
                                 if let error = error {
                                     self.errorMessage = error.localizedDescription
@@ -91,79 +73,63 @@ struct SettingsView: View {
                                     self.errorMessage = nil
                                 }
                             }
-                        }) {
-                            Text("Link Email & Password")
-                                .frame(maxWidth: .infinity)
                         }
-                        .buttonStyle(PrimaryButtonStyle())
                     }
                 }
                 
-                // MARK: - Link Accounts Section
-                Section(header: sectionHeader("Link Accounts")) {
-                    if !isGoogleLinked {
-                        Button(action: {
-                            let rootVC = UIApplication.shared.connectedScenes
-                                .compactMap { $0 as? UIWindowScene }
-                                .first?.windows.first?.rootViewController ?? UIViewController()
-                            authManager.linkGoogleAccount(presenting: rootVC) { error in
-                                if let error = error {
-                                    self.errorMessage = error.localizedDescription
-                                    self.successMessage = nil
-                                } else {
-                                    self.successMessage = "Google account linked successfully."
-                                    self.errorMessage = nil
+                // MARK: - Link Accounts Section (only if at least one is not linked)
+                if !isGoogleLinked || !isAppleLinked {
+                    Section(header: Text("Link Accounts")) {
+                        if !isGoogleLinked {
+                            Button("Link Google Account") {
+                                let rootVC = UIApplication.shared.connectedScenes
+                                    .compactMap { $0 as? UIWindowScene }
+                                    .first?.windows.first?.rootViewController ?? UIViewController()
+                                authManager.linkGoogleAccount(presenting: rootVC) { error in
+                                    if let error = error {
+                                        self.errorMessage = error.localizedDescription
+                                        self.successMessage = nil
+                                    } else {
+                                        self.successMessage = "Google account linked successfully."
+                                        self.errorMessage = nil
+                                    }
                                 }
                             }
-                        }) {
-                            Text("Link Google Account")
-                                .frame(maxWidth: .infinity)
                         }
-                        .buttonStyle(PrimaryButtonStyle())
-                    }
-                    if !isAppleLinked {
-                        Button(action: {
-                            authManager.linkAppleAccount { error in
-                                if let error = error {
-                                    self.errorMessage = error.localizedDescription
-                                    self.successMessage = nil
-                                } else {
-                                    self.successMessage = "Apple account linked successfully."
-                                    self.errorMessage = nil
+                        if !isAppleLinked {
+                            Button("Link Apple Account") {
+                                authManager.linkAppleAccount { error in
+                                    if let error = error {
+                                        self.errorMessage = error.localizedDescription
+                                        self.successMessage = nil
+                                    } else {
+                                        self.successMessage = "Apple account linked successfully."
+                                        self.errorMessage = nil
+                                    }
                                 }
                             }
-                        }) {
-                            Text("Link Apple Account")
-                                .frame(maxWidth: .infinity)
                         }
-                        .buttonStyle(PrimaryButtonStyle())
                     }
                 }
                 
                 // MARK: - Sign Out Section
                 Section {
-                    Button(action: {
+                    Button("Sign Out") {
                         authManager.signOut { error in
                             if let error = error {
                                 self.errorMessage = error.localizedDescription
                             }
                         }
-                    }) {
-                        Text("Sign Out")
-                            .frame(maxWidth: .infinity)
                     }
                     .foregroundColor(.red)
-                    .buttonStyle(BorderlessButtonStyle())
                 }
                 
                 // MARK: - Delete Account Section
                 Section {
-                    Button(action: { showDeleteAlert = true }) {
-                        Text("Delete Account")
-                            .frame(maxWidth: .infinity)
+                    Button("Delete Account") {
+                        showDeleteAlert = true
                     }
                     .foregroundColor(.red)
-                    .buttonStyle(BorderlessButtonStyle())
                 }
                 .alert(isPresented: $showDeleteAlert) {
                     Alert(
@@ -197,7 +163,6 @@ struct SettingsView: View {
                     }
                 }
             }
-            .listStyle(InsetGroupedListStyle())
             .navigationTitle("Settings")
         }
     }
@@ -214,35 +179,5 @@ struct SettingsView: View {
     
     private var isPasswordLinked: Bool {
         authManager.currentUser?.providerData.contains(where: { $0.providerID == "password" }) ?? false
-    }
-    
-    private func sectionHeader(_ title: String) -> some View {
-        HStack {
-            Text(title)
-                .font(.headline)
-                .foregroundColor(.primary)
-            Spacer()
-        }
-    }
-}
-
-// MARK: - Custom Modifiers & Styles
-
-struct RoundedFieldModifier: ViewModifier {
-    func body(content: Content) -> some View {
-        content
-            .padding(10)
-            .background(Color(UIColor.secondarySystemBackground))
-            .cornerRadius(8)
-    }
-}
-
-struct PrimaryButtonStyle: ButtonStyle {
-    func makeBody(configuration: Configuration) -> some View {
-        configuration.label
-            .padding()
-            .background(Color.blue.opacity(configuration.isPressed ? 0.7 : 1.0))
-            .foregroundColor(.white)
-            .cornerRadius(8)
     }
 }
