@@ -22,6 +22,11 @@ struct SettingsView: View {
     @State private var fetchedFirstName = ""
     @State private var fetchedLastName = ""
     
+    // Computed property to check if email/password is already linked.
+    private var isPasswordLinked: Bool {
+        session.currentUser?.providerData.contains(where: { $0.providerID == "password" }) ?? false
+    }
+    
     var body: some View {
         NavigationView {
             Form {
@@ -55,30 +60,45 @@ struct SettingsView: View {
                     .buttonStyle(PrimaryButtonStyle())
                 }
                 
-                // MARK: - Update Email Section
-                Section(header: sectionHeader("Update Email")) {
-                    TextField("New Email", text: $newEmail)
-                        .keyboardType(.emailAddress)
-                        .autocapitalization(.none)
-                        .modifier(RoundedFieldModifier())
-                    
-                    Button(action: updateEmail) {
-                        Text("Update Email")
-                            .frame(maxWidth: .infinity)
+                // MARK: - Email/Password Linking or Updating Section
+                if isPasswordLinked {
+                    Section(header: sectionHeader("Update Email & Password")) {
+                        TextField("New Email", text: $newEmail)
+                            .keyboardType(.emailAddress)
+                            .autocapitalization(.none)
+                            .modifier(RoundedFieldModifier())
+                        
+                        SecureField("New Password", text: $newPassword)
+                            .modifier(RoundedFieldModifier())
+                        
+                        Button(action: updateEmail) {
+                            Text("Update Email")
+                                .frame(maxWidth: .infinity)
+                        }
+                        .buttonStyle(PrimaryButtonStyle())
+                        
+                        Button(action: updatePassword) {
+                            Text("Update Password")
+                                .frame(maxWidth: .infinity)
+                        }
+                        .buttonStyle(PrimaryButtonStyle())
                     }
-                    .buttonStyle(PrimaryButtonStyle())
-                }
-                
-                // MARK: - Update Password Section
-                Section(header: sectionHeader("Update Password")) {
-                    SecureField("New Password", text: $newPassword)
-                        .modifier(RoundedFieldModifier())
-                    
-                    Button(action: updatePassword) {
-                        Text("Update Password")
-                            .frame(maxWidth: .infinity)
+                } else {
+                    Section(header: sectionHeader("Link Email & Password")) {
+                        TextField("Email", text: $newEmail)
+                            .keyboardType(.emailAddress)
+                            .autocapitalization(.none)
+                            .modifier(RoundedFieldModifier())
+                        
+                        SecureField("Password", text: $newPassword)
+                            .modifier(RoundedFieldModifier())
+                        
+                        Button(action: linkEmailPasswordAccount) {
+                            Text("Link Email & Password")
+                                .frame(maxWidth: .infinity)
+                        }
+                        .buttonStyle(PrimaryButtonStyle())
                     }
-                    .buttonStyle(PrimaryButtonStyle())
                 }
                 
                 // MARK: - Link Accounts Section
@@ -255,6 +275,24 @@ struct SettingsView: View {
             } else {
                 successMessage = "Password updated successfully."
                 errorMessage = nil
+            }
+        }
+    }
+    
+    // MARK: - New Function for Linking Email/Password Credentials
+    private func linkEmailPasswordAccount() {
+        guard let user = Auth.auth().currentUser else {
+            errorMessage = "No user logged in."
+            return
+        }
+        let credential = EmailAuthProvider.credential(withEmail: newEmail, password: newPassword)
+        user.link(with: credential) { authResult, error in
+            if let error = error {
+                self.errorMessage = error.localizedDescription
+                self.successMessage = nil
+            } else {
+                self.successMessage = "Email & Password linked successfully."
+                self.errorMessage = nil
             }
         }
     }

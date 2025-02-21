@@ -35,6 +35,7 @@ struct RallyProApp: App {
         }
     }()
 
+    @StateObject private var session = SessionStore()
     @StateObject private var playerManager: PlayerManager
     @StateObject private var seasonSessionManager: SeasonSessionManager
     @StateObject private var seasonalResultsManager: SeasonalResultsManager
@@ -54,7 +55,8 @@ struct RallyProApp: App {
 
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            RootView()
+                .environmentObject(session)
                 .environmentObject(playerManager)
                 .environmentObject(seasonSessionManager)
                 .environmentObject(seasonalResultsManager)

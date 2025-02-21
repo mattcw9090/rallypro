@@ -2,7 +2,7 @@ import SwiftUI
 import SwiftData
 
 struct ContentView: View {
-    @StateObject var session = SessionStore()
+    @EnvironmentObject var session: SessionStore
 
     var body: some View {
         ZStack {
@@ -26,28 +26,7 @@ struct ContentView: View {
                     .tabItem {
                         Label("Settings", systemImage: "gear")
                     }
-                    .environmentObject(session)
             }
         }
-        .fullScreenCover(isPresented: Binding<Bool>(
-            get: { session.currentUser == nil },
-            set: { _ in }
-        )) {
-            AuthView()
-        }
-    }
-}
-
-
-#Preview {
-    let schema = Schema([Player.self, Season.self, Session.self, SessionParticipant.self, DoublesMatch.self])
-    let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: true)
-
-    do {
-        let mockContainer = try ModelContainer(for: schema, configurations: [modelConfiguration])
-        return ContentView()
-            .modelContainer(mockContainer)
-    } catch {
-        fatalError("Could not create ModelContainer: \(error)")
     }
 }
