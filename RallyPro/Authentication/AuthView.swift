@@ -2,6 +2,8 @@ import SwiftUI
 
 struct AuthView: View {
     @EnvironmentObject var authManager: AuthManager
+    @EnvironmentObject var profileManager: ProfileManager
+
     @State private var email = ""
     @State private var password = ""
     @State private var errorMessage: String?
@@ -52,13 +54,15 @@ struct AuthView: View {
                 
                 Button(action: {
                     if isSignUpMode {
-                        authManager.signUp(email: email, password: password) { error in
-                            self.errorMessage = error?.localizedDescription
+                    authManager.signUp(email: email, password: password) { error in
+                        if let error = error {
+                            self.errorMessage = error.localizedDescription
+                        } else {
+                            // Manually trigger a profile fetch.
+                            profileManager.fetchUserProfile()
+                            // Optionally, clear fields or perform other UI updates.
                         }
-                    } else {
-                        authManager.signIn(email: email, password: password) { error in
-                            self.errorMessage = error?.localizedDescription
-                        }
+                    }
                     }
                 }) {
                     Text(isSignUpMode ? "Sign Up" : "Sign In")

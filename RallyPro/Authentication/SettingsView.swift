@@ -2,6 +2,8 @@ import SwiftUI
 
 struct SettingsView: View {
     @EnvironmentObject var authManager: AuthManager
+    @EnvironmentObject var profileManager: ProfileManager
+    
     @State private var newEmail = ""
     @State private var newPassword = ""
     @State private var errorMessage: String?
@@ -19,6 +21,16 @@ struct SettingsView: View {
                     } else {
                         Text("No user logged in.")
                             .foregroundColor(.secondary)
+                    }
+                }
+                
+                // MARK: - Profile Info Section
+                if let profile = profileManager.userProfile {
+                    Section(header: Text("Profile Info")) {
+                        Text("Name: \(profile.fullName)")
+                        if let bio = profile.bio, !bio.isEmpty {
+                            Text("Bio: \(bio)")
+                        }
                     }
                 }
                 
@@ -136,11 +148,19 @@ struct SettingsView: View {
                         title: Text("Delete Account"),
                         message: Text("Are you sure you want to delete your account? This action cannot be undone."),
                         primaryButton: .destructive(Text("Delete")) {
-                            authManager.deleteAccount { error in
+                            // First, delete the user profile from Firestore
+                            profileManager.deleteUserProfile { error in
                                 if let error = error {
                                     self.errorMessage = error.localizedDescription
                                 } else {
-                                    self.successMessage = "Account deleted successfully."
+                                    // If profile deletion succeeds, delete the auth account
+                                    authManager.deleteAccount { error in
+                                        if let error = error {
+                                            self.errorMessage = error.localizedDescription
+                                        } else {
+                                            self.successMessage = "Account deleted successfully."
+                                        }
+                                    }
                                 }
                             }
                         },

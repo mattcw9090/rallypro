@@ -36,6 +36,7 @@ struct RallyProApp: App {
     }()
 
     @StateObject private var authManager = AuthManager()
+    @StateObject private var profileManager = ProfileManager()
     @StateObject private var playerManager: PlayerManager
     @StateObject private var seasonSessionManager: SeasonSessionManager
     @StateObject private var seasonalResultsManager: SeasonalResultsManager
@@ -57,6 +58,7 @@ struct RallyProApp: App {
         WindowGroup {
             RootView()
                 .environmentObject(authManager)
+                .environmentObject(profileManager)
                 .environmentObject(playerManager)
                 .environmentObject(seasonSessionManager)
                 .environmentObject(seasonalResultsManager)
