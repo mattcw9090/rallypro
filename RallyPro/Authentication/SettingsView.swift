@@ -4,6 +4,7 @@ import FirebaseAuth
 import GoogleSignIn
 import AuthenticationServices
 import CryptoKit
+import FirebaseFirestore  // <--- NEW
 
 struct SettingsView: View {
     @EnvironmentObject var session: SessionStore
@@ -16,6 +17,10 @@ struct SettingsView: View {
     // New state for deletion alert and holding the Apple linking coordinator.
     @State private var showDeleteAlert = false
     @State private var appleLinkingCoordinator: AppleLinkingCoordinator?
+    
+    // NEW: Profile data from Firestore
+    @State private var fetchedFirstName = ""
+    @State private var fetchedLastName = ""
     
     var body: some View {
         NavigationView {
@@ -34,6 +39,20 @@ struct SettingsView: View {
                         Text("No user logged in.")
                             .foregroundColor(.secondary)
                     }
+                }
+                
+                // MARK: - Profile Info (from Firestore)
+                Section(header: sectionHeader("Profile Info")) {
+                    TextField("First Name", text: $fetchedFirstName)
+                        .modifier(RoundedFieldModifier())
+                    TextField("Last Name", text: $fetchedLastName)
+                        .modifier(RoundedFieldModifier())
+                    
+                    Button(action: saveUserProfile) {
+                        Text("Save Profile")
+                            .frame(maxWidth: .infinity)
+                    }
+                    .buttonStyle(PrimaryButtonStyle())
                 }
                 
                 // MARK: - Update Email Section
@@ -127,6 +146,53 @@ struct SettingsView: View {
             }
             .listStyle(InsetGroupedListStyle())
             .navigationTitle("Settings")
+        }
+        // When the view appears, load the Firestore user profile
+        .onAppear {
+            loadUserProfile()
+        }
+    }
+    
+    // MARK: - Firestore Profile: Load & Save
+    private func loadUserProfile() {
+        guard let currentUser = session.currentUser else {
+            return
+        }
+        
+        let db = Firestore.firestore()
+        let docRef = db.collection("users").document(currentUser.uid)
+        
+        docRef.getDocument { document, error in
+            if let error = error {
+                self.errorMessage = "Error loading user profile: \(error.localizedDescription)"
+                return
+            }
+            
+            guard let document = document, document.exists,
+                  let data = document.data() else {
+                self.errorMessage = "No profile data found."
+                return
+            }
+            
+            // Parse data
+            self.fetchedFirstName = data["firstName"] as? String ?? ""
+            self.fetchedLastName = data["lastName"] as? String ?? ""
+        }
+    }
+    
+    private func saveUserProfile() {
+        guard let currentUser = session.currentUser else { return }
+        
+        let db = Firestore.firestore()
+        db.collection("users").document(currentUser.uid).updateData([
+            "firstName": fetchedFirstName,
+            "lastName": fetchedLastName
+        ]) { error in
+            if let error = error {
+                self.errorMessage = "Error updating profile: \(error.localizedDescription)"
+            } else {
+                self.successMessage = "Profile updated successfully."
+            }
         }
     }
     
@@ -310,7 +376,6 @@ struct SettingsView: View {
 }
 
 // MARK: - Apple Linking Coordinator
-// This coordinator is similar to your AppleSignInCoordinator but uses link(with:) to attach the Apple credential.
 class AppleLinkingCoordinator: NSObject, ASAuthorizationControllerDelegate, ASAuthorizationControllerPresentationContextProviding {
     var currentNonce: String?
     var onComplete: ((Error?) -> Void)?
@@ -342,8 +407,8 @@ class AppleLinkingCoordinator: NSObject, ASAuthorizationControllerDelegate, ASAu
                 return
             }
             let credential = OAuthProvider.appleCredential(withIDToken: idTokenString,
-                                                             rawNonce: nonce,
-                                                             fullName: appleIDCredential.fullName)
+                                                           rawNonce: nonce,
+                                                           fullName: appleIDCredential.fullName)
             Auth.auth().currentUser?.link(with: credential) { authResult, error in
                 self.onComplete?(error)
             }
@@ -356,7 +421,6 @@ class AppleLinkingCoordinator: NSObject, ASAuthorizationControllerDelegate, ASAu
 }
 
 // MARK: - Custom Modifiers & Styles
-
 struct RoundedFieldModifier: ViewModifier {
     func body(content: Content) -> some View {
         content
