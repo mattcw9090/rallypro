@@ -10,7 +10,7 @@ struct ProfileSetupView: View {
     @State private var navigateToContent: Bool = false
     
     var body: some View {
-        NavigationView {
+        NavigationStack {
             VStack(spacing: 20) {
                 Text("Complete Your Profile")
                     .font(.title)
@@ -51,13 +51,12 @@ struct ProfileSetupView: View {
                         .cornerRadius(8)
                 }
                 
-                NavigationLink(destination: ContentView(), isActive: $navigateToContent) {
-                    EmptyView()
-                }
-                
                 Spacer()
             }
             .padding()
+            .navigationDestination(isPresented: $navigateToContent) {
+                ContentView()
+            }
         }
     }
 }

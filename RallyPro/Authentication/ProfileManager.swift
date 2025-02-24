@@ -8,10 +8,12 @@ class ProfileManager: ObservableObject {
     
     func fetchUserProfile() {
         guard let uid = Auth.auth().currentUser?.uid else {
+            print("No user logged in.")
             return
         }
         db.collection("users").document(uid).getDocument { snapshot, error in
-            if let error = error {
+            if error != nil {
+                print("Error fetching user profile: \(error!.localizedDescription)")
                 return
             }
             if let snapshot = snapshot, snapshot.exists {
@@ -21,6 +23,7 @@ class ProfileManager: ObservableObject {
                         self.userProfile = profile
                     }
                 } catch {
+                    print("Error decoding user profile: \(error.localizedDescription)")
                 }
             }
         }
@@ -29,13 +32,16 @@ class ProfileManager: ObservableObject {
     func saveUserProfile(fullName: String, bio: String, completion: @escaping (Error?) -> Void) {
         guard let uid = Auth.auth().currentUser?.uid else {
             let error = NSError(domain: "", code: 0, userInfo: [NSLocalizedDescriptionKey: "No user logged in."])
+            print("Error: No user logged in.")
             completion(error)
             return
         }
         let profile = UserProfile(id: uid, fullName: fullName, bio: bio)
         do {
             try db.collection("users").document(uid).setData(from: profile) { error in
-                if error == nil {
+                if error != nil {
+                    print("Error saving user profile: \(error!.localizedDescription)")
+                } else {
                     DispatchQueue.main.async {
                         self.userProfile = profile
                     }
@@ -43,6 +49,7 @@ class ProfileManager: ObservableObject {
                 completion(error)
             }
         } catch {
+            print("Error encoding user profile: \(error.localizedDescription)")
             completion(error)
         }
     }
@@ -50,10 +57,14 @@ class ProfileManager: ObservableObject {
     func deleteUserProfile(completion: @escaping (Error?) -> Void) {
         guard let uid = Auth.auth().currentUser?.uid else {
             let error = NSError(domain: "", code: 0, userInfo: [NSLocalizedDescriptionKey: "No user logged in."])
+            print("Error: No user logged in.")
             completion(error)
             return
         }
         db.collection("users").document(uid).delete { error in
+            if error != nil {
+                print("Error deleting user profile: \(error!.localizedDescription)")
+            }
             completion(error)
         }
     }

@@ -17,13 +17,13 @@ struct RootView: View {
         }
         .onAppear {
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                if let user = authManager.currentUser {
+                if authManager.currentUser != nil {
                     profileManager.fetchUserProfile()
                 }
             }
         }
-        .onChange(of: authManager.currentUser) { newUser in
-            if newUser != nil {
+        .onChange(of: authManager.currentUser) {
+            if authManager.currentUser != nil {
                 profileManager.fetchUserProfile()
             }
         }
