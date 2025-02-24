@@ -9,14 +9,13 @@ struct EditPlayerViewBeta: View {
     @State private var name: String
     @State private var isMale: Bool
     @State private var status: PlayerBeta.PlayerStatus
-    @State private var waitlistPosition: String
 
     init(player: PlayerBeta) {
         self.player = player
         _name = State(initialValue: player.name)
         _isMale = State(initialValue: player.isMale ?? true)
         _status = State(initialValue: player.status)
-        _waitlistPosition = State(initialValue: player.waitlistPosition != nil ? String(player.waitlistPosition!) : "")
+        // Removed waitlistPosition state initialization
     }
     
     var body: some View {
@@ -30,8 +29,7 @@ struct EditPlayerViewBeta: View {
                             Text(stat.rawValue).tag(stat)
                         }
                     }
-                    TextField("Waitlist Position", text: $waitlistPosition)
-                        .keyboardType(.numberPad)
+                    // Removed Waitlist Position input as it is not user-editable.
                 }
             }
             .navigationTitle("Edit Player")
@@ -43,11 +41,11 @@ struct EditPlayerViewBeta: View {
                 }
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button("Save") {
-                        let position = Int(waitlistPosition)
+                        // Preserve the existing waitlistPosition by using the original player's value.
                         let updatedPlayer = PlayerBeta(id: player.id,
                                                        name: name,
                                                        status: status,
-                                                       waitlistPosition: position,
+                                                       waitlistPosition: player.waitlistPosition,
                                                        isMale: isMale)
                         playerManager.updatePlayer(updatedPlayer)
                         dismiss()

@@ -10,12 +10,12 @@ struct ContentView: View {
                         Label("Sessions", systemImage: "list.bullet")
                     }
                 
-                WaitlistView()
+                WaitlistViewBeta()
                     .tabItem {
                         Label("Waitlist", systemImage: "person.fill.badge.plus")
                     }
                 
-                AllPlayersView()
+                AllPlayersViewBeta()
                     .tabItem {
                         Label("All Players", systemImage: "person.3.fill")
                     }
@@ -23,10 +23,6 @@ struct ContentView: View {
                 SettingsView()
                     .tabItem {
                         Label("Settings", systemImage: "gear")
-                    }
-                AllPlayersViewBeta()
-                    .tabItem {
-                        Label("All Players Beta", systemImage: "person.3.fill")
                     }
             }
         }

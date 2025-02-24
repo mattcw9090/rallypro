@@ -10,6 +10,7 @@ struct AllPlayersViewBeta: View {
             List {
                 ForEach(playerManager.players) { player in
                     PlayerRowViewBeta(player: player)
+                        // Trailing swipe actions for Delete and Edit remain.
                         .swipeActions(edge: .trailing, allowsFullSwipe: false) {
                             // Delete Action
                             Button(role: .destructive) {
@@ -19,6 +20,7 @@ struct AllPlayersViewBeta: View {
                             } label: {
                                 Label("Delete", systemImage: "trash")
                             }
+                            
                             // Edit Action
                             Button {
                                 selectedPlayerForEdit = player
@@ -26,6 +28,17 @@ struct AllPlayersViewBeta: View {
                                 Label("Edit", systemImage: "pencil")
                             }
                             .tint(.blue)
+                        }
+                        // Leading swipe action only if the player is not in session.
+                        .swipeActions(edge: .leading, allowsFullSwipe: false) {
+                            if player.status == .notInSession {
+                                Button {
+                                    playerManager.movePlayerToWaitlist(player)
+                                } label: {
+                                    Label("Waitlist", systemImage: "list.bullet")
+                                }
+                                .tint(.orange)
+                            }
                         }
                 }
                 .onDelete { offsets in

@@ -7,7 +7,6 @@ struct AddPlayerViewBeta: View {
     @State private var name: String = ""
     @State private var isMale: Bool = true
     @State private var status: PlayerBeta.PlayerStatus = .notInSession
-    @State private var waitlistPosition: String = ""
 
     var body: some View {
         NavigationView {
@@ -20,8 +19,7 @@ struct AddPlayerViewBeta: View {
                             Text(stat.rawValue).tag(stat)
                         }
                     }
-                    TextField("Waitlist Position", text: $waitlistPosition)
-                        .keyboardType(.numberPad)
+                    // Removed Waitlist Position input as it will be handled internally
                 }
             }
             .navigationTitle("Add Player")
@@ -33,10 +31,10 @@ struct AddPlayerViewBeta: View {
                 }
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button("Save") {
-                        let position = Int(waitlistPosition)
+                        // Pass nil for waitlistPosition; it can be set/updated in the future as needed.
                         playerManager.addPlayer(name: name,
                                                   status: status,
-                                                  waitlistPosition: position,
+                                                  waitlistPosition: nil,
                                                   isMale: isMale)
                         dismiss()
                     }
