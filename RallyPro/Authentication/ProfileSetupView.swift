@@ -33,14 +33,11 @@ struct ProfileSetupView: View {
                 
                 Button(action: {
                     isLoading = true
-                    print("DEBUG: Attempting to save profile with fullName: \(fullName), bio: \(bio)")
                     profileManager.saveUserProfile(fullName: fullName, bio: bio) { error in
                         isLoading = false
                         if let error = error {
                             errorMessage = error.localizedDescription
-                            print("DEBUG: Error saving profile: \(error.localizedDescription)")
                         } else {
-                            print("DEBUG: Profile saved successfully, navigating to ContentView.")
                             navigateToContent = true
                         }
                     }
