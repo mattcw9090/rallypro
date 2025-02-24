@@ -24,6 +24,10 @@ struct ContentView: View {
                     .tabItem {
                         Label("Settings", systemImage: "gear")
                     }
+                AllPlayersViewBeta()
+                    .tabItem {
+                        Label("All Players Beta", systemImage: "person.3.fill")
+                    }
             }
         }
     }

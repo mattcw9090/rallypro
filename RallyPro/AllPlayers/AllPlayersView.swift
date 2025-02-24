@@ -78,28 +78,3 @@ struct PlayerRowView: View {
         .padding(.vertical, 5)
     }
 }
-
-#Preview {
-    let schema = Schema([Player.self])
-    let config = ModelConfiguration(isStoredInMemoryOnly: true)
-    
-    do {
-        let container = try ModelContainer(for: schema, configurations: config)
-        let manager = PlayerManager(modelContext: container.mainContext)
-        
-        // Insert mock data
-        let mockPlayers = [
-            Player(name: "Alice", status: .playing, isMale: false),
-            Player(name: "Bob", status: .onWaitlist, waitlistPosition: 2, isMale: true),
-            Player(name: "Charlie", status: .notInSession, isMale: true),
-            Player(name: "Denise", status: .onWaitlist, waitlistPosition: 1, isMale: false)
-        ]
-        mockPlayers.forEach { container.mainContext.insert($0) }
-        
-        return AllPlayersView()
-            .environmentObject(manager)
-            .modelContainer(container)
-    } catch {
-        fatalError("Failed to create preview container: \(error)")
-    }
-}
