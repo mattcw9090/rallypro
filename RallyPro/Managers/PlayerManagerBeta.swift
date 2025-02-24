@@ -44,27 +44,63 @@ class PlayerManagerBeta: ObservableObject {
                    status: PlayerBeta.PlayerStatus = .notInSession,
                    waitlistPosition: Int? = nil,
                    isMale: Bool? = nil) {
-        // Create a new player instance using PlayerBeta.
         let newPlayer = PlayerBeta(name: name,
                                    status: status,
                                    waitlistPosition: waitlistPosition,
                                    isMale: isMale)
         
         let playerData: [String: Any] = [
-            "id": newPlayer.id, // Store the id generated in the model.
+            "id": newPlayer.id,
             "name": newPlayer.name,
             "statusRawValue": newPlayer.status.rawValue,
             "waitlistPosition": newPlayer.waitlistPosition as Any,
             "isMale": newPlayer.isMale as Any
         ]
         
-        // Using the player's id as the document ID ensures uniqueness.
         db.collection("players").document(newPlayer.id).setData(playerData) { error in
             if let error = error {
                 print("Error adding player: \(error.localizedDescription)")
             } else {
                 DispatchQueue.main.async {
                     self.players.append(newPlayer)
+                }
+            }
+        }
+    }
+    
+    // MARK: - New Delete Functionality
+    func deletePlayer(at offsets: IndexSet) {
+        offsets.forEach { index in
+            let player = players[index]
+            db.collection("players").document(player.id).delete { error in
+                if let error = error {
+                    print("Error deleting player: \(error.localizedDescription)")
+                } else {
+                    DispatchQueue.main.async {
+                        self.players.remove(at: index)
+                    }
+                }
+            }
+        }
+    }
+    
+    // MARK: - New Update Functionality
+    func updatePlayer(_ updatedPlayer: PlayerBeta) {
+        let playerData: [String: Any] = [
+            "id": updatedPlayer.id,
+            "name": updatedPlayer.name,
+            "statusRawValue": updatedPlayer.status.rawValue,
+            "waitlistPosition": updatedPlayer.waitlistPosition as Any,
+            "isMale": updatedPlayer.isMale as Any
+        ]
+        db.collection("players").document(updatedPlayer.id).updateData(playerData) { error in
+            if let error = error {
+                print("Error updating player: \(error.localizedDescription)")
+            } else {
+                if let index = self.players.firstIndex(where: { $0.id == updatedPlayer.id }) {
+                    DispatchQueue.main.async {
+                        self.players[index] = updatedPlayer
+                    }
                 }
             }
         }

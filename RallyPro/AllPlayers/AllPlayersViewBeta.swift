@@ -3,22 +3,52 @@ import SwiftUI
 struct AllPlayersViewBeta: View {
     @EnvironmentObject var playerManager: PlayerManagerBeta
     @State private var showAddPlayerSheet = false
+    @State private var selectedPlayerForEdit: PlayerBeta? = nil
 
     var body: some View {
         NavigationView {
-            List(playerManager.players) { player in
-                PlayerRowViewBeta(player: player)
+            List {
+                ForEach(playerManager.players) { player in
+                    PlayerRowViewBeta(player: player)
+                        .swipeActions(edge: .trailing, allowsFullSwipe: false) {
+                            // Delete Action
+                            Button(role: .destructive) {
+                                if let index = playerManager.players.firstIndex(where: { $0.id == player.id }) {
+                                    playerManager.deletePlayer(at: IndexSet(integer: index))
+                                }
+                            } label: {
+                                Label("Delete", systemImage: "trash")
+                            }
+                            // Edit Action
+                            Button {
+                                selectedPlayerForEdit = player
+                            } label: {
+                                Label("Edit", systemImage: "pencil")
+                            }
+                            .tint(.blue)
+                        }
+                }
+                .onDelete { offsets in
+                    playerManager.deletePlayer(at: offsets)
+                }
             }
             .navigationTitle("All Players")
             .toolbar {
-                Button(action: {
-                    showAddPlayerSheet.toggle()
-                }) {
-                    Image(systemName: "plus")
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button(action: {
+                        showAddPlayerSheet.toggle()
+                    }) {
+                        Image(systemName: "plus")
+                    }
                 }
             }
             .sheet(isPresented: $showAddPlayerSheet) {
                 AddPlayerViewBeta()
+                    .environmentObject(playerManager)
+            }
+            // Present the edit sheet when a player is selected.
+            .sheet(item: $selectedPlayerForEdit) { player in
+                EditPlayerViewBeta(player: player)
                     .environmentObject(playerManager)
             }
             .onAppear {
