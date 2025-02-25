@@ -13,11 +13,22 @@ struct SessionsViewBeta: View {
         manager.seasons.sorted { $0.seasonNumber > $1.seasonNumber }
     }
     
+    // Returns a header title for a given season with an indicator.
+    func seasonHeader(for season: SeasonBeta) -> String {
+        if season.id == latestSeason?.id && !season.isComplete {
+            return "Season \(season.seasonNumber) (In Progress)"
+        } else if season.isComplete {
+            return "Season \(season.seasonNumber) (Completed)"
+        } else {
+            return "Season \(season.seasonNumber)"
+        }
+    }
+    
     var body: some View {
         NavigationView {
             List {
                 ForEach(sortedSeasons) { season in
-                    DisclosureGroup("Season \(season.seasonNumber)") {
+                    DisclosureGroup(seasonHeader(for: season)) {
                         if let sessions = season.sessions, !sessions.isEmpty {
                             // Sort sessions in descending order (latest first)
                             ForEach(sessions.sorted { $0.sessionNumber > $1.sessionNumber }) { session in
@@ -34,7 +45,7 @@ struct SessionsViewBeta: View {
                                 .padding(.leading, 20)
                         }
                         
-                        // For the latest season (if not complete), show inline buttons to add session and mark complete.
+                        // For the latest season if it's not complete, show inline buttons.
                         if season.id == latestSeason?.id && !season.isComplete {
                             HStack {
                                 Button(action: {
@@ -60,7 +71,7 @@ struct SessionsViewBeta: View {
             .listStyle(InsetGroupedListStyle())
             .navigationTitle("Sessions")
             .toolbar {
-                // Top-right global "Add Season" button (no icon)
+                // Global "Add Season" button at the top-right.
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button(action: {
                         manager.addNextSeason()
