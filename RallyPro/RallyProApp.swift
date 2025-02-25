@@ -40,6 +40,7 @@ struct RallyProApp: App {
     @StateObject private var playerManager: PlayerManager
     @StateObject private var playerManagerBeta: PlayerManagerBeta
     @StateObject private var seasonSessionManager: SeasonSessionManager
+    @StateObject private var seasonSessionManagerBeta: SeasonSessionManagerBeta
     @StateObject private var seasonalResultsManager: SeasonalResultsManager
     @StateObject private var teamsManager: TeamsManager
     @StateObject private var drawsManager: DrawsManager
@@ -50,6 +51,7 @@ struct RallyProApp: App {
         _playerManager = StateObject(wrappedValue: PlayerManager(modelContext: modelContext))
         _playerManagerBeta = StateObject(wrappedValue: PlayerManagerBeta())
         _seasonSessionManager = StateObject(wrappedValue: SeasonSessionManager(modelContext: modelContext))
+        _seasonSessionManagerBeta = StateObject(wrappedValue: SeasonSessionManagerBeta())
         _seasonalResultsManager = StateObject(wrappedValue: SeasonalResultsManager(modelContext: modelContext))
         _teamsManager = StateObject(wrappedValue: TeamsManager(modelContext: modelContext))
         _drawsManager = StateObject(wrappedValue: DrawsManager(modelContext: modelContext))
@@ -64,6 +66,7 @@ struct RallyProApp: App {
                 .environmentObject(playerManager)
                 .environmentObject(playerManagerBeta)
                 .environmentObject(seasonSessionManager)
+                .environmentObject(seasonSessionManagerBeta)
                 .environmentObject(seasonalResultsManager)
                 .environmentObject(teamsManager)
                 .environmentObject(drawsManager)

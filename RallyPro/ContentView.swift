@@ -5,7 +5,7 @@ struct ContentView: View {
     var body: some View {
         ZStack {
             TabView {
-                SessionsView()
+                SessionsViewBeta()
                     .tabItem {
                         Label("Sessions", systemImage: "list.bullet")
                     }
