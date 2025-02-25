@@ -3,7 +3,7 @@ import SwiftUI
 struct SessionsViewBeta: View {
     @StateObject var manager = SeasonSessionManagerBeta()
     
-    // Helper to get the latest season (if any).
+    // Helper to get the latest season (if any)
     var latestSeason: SeasonBeta? {
         manager.seasons.max(by: { $0.seasonNumber < $1.seasonNumber })
     }
@@ -19,7 +19,7 @@ struct SessionsViewBeta: View {
                 ForEach(sortedSeasons) { season in
                     DisclosureGroup("Season \(season.seasonNumber)") {
                         if let sessions = season.sessions, !sessions.isEmpty {
-                            // Sort sessions in descending order (latest first) and wrap each row in a NavigationLink.
+                            // Sort sessions in descending order (latest first)
                             ForEach(sessions.sorted { $0.sessionNumber > $1.sessionNumber }) { session in
                                 NavigationLink {
                                     SessionDetailViewBeta(session: session, seasonNumber: season.seasonNumber)
@@ -34,29 +34,20 @@ struct SessionsViewBeta: View {
                                 .padding(.leading, 20)
                         }
                         
-                        // If this is the latest season and it's not complete,
-                        // show buttons to add the next session and mark it complete.
+                        // For the latest season (if not complete), show inline buttons to add session and mark complete.
                         if season.id == latestSeason?.id && !season.isComplete {
-                            VStack(alignment: .leading, spacing: 10) {
+                            HStack {
                                 Button(action: {
                                     manager.addNextSession()
                                 }) {
-                                    HStack {
-                                        Image(systemName: "plus.circle")
-                                        Text("Add Next Session")
-                                    }
-                                    .frame(maxWidth: .infinity)
+                                    Text("Add Session")
                                 }
                                 .buttonStyle(.borderedProminent)
                                 
                                 Button(action: {
                                     manager.markSeasonAsComplete(season)
                                 }) {
-                                    HStack {
-                                        Image(systemName: "checkmark.circle")
-                                        Text("Mark Season Complete")
-                                    }
-                                    .frame(maxWidth: .infinity)
+                                    Text("Mark Season Complete")
                                 }
                                 .buttonStyle(.bordered)
                             }
@@ -69,17 +60,14 @@ struct SessionsViewBeta: View {
             .listStyle(InsetGroupedListStyle())
             .navigationTitle("Sessions")
             .toolbar {
-                // Top right global "Add Next Season" button.
+                // Top-right global "Add Season" button (no icon)
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button(action: {
                         manager.addNextSeason()
                     }) {
-                        HStack {
-                            Image(systemName: "plus.square.on.square")
-                            Text("Add Next Season")
-                        }
+                        Text("Add Season")
                     }
-                    // Disable if the latest season is not complete.
+                    // Disable if the latest season exists and is not complete.
                     .disabled(latestSeason != nil && !latestSeason!.isComplete)
                 }
             }
