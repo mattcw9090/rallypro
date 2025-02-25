@@ -37,7 +37,7 @@ struct SessionDetailView: View {
                     case .results:
                         ResultsView(session: session)
                     case .payments:
-                        PaymentsView(session: session)  // Show the PaymentsView
+                        PaymentsView(session: session)
                     }
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)

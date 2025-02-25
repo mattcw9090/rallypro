@@ -23,8 +23,9 @@ class SeasonSessionManagerBeta: ObservableObject {
                 self.seasons = documents.compactMap { doc in
                     let data = doc.data()
                     guard let seasonNumber = data["seasonNumber"] as? Int else { return nil }
+                    let isComplete = data["isComplete"] as? Bool ?? false
                     
-                    // Retrieve sessions as an array of dictionaries
+                    // Retrieve sessions as an array of dictionaries.
                     let sessionsData = data["sessions"] as? [[String: Any]]
                     var sessions: [SessionBeta] = []
                     if let sessionsData = sessionsData {
@@ -35,7 +36,7 @@ class SeasonSessionManagerBeta: ObservableObject {
                         }
                     }
                     
-                    return SeasonBeta(id: doc.documentID, seasonNumber: seasonNumber, sessions: sessions)
+                    return SeasonBeta(id: doc.documentID, seasonNumber: seasonNumber, sessions: sessions, isComplete: isComplete)
                 }
             }
         }
@@ -46,6 +47,7 @@ class SeasonSessionManagerBeta: ObservableObject {
         let newSeason = SeasonBeta(seasonNumber: seasonNumber, sessions: sessions)
         let seasonData: [String: Any] = [
             "seasonNumber": newSeason.seasonNumber,
+            "isComplete": newSeason.isComplete,
             "sessions": newSeason.sessions?.map { ["id": $0.id, "sessionNumber": $0.sessionNumber] } as Any
         ]
         
@@ -64,6 +66,7 @@ class SeasonSessionManagerBeta: ObservableObject {
     func updateSeason(_ season: SeasonBeta) {
         let seasonData: [String: Any] = [
             "seasonNumber": season.seasonNumber,
+            "isComplete": season.isComplete,
             "sessions": season.sessions?.map { ["id": $0.id, "sessionNumber": $0.sessionNumber] } as Any
         ]
         
@@ -88,7 +91,7 @@ class SeasonSessionManagerBeta: ObservableObject {
         
         let newSession = SessionBeta(sessionNumber: sessionNumber)
         updatedSessions.append(newSession)
-        // Optional: sort sessions by session number
+        // Optional: sort sessions by session number.
         updatedSessions.sort { $0.sessionNumber < $1.sessionNumber }
         updatedSeason.sessions = updatedSessions
         
@@ -112,8 +115,34 @@ class SeasonSessionManagerBeta: ObservableObject {
     
     // MARK: - Global Add Season Functionality
     func addNextSeason() {
-        let latestSeasonNumber = seasons.map { $0.seasonNumber }.max() ?? 0
-        let newSeasonNumber = latestSeasonNumber + 1
+        // If no season exists, add season 1.
+        if seasons.isEmpty {
+            addSeason(seasonNumber: 1, sessions: [])
+            return
+        }
+        
+        // Otherwise, get the latest season.
+        guard let latestSeason = seasons.max(by: { $0.seasonNumber < $1.seasonNumber }) else {
+            print("Unexpected error: could not determine latest season.")
+            return
+        }
+        
+        // Check if the latest season is complete.
+        if !latestSeason.isComplete {
+            print("Latest season is not complete. Please mark it as complete before adding a new season.")
+            return
+        }
+        
+        // Create a new season with the next season number.
+        let newSeasonNumber = latestSeason.seasonNumber + 1
         addSeason(seasonNumber: newSeasonNumber, sessions: [])
+    }
+
+    
+    // MARK: - Mark Season as Complete
+    func markSeasonAsComplete(_ season: SeasonBeta) {
+        var updatedSeason = season
+        updatedSeason.isComplete = true
+        updateSeason(updatedSeason)
     }
 }
