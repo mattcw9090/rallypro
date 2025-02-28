@@ -48,15 +48,6 @@ struct SessionDetailViewBeta: View {
     }
 }
 
-struct TeamsViewBeta: View {
-    let session: SessionBeta
-    var body: some View {
-        Text("Teams for Session \(session.sessionNumber)")
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .background(Color.blue.opacity(0.1))
-    }
-}
-
 struct DrawsViewBeta: View {
     let session: SessionBeta
     var body: some View {
