@@ -112,4 +112,19 @@ class TeamsManagerBeta: ObservableObject {
             completion(error)
         })
     }
+    
+    func updateTeam(for participant: SessionParticipantBeta, to newTeam: TeamType?, completion: @escaping (Error?) -> Void) {
+        let teamValue = newTeam?.rawValue
+        db.collection("sessionParticipants").document(participant.id).updateData(["team": teamValue as Any]) { error in
+            if let error = error {
+                print("Error updating team for participant \(participant.id): \(error.localizedDescription)")
+            } else {
+                print("Successfully updated team for participant \(participant.id)")
+            }
+            DispatchQueue.main.async {
+                completion(error)
+            }
+        }
+    }
+
 }
