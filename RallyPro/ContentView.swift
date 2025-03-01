@@ -5,17 +5,17 @@ struct ContentView: View {
     var body: some View {
         ZStack {
             TabView {
-                SessionsViewBeta()
+                SessionsView()
                     .tabItem {
                         Label("Sessions", systemImage: "list.bullet")
                     }
                 
-                WaitlistViewBeta()
+                WaitlistView()
                     .tabItem {
                         Label("Waitlist", systemImage: "person.fill.badge.plus")
                     }
                 
-                AllPlayersViewBeta()
+                AllPlayersView()
                     .tabItem {
                         Label("All Players", systemImage: "person.3.fill")
                     }
