@@ -19,7 +19,7 @@ struct SessionsView: View {
                 }
             }
             .navigationTitle("Sessions")
-            .alert("Cannot Add Season", isPresented: $showAlert) {
+            .alert("Error", isPresented: $showAlert) {
                 Button("OK", role: .cancel) { }
             } message: {
                 Text(alertMessage)
@@ -69,12 +69,14 @@ struct SessionsView: View {
                     get: { expandedSeasons[season.seasonNumber] ?? false },
                     set: { expandedSeasons[season.seasonNumber] = $0 }
                 ),
-                seasonNumber: season.seasonNumber,
+                season: season,
                 sessions: seasonManager.allSessions.filter { $0.season.id == season.id },
                 isCompleted: season.isCompleted,
                 markIncomplete: { markSeasonIncomplete(season) },
                 addSession: { addSession(to: season) },
-                markComplete: { markSeasonComplete(season) }
+                markComplete: { markSeasonComplete(season) },
+                // Here we ignore the incoming parameter because we already know the season.
+                deleteLatestSession: { _ in deleteLatestSession(for: season) }
             )
         }
         .listStyle(InsetGroupedListStyle())
@@ -124,16 +126,26 @@ struct SessionsView: View {
             print("Error updating season: \(error)")
         }
     }
+    
+    private func deleteLatestSession(for season: Season) {
+        do {
+            try seasonManager.deleteLatestSession(for: season)
+        } catch {
+            alertMessage = error.localizedDescription
+            showAlert = true
+        }
+    }
 }
 
 struct SeasonAccordionView: View {
     @Binding var isExpanded: Bool
-    let seasonNumber: Int
+    let season: Season
     let sessions: [Session]
     let isCompleted: Bool
     let markIncomplete: () -> Void
     let addSession: () -> Void
     let markComplete: () -> Void
+    let deleteLatestSession: (Season) -> Void
 
     var body: some View {
         DisclosureGroup(isExpanded: $isExpanded) {
@@ -143,8 +155,9 @@ struct SeasonAccordionView: View {
                     .foregroundColor(.gray)
                     .padding(.vertical, 5)
             } else {
-                // List each session
-                ForEach(sessions) { session in
+                // Sort sessions in ascending order (oldest to latest)
+                let sortedSessions = sessions.sorted { $0.sessionNumber < $1.sessionNumber }
+                ForEach(sortedSessions, id: \.id) { session in
                     NavigationLink(destination: SessionDetailView(session: session)) {
                         HStack {
                             Image(systemName: "calendar.circle.fill")
@@ -153,21 +166,31 @@ struct SeasonAccordionView: View {
                         }
                         .padding(.vertical, 5)
                     }
+                    // Add swipe action only for the latest session.
+                    .swipeActions(edge: .trailing, allowsFullSwipe: true) {
+                        if session == sortedSessions.last {
+                            Button(role: .destructive) {
+                                deleteLatestSession(season)
+                            } label: {
+                                Label("Delete", systemImage: "trash")
+                            }
+                        }
+                    }
                 }
-                // Navigation link for seasonal results
+                // Navigation link for seasonal results.
                 NavigationLink(
-                    destination: SeasonalResultsView(seasonNumber: seasonNumber)
+                    destination: SeasonalResultsView(seasonNumber: season.seasonNumber)
                 ) {
                     HStack {
                         Image(systemName: "chart.bar.fill")
-                        Text("Season \(seasonNumber) Results")
+                        Text("Season \(season.seasonNumber) Results")
                             .font(.body)
                     }
                     .padding(.vertical, 5)
                 }
             }
 
-            // Buttons for adding a session and marking complete/incomplete
+            // Buttons for adding a session and marking complete/incomplete.
             if !isCompleted {
                 HStack(spacing: 20) {
                     Button("Add Session", action: addSession)
@@ -199,7 +222,7 @@ struct SeasonAccordionView: View {
             }
         } label: {
             HStack {
-                Text("Season \(seasonNumber)")
+                Text("Season \(season.seasonNumber)")
                     .font(.headline)
                     .foregroundColor(isCompleted ? .black : .blue)
                 Spacer()
@@ -209,34 +232,5 @@ struct SeasonAccordionView: View {
             }
         }
         .contentShape(Rectangle())
-    }
-}
-
-#Preview {
-    let schema = Schema([Season.self, Session.self])
-    let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: true)
-
-    do {
-        let mockContainer = try ModelContainer(for: schema, configurations: [modelConfiguration])
-        let context = mockContainer.mainContext
-
-        // Insert a sample season and session for preview.
-        let season1 = Season(seasonNumber: 1, isCompleted: true)
-        context.insert(season1)
-        let session1 = Session(sessionNumber: 1, season: season1)
-        context.insert(session1)
-
-        // Create managers using the same context.
-        let playerManager = PlayerManager(modelContext: context)
-        let seasonManager = SeasonSessionManager(modelContext: context)
-
-        return NavigationStack {
-            SessionsView()
-                .modelContainer(mockContainer)
-                .environmentObject(seasonManager)
-                .environmentObject(playerManager)
-        }
-    } catch {
-        fatalError("Could not create ModelContainer: \(error)")
     }
 }
