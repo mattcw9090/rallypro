@@ -6,7 +6,7 @@ class SeasonSessionManagerBeta: ObservableObject {
     
     private let db = Firestore.firestore()
     
-    // MARK: - Fetch Seasons
+    // MARK: - Fetch Seasons with Sessions from Subcollections
     func fetchSeasons() {
         db.collection("seasons").getDocuments { snapshot, error in
             if let error = error {
@@ -14,41 +14,58 @@ class SeasonSessionManagerBeta: ObservableObject {
                 return
             }
             
-            guard let documents = snapshot?.documents else {
+            guard let seasonDocs = snapshot?.documents else {
                 print("No seasons found")
                 return
             }
             
-            DispatchQueue.main.async {
-                self.seasons = documents.compactMap { doc in
-                    let data = doc.data()
-                    guard let seasonNumber = data["seasonNumber"] as? Int else { return nil }
-                    let isComplete = data["isComplete"] as? Bool ?? false
-                    
-                    // Retrieve sessions as an array of dictionaries.
-                    let sessionsData = data["sessions"] as? [[String: Any]]
-                    var sessions: [SessionBeta] = []
-                    if let sessionsData = sessionsData {
-                        sessions = sessionsData.compactMap { sessionDict in
-                            guard let sessionNumber = sessionDict["sessionNumber"] as? Int,
-                                  let id = sessionDict["id"] as? String else { return nil }
-                            return SessionBeta(id: id, sessionNumber: sessionNumber)
+            var fetchedSeasons: [SeasonBeta] = []
+            let group = DispatchGroup()
+            
+            // Iterate through each season document.
+            for doc in seasonDocs {
+                // Extract data from the document
+                let data = doc.data()
+                guard let seasonNumber = data["seasonNumber"] as? Int else { continue }
+                let isComplete = data["isComplete"] as? Bool ?? false
+
+                group.enter()
+                // Create a SeasonBeta instance with an empty sessions array
+                var season = SeasonBeta(id: doc.documentID, seasonNumber: seasonNumber, sessions: [], isComplete: isComplete)
+                
+                // Query the "sessions" subcollection for this season.
+                doc.reference.collection("sessions")
+                    .order(by: "sessionNumber", descending: false)
+                    .getDocuments { sessionSnapshot, error in
+                        if let error = error {
+                            print("Error fetching sessions for season \(seasonNumber): \(error.localizedDescription)")
+                        } else if let sessionDocs = sessionSnapshot?.documents {
+                            let sessions = sessionDocs.compactMap { sessionDoc -> SessionBeta? in
+                                let sData = sessionDoc.data()
+                                guard let sessionNumber = sData["sessionNumber"] as? Int else { return nil }
+                                return SessionBeta(id: sessionDoc.documentID, sessionNumber: sessionNumber)
+                            }
+                            season.sessions = sessions
                         }
+                        fetchedSeasons.append(season)
+                        group.leave()
                     }
-                    
-                    return SeasonBeta(id: doc.documentID, seasonNumber: seasonNumber, sessions: sessions, isComplete: isComplete)
-                }
+            }
+
+
+            
+            group.notify(queue: .main) {
+                self.seasons = fetchedSeasons
             }
         }
     }
     
-    // MARK: - Add Season
-    func addSeason(seasonNumber: Int, sessions: [SessionBeta]? = nil) {
-        let newSeason = SeasonBeta(seasonNumber: seasonNumber, sessions: sessions)
+    // MARK: - Add Season (writes a season document; sessions are added separately)
+    func addSeason(seasonNumber: Int) {
+        let newSeason = SeasonBeta(seasonNumber: seasonNumber, sessions: nil, isComplete: false)
         let seasonData: [String: Any] = [
             "seasonNumber": newSeason.seasonNumber,
-            "isComplete": newSeason.isComplete,
-            "sessions": newSeason.sessions?.map { ["id": $0.id, "sessionNumber": $0.sessionNumber] } as Any
+            "isComplete": newSeason.isComplete
         ]
         
         db.collection("seasons").document(newSeason.id).setData(seasonData) { error in
@@ -62,12 +79,11 @@ class SeasonSessionManagerBeta: ObservableObject {
         }
     }
     
-    // MARK: - Update Season
+    // MARK: - Update Season (only updates season-level fields)
     func updateSeason(_ season: SeasonBeta) {
         let seasonData: [String: Any] = [
             "seasonNumber": season.seasonNumber,
-            "isComplete": season.isComplete,
-            "sessions": season.sessions?.map { ["id": $0.id, "sessionNumber": $0.sessionNumber] } as Any
+            "isComplete": season.isComplete
         ]
         
         db.collection("seasons").document(season.id).updateData(seasonData) { error in
@@ -83,19 +99,23 @@ class SeasonSessionManagerBeta: ObservableObject {
         }
     }
     
-    // MARK: - Add Session to a Season
+    // MARK: - Add Session to a Season (writes a document in the "sessions" subcollection)
     func addSession(to season: SeasonBeta, sessionNumber: Int) {
-        guard let index = seasons.firstIndex(where: { $0.id == season.id }) else { return }
-        var updatedSeason = season
-        var updatedSessions = updatedSeason.sessions ?? []
-        
         let newSession = SessionBeta(sessionNumber: sessionNumber)
-        updatedSessions.append(newSession)
-        // Optional: sort sessions by session number.
-        updatedSessions.sort { $0.sessionNumber < $1.sessionNumber }
-        updatedSeason.sessions = updatedSessions
+        let seasonRef = db.collection("seasons").document(season.id)
+        let sessionData: [String: Any] = [
+            "sessionNumber": newSession.sessionNumber
+        ]
         
-        updateSeason(updatedSeason)
+        seasonRef.collection("sessions").document(newSession.id).setData(sessionData) { error in
+            if let error = error {
+                print("Error adding session: \(error.localizedDescription)")
+            } else {
+                print("Session \(newSession.sessionNumber) added to season \(season.seasonNumber)")
+                // Optionally refresh the seasons list.
+                self.fetchSeasons()
+            }
+        }
     }
     
     // MARK: - Global Add Session Functionality
@@ -106,38 +126,44 @@ class SeasonSessionManagerBeta: ObservableObject {
             return
         }
         
-        let currentSessions = latestSeason.sessions ?? []
-        let latestSessionNumber = currentSessions.map { $0.sessionNumber }.max() ?? 0
-        let newSessionNumber = latestSessionNumber + 1
-        
-        addSession(to: latestSeason, sessionNumber: newSessionNumber)
+        let seasonRef = db.collection("seasons").document(latestSeason.id)
+        seasonRef.collection("sessions")
+            .order(by: "sessionNumber", descending: true)
+            .limit(to: 1)
+            .getDocuments { snapshot, error in
+                if let error = error {
+                    print("Error fetching sessions: \(error.localizedDescription)")
+                    return
+                }
+                let latestSessionNumber = snapshot?.documents.first.flatMap {
+                    $0.data()["sessionNumber"] as? Int
+                } ?? 0
+                let newSessionNumber = latestSessionNumber + 1
+                self.addSession(to: latestSeason, sessionNumber: newSessionNumber)
+            }
     }
     
     // MARK: - Global Add Season Functionality
     func addNextSeason() {
         // If no season exists, add season 1.
         if seasons.isEmpty {
-            addSeason(seasonNumber: 1, sessions: [])
+            addSeason(seasonNumber: 1)
             return
         }
         
-        // Otherwise, get the latest season.
         guard let latestSeason = seasons.max(by: { $0.seasonNumber < $1.seasonNumber }) else {
             print("Unexpected error: could not determine latest season.")
             return
         }
         
-        // Check if the latest season is complete.
         if !latestSeason.isComplete {
             print("Latest season is not complete. Please mark it as complete before adding a new season.")
             return
         }
         
-        // Create a new season with the next season number.
         let newSeasonNumber = latestSeason.seasonNumber + 1
-        addSeason(seasonNumber: newSeasonNumber, sessions: [])
+        addSeason(seasonNumber: newSeasonNumber)
     }
-
     
     // MARK: - Mark Season as Complete
     func markSeasonAsComplete(_ season: SeasonBeta) {

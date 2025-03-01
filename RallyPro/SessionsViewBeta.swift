@@ -78,7 +78,6 @@ struct SessionsViewBeta: View {
                     }) {
                         Text("Add Season")
                     }
-                    // Disable if the latest season exists and is not complete.
                     .disabled(latestSeason != nil && !latestSeason!.isComplete)
                 }
             }

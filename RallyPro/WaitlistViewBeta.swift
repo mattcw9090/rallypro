@@ -2,6 +2,7 @@ import SwiftUI
 
 struct WaitlistViewBeta: View {
     @EnvironmentObject var playerManager: PlayerManagerBeta
+    @EnvironmentObject var teamsManager: TeamsManagerBeta  // Injected instance
 
     // Filter players with status 'onWaitlist' and sort by waitlistPosition.
     var waitlistPlayers: [PlayerBeta] {
@@ -15,17 +16,45 @@ struct WaitlistViewBeta: View {
             List {
                 ForEach(waitlistPlayers) { player in
                     WaitlistRowViewBeta(player: player)
+                        // Existing trailing swipe action: Restore to notInSession.
                         .swipeActions(edge: .trailing, allowsFullSwipe: false) {
                             Button {
-                                // Update the player's status to not in session.
                                 var updatedPlayer = player
                                 updatedPlayer.status = .notInSession
-                                // updatePlayer will clear waitlistPosition and reorder the remaining waitlisted players.
                                 playerManager.updatePlayer(updatedPlayer)
                             } label: {
                                 Label("Restore", systemImage: "arrow.uturn.left")
                             }
                             .tint(.green)
+                        }
+                        // New leading swipe action: Move player into the latest session.
+                        .swipeActions(edge: .leading, allowsFullSwipe: false) {
+                            Button {
+                                // Update the player's status to "Currently Playing"
+                                var updatedPlayer = player
+                                updatedPlayer.status = .playing
+                                playerManager.updatePlayer(updatedPlayer)
+                                
+                                // Now fetch the latest session from the latest season (using our new subcollection approach).
+                                teamsManager.getLatestSession { latestSession in
+                                    if let session = latestSession {
+                                        teamsManager.addParticipant(for: session.id,
+                                                                     player: updatedPlayer,
+                                                                     team: nil) { error in
+                                            if let error = error {
+                                                print("Error adding session participant: \(error.localizedDescription)")
+                                            } else {
+                                                print("Player \(updatedPlayer.name) added to session \(session.sessionNumber)")
+                                            }
+                                        }
+                                    } else {
+                                        print("No latest session found. Cannot add participant.")
+                                    }
+                                }
+                            } label: {
+                                Text("Join Latest Session")
+                            }
+                            .tint(.blue)
                         }
                 }
             }
@@ -49,7 +78,6 @@ struct WaitlistRowViewBeta: View {
                     .font(.headline)
                     .frame(width: 30, alignment: .center)
             }
-            
             // Display player's name.
             Text(player.name)
                 .font(.body)
