@@ -189,37 +189,6 @@ struct SeasonAccordionView: View {
                     .padding(.vertical, 5)
                 }
             }
-
-            // Buttons for adding a session and marking complete/incomplete.
-            if !isCompleted {
-                HStack(spacing: 20) {
-                    Button("Add Session", action: addSession)
-                        .padding(.vertical, 5)
-                        .padding(.horizontal, 10)
-                        .background(Color.green)
-                        .foregroundColor(.white)
-                        .cornerRadius(6)
-                        .font(.caption)
-
-                    Button("Mark Complete", action: markComplete)
-                        .padding(.vertical, 5)
-                        .padding(.horizontal, 10)
-                        .background(Color.orange)
-                        .foregroundColor(.white)
-                        .cornerRadius(6)
-                        .font(.caption)
-                }
-                .padding(.top, 10)
-            } else {
-                Button("Mark Incomplete", action: markIncomplete)
-                    .padding(.vertical, 5)
-                    .padding(.horizontal, 10)
-                    .background(Color.red)
-                    .foregroundColor(.white)
-                    .cornerRadius(6)
-                    .font(.caption)
-                    .padding(.top, 10)
-            }
         } label: {
             HStack {
                 Text("Season \(season.seasonNumber)")
@@ -230,7 +199,16 @@ struct SeasonAccordionView: View {
                     .font(.subheadline)
                     .foregroundColor(isCompleted ? .black : .blue)
             }
+            // Attach a context menu to the header so the actions are separate from the tap area.
+            .contextMenu {
+                Button("Add Session", action: addSession)
+                if !isCompleted {
+                    Button("Mark Complete", action: markComplete)
+                } else {
+                    Button("Mark Incomplete", action: markIncomplete)
+                }
+            }
         }
-        .contentShape(Rectangle())
+        .contentShape(Rectangle()) // Makes sure the tap area for the disclosure group is only on the header.
     }
 }
