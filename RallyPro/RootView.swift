@@ -8,22 +8,20 @@ struct RootView: View {
     var body: some View {
         Group {
             if authManager.currentUser == nil {
-                AuthView()
+                ContentView() // Use AuthView()
             } else if profileManager.userProfile == nil {
-                ProfileSetupView()
+                ContentView() // Use ProfileSetupView()
             } else {
                 ContentView()
             }
         }
         .onAppear {
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                if authManager.currentUser != nil {
-                    profileManager.fetchUserProfile()
-                }
+            if authManager.currentUser != nil {
+                profileManager.fetchUserProfile()
             }
         }
-        .onChange(of: authManager.currentUser) {
-            if authManager.currentUser != nil {
+        .onChange(of: authManager.currentUser) { newUser in
+            if newUser != nil {
                 profileManager.fetchUserProfile()
             }
         }
