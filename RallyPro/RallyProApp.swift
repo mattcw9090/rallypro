@@ -35,43 +35,30 @@ struct RallyProApp: App {
         }
     }()
 
-    @StateObject private var authManager = AuthManager()
-    @StateObject private var profileManager = ProfileManager()
     @StateObject private var playerManager: PlayerManager
-    @StateObject private var playerManagerBeta: PlayerManagerBeta
     @StateObject private var seasonSessionManager: SeasonSessionManager
-    @StateObject private var seasonSessionManagerBeta: SeasonSessionManagerBeta
     @StateObject private var seasonalResultsManager: SeasonalResultsManager
     @StateObject private var teamsManager: TeamsManager
-    @StateObject private var teamsManagerBeta: TeamsManagerBeta
     @StateObject private var drawsManager: DrawsManager
     @StateObject private var resultsManager: ResultsManager
 
     init() {
         let modelContext = sharedModelContainer.mainContext
         _playerManager = StateObject(wrappedValue: PlayerManager(modelContext: modelContext))
-        _playerManagerBeta = StateObject(wrappedValue: PlayerManagerBeta())
         _seasonSessionManager = StateObject(wrappedValue: SeasonSessionManager(modelContext: modelContext))
-        _seasonSessionManagerBeta = StateObject(wrappedValue: SeasonSessionManagerBeta())
         _seasonalResultsManager = StateObject(wrappedValue: SeasonalResultsManager(modelContext: modelContext))
         _teamsManager = StateObject(wrappedValue: TeamsManager(modelContext: modelContext))
-        _teamsManagerBeta = StateObject(wrappedValue: TeamsManagerBeta())
         _drawsManager = StateObject(wrappedValue: DrawsManager(modelContext: modelContext))
         _resultsManager = StateObject(wrappedValue: ResultsManager(modelContext: modelContext))
     }
 
     var body: some Scene {
         WindowGroup {
-            RootView()
-                .environmentObject(authManager)
-                .environmentObject(profileManager)
+            ContentView()
                 .environmentObject(playerManager)
-                .environmentObject(playerManagerBeta)
                 .environmentObject(seasonSessionManager)
-                .environmentObject(seasonSessionManagerBeta)
                 .environmentObject(seasonalResultsManager)
                 .environmentObject(teamsManager)
-                .environmentObject(teamsManagerBeta)
                 .environmentObject(drawsManager)
                 .environmentObject(resultsManager)
         }
