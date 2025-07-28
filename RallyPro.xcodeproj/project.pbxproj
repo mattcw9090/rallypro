@@ -17,10 +17,21 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		FB36CC492D3CE8230013B8D6 /* RallyPro.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = RallyPro.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		FB1D91652E375E0D00726576 /* RallyProMac.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = RallyProMac.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		FB36CC492D3CE8230013B8D6 /* RallyProIOS.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = RallyProIOS.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
+		FB1D91412E375D4F00726576 /* Models */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = Models;
+			sourceTree = "<group>";
+		};
+		FB1D91662E375E0D00726576 /* RallyProMac */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = RallyProMac;
+			sourceTree = "<group>";
+		};
 		FB36CC4B2D3CE8230013B8D6 /* RallyPro */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			path = RallyPro;
@@ -29,6 +40,13 @@
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
+		FB1D91622E375E0D00726576 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		FB36CC462D3CE8230013B8D6 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -50,15 +68,18 @@
 			isa = PBXGroup;
 			children = (
 				FB36CC4B2D3CE8230013B8D6 /* RallyPro */,
+				FB1D91662E375E0D00726576 /* RallyProMac */,
 				FBA2EC0E2D6631ED00F3F4DB /* Frameworks */,
 				FB36CC4A2D3CE8230013B8D6 /* Products */,
+				FB1D91412E375D4F00726576 /* Models */,
 			);
 			sourceTree = "<group>";
 		};
 		FB36CC4A2D3CE8230013B8D6 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				FB36CC492D3CE8230013B8D6 /* RallyPro.app */,
+				FB36CC492D3CE8230013B8D6 /* RallyProIOS.app */,
+				FB1D91652E375E0D00726576 /* RallyProMac.app */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -73,9 +94,31 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		FB36CC482D3CE8230013B8D6 /* RallyPro */ = {
+		FB1D91642E375E0D00726576 /* RallyProMac */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = FB36CC592D3CE8250013B8D6 /* Build configuration list for PBXNativeTarget "RallyPro" */;
+			buildConfigurationList = FB1D91702E375E0E00726576 /* Build configuration list for PBXNativeTarget "RallyProMac" */;
+			buildPhases = (
+				FB1D91612E375E0D00726576 /* Sources */,
+				FB1D91622E375E0D00726576 /* Frameworks */,
+				FB1D91632E375E0D00726576 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				FB1D91662E375E0D00726576 /* RallyProMac */,
+			);
+			name = RallyProMac;
+			packageProductDependencies = (
+			);
+			productName = RallyProMac;
+			productReference = FB1D91652E375E0D00726576 /* RallyProMac.app */;
+			productType = "com.apple.product-type.application";
+		};
+		FB36CC482D3CE8230013B8D6 /* RallyProIOS */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = FB36CC592D3CE8250013B8D6 /* Build configuration list for PBXNativeTarget "RallyProIOS" */;
 			buildPhases = (
 				FB36CC452D3CE8230013B8D6 /* Sources */,
 				FB36CC462D3CE8230013B8D6 /* Frameworks */,
@@ -86,9 +129,10 @@
 			dependencies = (
 			);
 			fileSystemSynchronizedGroups = (
+				FB1D91412E375D4F00726576 /* Models */,
 				FB36CC4B2D3CE8230013B8D6 /* RallyPro */,
 			);
-			name = RallyPro;
+			name = RallyProIOS;
 			packageProductDependencies = (
 				FBAB55062D64DB6900F7816B /* FirebaseAnalytics */,
 				FBAB55082D64DB6900F7816B /* FirebaseAppCheck */,
@@ -99,7 +143,7 @@
 				FBD9C1F72D67572800003AF1 /* FirebaseFirestoreCombine-Community */,
 			);
 			productName = RallyPro;
-			productReference = FB36CC492D3CE8230013B8D6 /* RallyPro.app */;
+			productReference = FB36CC492D3CE8230013B8D6 /* RallyProIOS.app */;
 			productType = "com.apple.product-type.application";
 		};
 /* End PBXNativeTarget section */
@@ -109,9 +153,12 @@
 			isa = PBXProject;
 			attributes = {
 				BuildIndependentTargetsInParallel = 1;
-				LastSwiftUpdateCheck = 1620;
+				LastSwiftUpdateCheck = 1640;
 				LastUpgradeCheck = 1640;
 				TargetAttributes = {
+					FB1D91642E375E0D00726576 = {
+						CreatedOnToolsVersion = 16.4;
+					};
 					FB36CC482D3CE8230013B8D6 = {
 						CreatedOnToolsVersion = 16.2;
 					};
@@ -135,12 +182,20 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				FB36CC482D3CE8230013B8D6 /* RallyPro */,
+				FB36CC482D3CE8230013B8D6 /* RallyProIOS */,
+				FB1D91642E375E0D00726576 /* RallyProMac */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
+		FB1D91632E375E0D00726576 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		FB36CC472D3CE8230013B8D6 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -151,6 +206,13 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
+		FB1D91612E375E0D00726576 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		FB36CC452D3CE8230013B8D6 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -161,6 +223,64 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin XCBuildConfiguration section */
+		FB1D91712E375E0E00726576 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = RallyProMac/RallyProMac.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = F4PCJ46P2A;
+				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 15.5;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.MatthewChew.RallyProMac;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				REGISTER_APP_GROUPS = YES;
+				SDKROOT = macosx;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		FB1D91722E375E0E00726576 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = RallyProMac/RallyProMac.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = F4PCJ46P2A;
+				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 15.5;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.MatthewChew.RallyProMac;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				REGISTER_APP_GROUPS = YES;
+				SDKROOT = macosx;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
 		FB36CC572D3CE8250013B8D6 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -295,7 +415,7 @@
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = "";
-				INFOPLIST_KEY_CFBundleDisplayName = RallyPro;
+				INFOPLIST_KEY_CFBundleDisplayName = RallyProIOS;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.sports";
 				INFOPLIST_KEY_NSPhotoLibraryAddUsageDescription = "This app requires access to the photo library to save images.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
@@ -329,7 +449,7 @@
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = "";
-				INFOPLIST_KEY_CFBundleDisplayName = RallyPro;
+				INFOPLIST_KEY_CFBundleDisplayName = RallyProIOS;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.sports";
 				INFOPLIST_KEY_NSPhotoLibraryAddUsageDescription = "This app requires access to the photo library to save images.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
@@ -354,6 +474,15 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
+		FB1D91702E375E0E00726576 /* Build configuration list for PBXNativeTarget "RallyProMac" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				FB1D91712E375E0E00726576 /* Debug */,
+				FB1D91722E375E0E00726576 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 		FB36CC442D3CE8230013B8D6 /* Build configuration list for PBXProject "RallyPro" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
@@ -363,7 +492,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		FB36CC592D3CE8250013B8D6 /* Build configuration list for PBXNativeTarget "RallyPro" */ = {
+		FB36CC592D3CE8250013B8D6 /* Build configuration list for PBXNativeTarget "RallyProIOS" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				FB36CC5A2D3CE8250013B8D6 /* Debug */,
