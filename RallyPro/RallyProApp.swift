@@ -3,7 +3,6 @@ import SwiftData
 
 @main
 struct RallyProApp: App {
-    // Shared model container (unchanged).
     var sharedModelContainer: ModelContainer = {
         let schema = Schema([Player.self, Season.self, Session.self, SessionParticipant.self, DoublesMatch.self])
         let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)

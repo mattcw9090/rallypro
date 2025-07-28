@@ -1,59 +1,63 @@
-//
-//  ContentView.swift
-//  RallyProMac
-//
-//  Created by Matthew Chew on 28/7/25.
-//
-
 import SwiftUI
 import SwiftData
 
 struct ContentView: View {
-    @Environment(\.modelContext) private var modelContext
-    @Query private var items: [Item]
+    enum SidebarItem: Hashable {
+        case sessions, waitlist, allPlayers
+    }
+
+    @State private var selection: SidebarItem? = .sessions
 
     var body: some View {
         NavigationSplitView {
-            List {
-                ForEach(items) { item in
-                    NavigationLink {
-                        Text("Item at \(item.timestamp, format: Date.FormatStyle(date: .numeric, time: .standard))")
-                    } label: {
-                        Text(item.timestamp, format: Date.FormatStyle(date: .numeric, time: .standard))
-                    }
-                }
-                .onDelete(perform: deleteItems)
+            List(selection: $selection) {
+                Label("Sessions", systemImage: "list.bullet")
+                    .tag(SidebarItem.sessions)
+                Label("Waitlist", systemImage: "person.fill.badge.plus")
+                    .tag(SidebarItem.waitlist)
+                Label("All Players", systemImage: "person.3.fill")
+                    .tag(SidebarItem.allPlayers)
             }
-            .navigationSplitViewColumnWidth(min: 180, ideal: 200)
-            .toolbar {
-                ToolbarItem {
-                    Button(action: addItem) {
-                        Label("Add Item", systemImage: "plus")
-                    }
-                }
-            }
+            .navigationTitle("RallyPro")
         } detail: {
-            Text("Select an item")
-        }
-    }
-
-    private func addItem() {
-        withAnimation {
-            let newItem = Item(timestamp: Date())
-            modelContext.insert(newItem)
-        }
-    }
-
-    private func deleteItems(offsets: IndexSet) {
-        withAnimation {
-            for index in offsets {
-                modelContext.delete(items[index])
+            switch selection {
+            case .sessions:
+                SessionsPlaceholder()
+            case .waitlist:
+                WaitlistPlaceholder()
+            case .allPlayers:
+                AllPlayersPlaceholder()
+            case .none:
+                Text("Select a view from the sidebar")
+                    .foregroundColor(.secondary)
             }
         }
     }
 }
 
-#Preview {
-    ContentView()
-        .modelContainer(for: Item.self, inMemory: true)
+struct SessionsPlaceholder: View {
+    var body: some View {
+        Text("Sessions View")
+            .font(.largeTitle)
+            .foregroundColor(.blue)
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+}
+
+struct WaitlistPlaceholder: View {
+    var body: some View {
+        Text("Waitlist View")
+            .font(.largeTitle)
+            .foregroundColor(.green)
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+}
+
+struct AllPlayersPlaceholder: View {
+    var body: some View {
+        Text("All Players View")
+            .font(.largeTitle)
+            .foregroundColor(.orange)
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
 }

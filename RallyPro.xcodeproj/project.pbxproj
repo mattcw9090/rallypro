@@ -21,6 +21,16 @@
 		FB36CC492D3CE8230013B8D6 /* RallyProIOS.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = RallyProIOS.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		FB1D91912E37616200726576 /* Exceptions for "Managers" folder in "RallyProMac" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				SnapshotHelper.swift,
+			);
+			target = FB1D91642E375E0D00726576 /* RallyProMac */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		FB1D91412E375D4F00726576 /* Models */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
@@ -30,6 +40,14 @@
 		FB1D91662E375E0D00726576 /* RallyProMac */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			path = RallyProMac;
+			sourceTree = "<group>";
+		};
+		FB1D917B2E375FD100726576 /* Managers */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				FB1D91912E37616200726576 /* Exceptions for "Managers" folder in "RallyProMac" target */,
+			);
+			path = Managers;
 			sourceTree = "<group>";
 		};
 		FB36CC4B2D3CE8230013B8D6 /* RallyPro */ = {
@@ -72,6 +90,7 @@
 				FBA2EC0E2D6631ED00F3F4DB /* Frameworks */,
 				FB36CC4A2D3CE8230013B8D6 /* Products */,
 				FB1D91412E375D4F00726576 /* Models */,
+				FB1D917B2E375FD100726576 /* Managers */,
 			);
 			sourceTree = "<group>";
 		};
@@ -107,7 +126,9 @@
 			dependencies = (
 			);
 			fileSystemSynchronizedGroups = (
+				FB1D91412E375D4F00726576 /* Models */,
 				FB1D91662E375E0D00726576 /* RallyProMac */,
+				FB1D917B2E375FD100726576 /* Managers */,
 			);
 			name = RallyProMac;
 			packageProductDependencies = (
@@ -130,6 +151,7 @@
 			);
 			fileSystemSynchronizedGroups = (
 				FB1D91412E375D4F00726576 /* Models */,
+				FB1D917B2E375FD100726576 /* Managers */,
 				FB36CC4B2D3CE8230013B8D6 /* RallyPro */,
 			);
 			name = RallyProIOS;
