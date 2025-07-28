@@ -1,29 +1,8 @@
 import SwiftUI
-import FirebaseCore
-import FirebaseAuth
 import SwiftData
-import GoogleSignIn
-
-// Create AppDelegate to initialize Firebase and handle Google Sign-In callbacks.
-class AppDelegate: NSObject, UIApplicationDelegate {
-    func application(_ application: UIApplication,
-                     didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey : Any]? = nil) -> Bool {
-        FirebaseApp.configure()
-        return true
-    }
-    
-    // Handle the callback URL for Google Sign-In.
-    @available(iOS 9.0, *)
-    func application(_ app: UIApplication, open url: URL,
-                     options: [UIApplication.OpenURLOptionsKey: Any] = [:]) -> Bool {
-        return GIDSignIn.sharedInstance.handle(url)
-    }
-}
 
 @main
 struct RallyProApp: App {
-    @UIApplicationDelegateAdaptor(AppDelegate.self) var delegate
-
     // Shared model container (unchanged).
     var sharedModelContainer: ModelContainer = {
         let schema = Schema([Player.self, Season.self, Session.self, SessionParticipant.self, DoublesMatch.self])

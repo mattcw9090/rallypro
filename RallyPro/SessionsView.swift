@@ -1,6 +1,5 @@
 import SwiftUI
 import SwiftData
-import FirebaseAuth
 
 struct SessionsView: View {
     @EnvironmentObject var seasonManager: SeasonSessionManager
@@ -80,7 +79,11 @@ struct SessionsView: View {
             )
         }
         .listStyle(InsetGroupedListStyle())
-        .overlay(addSeasonButton, alignment: .bottom)
+        .safeAreaInset(edge: .bottom) {
+            addSeasonButton
+                .padding()
+                .background(.ultraThinMaterial)
+        }
     }
 
     private var addSeasonButton: some View {
