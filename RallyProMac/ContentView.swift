@@ -9,47 +9,53 @@ struct ContentView: View {
     @State private var selection: SidebarItem? = .sessions
 
     init() {
+        // Ensure consistent appearance
         NSApp.keyWindow?.appearance = NSAppearance(named: .aqua)
     }
 
     var body: some View {
         NavigationSplitView {
             sidebar
-                .frame(minWidth: 220)
+                .frame(minWidth: 240)
                 .background(
                     LinearGradient(
                         gradient: Gradient(colors: [Color(.windowBackgroundColor), Color(.controlBackgroundColor)]),
                         startPoint: .top,
                         endPoint: .bottom
                     )
+                    .ignoresSafeArea()
                 )
         } detail: {
             detailView
                 .frame(minWidth: 600, minHeight: 400)
-                .background(Color(.textBackgroundColor))
+                .background(Color(.textBackgroundColor).ignoresSafeArea())
         }
         .toolbar {
             ToolbarItem(placement: .navigation) {
-                Button(action: toggleSidebar) {
+                Button {
+                    toggleSidebar()
+                } label: {
                     Image(systemName: "sidebar.leading")
                 }
                 .help("Toggle Sidebar")
             }
         }
-        .accentColor(Color.mint)
+        .accentColor(.mint)
     }
 
     private var sidebar: some View {
         VStack(alignment: .leading, spacing: 16) {
-            // App Title
+            // App Header
             HStack(spacing: 8) {
                 Image("AppIcon")
                     .resizable()
-                    .frame(width: 28, height: 28)
+                    .frame(width: 32, height: 32)
                 Text("RallyPro")
-                    .font(.title2.weight(.bold))
+                    .font(.title2.bold())
             }
-            .padding(.top, 12)
+            .padding(.top, 16)
+
+            Divider()
 
             // Navigation List
             List(selection: $selection) {
@@ -57,38 +63,45 @@ struct ContentView: View {
                 sidebarItem(.waitlist, label: "Waitlist", icon: "person.fill.badge.plus")
                 sidebarItem(.allPlayers, label: "All Players", icon: "person.3.fill")
             }
-            .listStyle(SidebarListStyle())
+            .listStyle(.sidebar)
             .scrollIndicators(.hidden)
 
             Spacer()
         }
-        .padding(.horizontal)
+        .padding(.horizontal, 12)
     }
 
     @ViewBuilder
     private var detailView: some View {
-        switch selection {
-        case .sessions:
-            SessionsView()
-                .padding()
-        case .waitlist:
-            WaitlistView()
-                .padding()
-        case .allPlayers:
-            AllPlayersView()
-                .padding()
-        default:
-            Text("Select a view from the sidebar")
-                .foregroundColor(.secondary)
-                .font(.headline)
+        Group {
+            switch selection {
+            case .sessions:
+                SessionsView()
+            case .waitlist:
+                WaitlistView()
+            case .allPlayers:
+                AllPlayersView()
+            default:
+                VStack {
+                    Text("Select a view from the sidebar")
+                        .font(.headline)
+                        .foregroundColor(.secondary)
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+            }
         }
+        .padding()
     }
 
     private func sidebarItem(_ item: SidebarItem, label: String, icon: String) -> some View {
-        Label(label, systemImage: icon)
-            .tag(item)
-            .font(.headline)
-            .padding(.vertical, 6)
+        Label {
+            Text(label)
+                .font(.headline)
+        } icon: {
+            Image(systemName: icon)
+        }
+        .padding(.vertical, 8)
+        .contentShape(Rectangle())
     }
 
     private func toggleSidebar() {
