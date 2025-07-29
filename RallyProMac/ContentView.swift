@@ -22,7 +22,7 @@ struct ContentView: View {
         } detail: {
             switch selection {
             case .sessions:
-                SessionsPlaceholder()
+                SessionsView()
             case .waitlist:
                 WaitlistPlaceholder()
             case .allPlayers:
@@ -32,15 +32,6 @@ struct ContentView: View {
                     .foregroundColor(.secondary)
             }
         }
-    }
-}
-
-struct SessionsPlaceholder: View {
-    var body: some View {
-        Text("Sessions View")
-            .font(.largeTitle)
-            .foregroundColor(.blue)
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 }
 
