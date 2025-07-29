@@ -62,38 +62,47 @@ struct SessionsView: View {
     }
 
     private var seasonListView: some View {
-        List(seasonManager.allSeasons) { season in
-            SeasonAccordionView(
-                isExpanded: Binding(
-                    get: { expandedSeasons[season.seasonNumber] ?? false },
-                    set: { expandedSeasons[season.seasonNumber] = $0 }
-                ),
-                season: season,
-                sessions: seasonManager.allSessions.filter { $0.season.id == season.id },
-                isCompleted: season.isCompleted,
-                markIncomplete: { markSeasonIncomplete(season) },
-                addSession: { addSession(to: season) },
-                markComplete: { markSeasonComplete(season) },
-                // Here we ignore the incoming parameter because we already know the season.
-                deleteLatestSession: { _ in deleteLatestSession(for: season) }
-            )
+        List {
+            ForEach(seasonManager.allSeasons) { season in
+                SeasonAccordionView(
+                    isExpanded: Binding(
+                        get: { expandedSeasons[season.seasonNumber] ?? false },
+                        set: { expandedSeasons[season.seasonNumber] = $0 }
+                    ),
+                    season: season,
+                    sessions: seasonManager.allSessions.filter { $0.season.id == season.id },
+                    isCompleted: season.isCompleted,
+                    markIncomplete: { markSeasonIncomplete(season) },
+                    addSession: { addSession(to: season) },
+                    markComplete: { markSeasonComplete(season) },
+                    deleteLatestSession: { _ in deleteLatestSession(for: season) }
+                )
+                .padding(.vertical, 4)
+            }
         }
         .listStyle(.inset)
+        .background(Color.clear)
         .safeAreaInset(edge: .bottom) {
-            addSeasonButton
-                .padding()
-                .background(.ultraThinMaterial)
+            VStack {
+                Divider()
+                addSeasonButton
+                    .padding(.vertical, 10)
+            }
         }
     }
 
     private var addSeasonButton: some View {
-        Button("Add New Season", action: addNewSeason)
-            .frame(maxWidth: .infinity)
-            .padding()
-            .background(Color.blue)
-            .foregroundColor(.white)
-            .cornerRadius(8)
-            .padding()
+        Button(action: addNewSeason) {
+            Label("Add New Season", systemImage: "plus")
+                .font(.body.bold())
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 10)
+        }
+        .buttonStyle(.plain)
+        .background(RoundedRectangle(cornerRadius: 10).fill(Color.accentColor))
+        .foregroundColor(.white)
+        .padding(.horizontal)
+        .shadow(radius: 1)
     }
 
     private func addNewSeason() {
@@ -154,22 +163,22 @@ struct SeasonAccordionView: View {
         DisclosureGroup(isExpanded: $isExpanded) {
             if sessions.isEmpty {
                 Text("No sessions")
-                    .font(.subheadline)
-                    .foregroundColor(.gray)
-                    .padding(.vertical, 5)
+                    .font(.callout)
+                    .foregroundStyle(.secondary)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.vertical, 6)
             } else {
-                // Sort sessions in ascending order (oldest to latest)
                 let sortedSessions = sessions.sorted { $0.sessionNumber < $1.sessionNumber }
                 ForEach(sortedSessions, id: \.id) { session in
                     NavigationLink(destination: SessionDetailView(session: session)) {
-                        HStack {
+                        HStack(spacing: 10) {
                             Image(systemName: "calendar.circle.fill")
+                                .foregroundColor(.accentColor)
                             Text("Session \(session.sessionNumber)")
                                 .font(.body)
                         }
-                        .padding(.vertical, 5)
+                        .padding(.vertical, 6)
                     }
-                    // Add swipe action only for the latest session.
                     .swipeActions(edge: .trailing, allowsFullSwipe: true) {
                         if session == sortedSessions.last {
                             Button(role: .destructive) {
@@ -180,38 +189,40 @@ struct SeasonAccordionView: View {
                         }
                     }
                 }
-                // Navigation link for seasonal results.
-                NavigationLink(
-                    destination: SeasonalResultsView(seasonNumber: season.seasonNumber)
-                ) {
-                    HStack {
+
+                NavigationLink(destination: SeasonalResultsView(seasonNumber: season.seasonNumber)) {
+                    HStack(spacing: 10) {
                         Image(systemName: "chart.bar.fill")
+                            .foregroundColor(.accentColor)
                         Text("Season \(season.seasonNumber) Results")
                             .font(.body)
                     }
-                    .padding(.vertical, 5)
+                    .padding(.vertical, 6)
                 }
             }
         } label: {
             HStack {
-                Text("Season \(season.seasonNumber)")
-                    .font(.headline)
-                    .foregroundColor(isCompleted ? .black : .blue)
+                Spacer().frame(width: 10)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Season \(season.seasonNumber)")
+                        .font(.title3.bold())
+                        .foregroundColor(isCompleted ? .primary : .blue)
+                    Text(isCompleted ? "Completed" : "In Progress")
+                        .font(.caption)
+                        .foregroundColor(isCompleted ? .secondary : .blue)
+                }
                 Spacer()
-                Text(isCompleted ? "Completed" : "In Progress")
-                    .font(.subheadline)
-                    .foregroundColor(isCompleted ? .black : .blue)
             }
-            // Attach a context menu to the header so the actions are separate from the tap area.
+            .padding(.vertical, 8)
             .contextMenu {
                 Button("Add Session", action: addSession)
-                if !isCompleted {
-                    Button("Mark Complete", action: markComplete)
-                } else {
+                if isCompleted {
                     Button("Mark Incomplete", action: markIncomplete)
+                } else {
+                    Button("Mark Complete", action: markComplete)
                 }
             }
         }
-        .contentShape(Rectangle()) // Makes sure the tap area for the disclosure group is only on the header.
+        .contentShape(Rectangle())
     }
 }
