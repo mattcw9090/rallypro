@@ -1,5 +1,6 @@
 import SwiftUI
 import SwiftData
+import AppKit
 
 // MARK: - Alert Helper
 
@@ -155,7 +156,7 @@ struct TeamsView: View {
         }
         .padding()
         .frame(maxWidth: .infinity)
-        .background(Color(UIColor.secondarySystemBackground))
+        .background(Color(NSColor.windowBackgroundColor))
         .cornerRadius(10)
     }
     

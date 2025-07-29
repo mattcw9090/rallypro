@@ -1,5 +1,6 @@
 import SwiftUI
 import SwiftData
+import AppKit
 
 struct ResultsView: View {
     let session: Session
@@ -48,7 +49,7 @@ struct ResultsView: View {
                 }
                 .padding()
             }
-            .background(Color(.systemGray6))
+            .background(Color(NSColor.windowBackgroundColor))
             .cornerRadius(10)
             .padding(.horizontal)
             

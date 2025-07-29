@@ -1,5 +1,24 @@
 import SwiftUI
 import SwiftData
+import AppKit
+
+// MARK: - Input Box Style
+extension View {
+    /// A styled input box with padding, background, border, and fixed width.
+    func styledInputBox(width: CGFloat = 100) -> some View {
+        self
+            .padding(8)
+            .background(
+                RoundedRectangle(cornerRadius: 8)
+                    .fill(Color(NSColor.windowBackgroundColor))
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 8)
+                    .stroke(Color.accentColor, lineWidth: 2)
+            )
+            .frame(width: width)
+    }
+}
 
 struct PaymentsView: View {
     let session: Session
@@ -10,43 +29,31 @@ struct PaymentsView: View {
     @State private var costPerShuttleText: String = ""
 
     // Computed properties based on session data.
-    var numberOfParticipants: Int {
+    private var numberOfParticipants: Int {
         session.participants.count
     }
     
-    var participantsPayment: Double {
+    private var participantsPayment: Double {
         Double(numberOfParticipants) * 25
     }
     
-    var payout: Double {
+    private var payout: Double {
         (Double(numberOfParticipants) / 2.0) * 10
     }
     
-    var shuttleCost: Double {
+    private var shuttleCost: Double {
         Double(session.numberOfShuttles) * session.costPerShuttle
     }
     
-    var netIncome: Double {
+    private var netIncome: Double {
         participantsPayment - session.courtCost - payout - shuttleCost
     }
     
     // Function to commit changes for all text fields.
     private func commitChanges() {
-        if let cost = Double(courtCostText) {
-            session.courtCost = cost
-        } else {
-            session.courtCost = 0
-        }
-        if let num = Int(shuttleNumberText) {
-            session.numberOfShuttles = num
-        } else {
-            session.numberOfShuttles = 0
-        }
-        if let costPer = Double(costPerShuttleText) {
-            session.costPerShuttle = costPer
-        } else {
-            session.costPerShuttle = 0
-        }
+        session.courtCost = Double(courtCostText) ?? 0
+        session.numberOfShuttles = Int(shuttleNumberText) ?? 0
+        session.costPerShuttle = Double(costPerShuttleText) ?? 0
         try? modelContext.save()
     }
     
@@ -65,17 +72,7 @@ struct PaymentsView: View {
                             .fontWeight(.semibold)
                         Spacer()
                         TextField("Enter cost", text: $courtCostText)
-                            .padding(8)
-                            .background(
-                                RoundedRectangle(cornerRadius: 8)
-                                    .fill(Color(UIColor.systemBackground))
-                            )
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 8)
-                                    .stroke(Color.accentColor, lineWidth: 2)
-                            )
-                            .keyboardType(.decimalPad)
-                            .frame(width: 100)
+                            .styledInputBox()
                     }
                     
                     Divider()
@@ -89,34 +86,14 @@ struct PaymentsView: View {
                         Text("Number of Shuttles")
                         Spacer()
                         TextField("0", text: $shuttleNumberText)
-                            .padding(8)
-                            .background(
-                                RoundedRectangle(cornerRadius: 8)
-                                    .fill(Color(UIColor.systemBackground))
-                            )
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 8)
-                                    .stroke(Color.accentColor, lineWidth: 2)
-                            )
-                            .keyboardType(.numberPad)
-                            .frame(width: 100)
+                            .styledInputBox()
                     }
                     
                     HStack {
                         Text("Cost per Shuttle")
                         Spacer()
                         TextField("0.00", text: $costPerShuttleText)
-                            .padding(8)
-                            .background(
-                                RoundedRectangle(cornerRadius: 8)
-                                    .fill(Color(UIColor.systemBackground))
-                            )
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 8)
-                                    .stroke(Color.accentColor, lineWidth: 2)
-                            )
-                            .keyboardType(.decimalPad)
-                            .frame(width: 100)
+                            .styledInputBox()
                     }
                     
                     HStack {
@@ -182,7 +159,7 @@ struct PaymentsView: View {
                         Divider()
                     }
                 }
-                .background(Color(UIColor.secondarySystemBackground))
+                .background(Color(NSColor.windowBackgroundColor))
                 .cornerRadius(12)
                 .padding(.horizontal)
             }
@@ -190,32 +167,20 @@ struct PaymentsView: View {
         }
         .navigationTitle("Payments")
         .onAppear {
-            // Initialize text fields with persistent values.
             courtCostText = String(format: "%.2f", session.courtCost)
             shuttleNumberText = String(session.numberOfShuttles)
             costPerShuttleText = String(format: "%.2f", session.costPerShuttle)
         }
-        // Add a keyboard toolbar with a "Done" button.
-        .toolbar {
-            ToolbarItemGroup(placement: .keyboard) {
-                Spacer()
-                Button("Done") {
-                    commitChanges()
-                    // Dismiss the keyboard.
-                    UIApplication.shared.sendAction(
-                        #selector(UIResponder.resignFirstResponder),
-                        to: nil, from: nil, for: nil
-                    )
-                }
-            }
-        }
+        .onChange(of: courtCostText) { _ in commitChanges() }
+        .onChange(of: shuttleNumberText) { _ in commitChanges() }
+        .onChange(of: costPerShuttleText) { _ in commitChanges() }
     }
 }
 
 #Preview {
     let schema = Schema([Season.self, Session.self, Player.self, SessionParticipant.self])
     let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: true)
-    
+
     do {
         let mockContainer = try ModelContainer(for: schema, configurations: [modelConfiguration])
         let context = mockContainer.mainContext
@@ -223,27 +188,22 @@ struct PaymentsView: View {
         let season = Season(seasonNumber: 4)
         context.insert(season)
         let session = Session(sessionNumber: 5, season: season)
-        // Set initial persistent values.
         session.courtCost = 50.0
         session.numberOfShuttles = 2
         session.costPerShuttle = 15.0
         context.insert(session)
         
-        // Insert some mock players.
         let player1 = Player(name: "Alice")
         let player2 = Player(name: "Bob")
         context.insert(player1)
         context.insert(player2)
-        
-        // Create SessionParticipants.
+
         let sp1 = SessionParticipant(session: session, player: player1)
         let sp2 = SessionParticipant(session: session, player: player2)
         context.insert(sp1)
         context.insert(sp2)
-        
-        // Ensure the session's participants relationship is updated.
         session.participants = [sp1, sp2]
-        
+
         return PaymentsView(session: session)
             .modelContainer(mockContainer)
     } catch {

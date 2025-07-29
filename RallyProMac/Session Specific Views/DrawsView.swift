@@ -66,24 +66,18 @@ struct DrawsView: View {
             }
             .navigationTitle("Draws")
             .toolbar {
-                // Left: Edit / Done button.
-                ToolbarItem(placement: .navigationBarLeading) {
-                    Button(isEditingPlayers ? "Done" : "Edit") {
-                        if isEditingPlayers {
-                            // Save any pending changes before leaving edit mode.
-                            try? modelContext.save()
-                        }
-                        withAnimation {
-                            isEditingPlayers.toggle()
-                        }
+                Button(isEditingPlayers ? "Done" : "Edit") {
+                    if isEditingPlayers {
+                        try? modelContext.save()
+                    }
+                    withAnimation {
+                        isEditingPlayers.toggle()
                     }
                 }
-                // Right: "Add Wave" button (only when editing).
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    if isEditingPlayers {
-                        Button("Add Wave") {
-                            drawsManager.addWave(for: session)
-                        }
+
+                if isEditingPlayers {
+                    Button("Add Wave") {
+                        drawsManager.addWave(for: session)
                     }
                 }
             }
@@ -293,36 +287,16 @@ extension MatchView {
                     .font(.caption)
                 HStack(spacing: 4) {
                     TextField("R", text: $redFirstSetScore)
-                        .keyboardType(.numberPad)
                         .textFieldStyle(.roundedBorder)
                         .frame(width: 40)
                         .focused($activeScoreField, equals: .redFirst)
-                        .onChange(of: redFirstSetScore) { _, newValue in
-                            if newValue.count > 2 {
-                                redFirstSetScore = String(newValue.prefix(2))
-                            }
-                            if redFirstSetScore.count == 2 {
-                                activeScoreField = .blackFirst
-                            }
-                            updateScoreFields()
-                        }
                     
                     Text("-")
                     
                     TextField("B", text: $blackFirstSetScore)
-                        .keyboardType(.numberPad)
                         .textFieldStyle(.roundedBorder)
                         .frame(width: 40)
                         .focused($activeScoreField, equals: .blackFirst)
-                        .onChange(of: blackFirstSetScore) { _, newValue in
-                            if newValue.count > 2 {
-                                blackFirstSetScore = String(newValue.prefix(2))
-                            }
-                            if blackFirstSetScore.count == 2 {
-                                activeScoreField = .redSecond
-                            }
-                            updateScoreFields()
-                        }
                 }
             }
             
@@ -332,33 +306,16 @@ extension MatchView {
                     .font(.caption)
                 HStack(spacing: 4) {
                     TextField("R", text: $redSecondSetScore)
-                        .keyboardType(.numberPad)
                         .textFieldStyle(.roundedBorder)
                         .frame(width: 40)
                         .focused($activeScoreField, equals: .redSecond)
-                        .onChange(of: redSecondSetScore) { _, newValue in
-                            if newValue.count > 2 {
-                                redSecondSetScore = String(newValue.prefix(2))
-                            }
-                            if redSecondSetScore.count == 2 {
-                                activeScoreField = .blackSecond
-                            }
-                            updateScoreFields()
-                        }
                     
                     Text("-")
                     
                     TextField("B", text: $blackSecondSetScore)
-                        .keyboardType(.numberPad)
                         .textFieldStyle(.roundedBorder)
                         .frame(width: 40)
                         .focused($activeScoreField, equals: .blackSecond)
-                        .onChange(of: blackSecondSetScore) { _, newValue in
-                            if newValue.count > 2 {
-                                blackSecondSetScore = String(newValue.prefix(2))
-                            }
-                            updateScoreFields()
-                        }
                 }
             }
             

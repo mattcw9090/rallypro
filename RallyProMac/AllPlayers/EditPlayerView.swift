@@ -18,9 +18,6 @@ struct EditPlayerView: View {
             Form {
                 Section(header: Text("Player Details")) {
                     TextField("Name", text: $editedName)
-                        .autocapitalization(.words)
-                        .disableAutocorrection(true)
-
                     Picker("Status", selection: $editedStatus) {
                         ForEach(Player.PlayerStatus.allCases, id: \.self) { status in
                             Text(status.rawValue).tag(status)
@@ -69,29 +66,5 @@ struct EditPlayerView: View {
             alertMessage = error.localizedDescription
             showingAlert = true
         }
-    }
-}
-
-#Preview {
-    let schema = Schema([Player.self, Season.self, Session.self, SessionParticipant.self])
-    let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: true)
-
-    do {
-        let mockContainer = try ModelContainer(for: schema, configurations: [modelConfiguration])
-        let context = mockContainer.mainContext
-        let playerToEdit = Player(name: "Charlie", status: .playing, isMale: true)
-        let season = Season(seasonNumber: 1)
-        context.insert(season)
-        let session = Session(sessionNumber: 1, season: season)
-        context.insert(session)
-
-        return NavigationStack {
-            EditPlayerView(player: playerToEdit)
-                .modelContainer(mockContainer)
-                .environmentObject(PlayerManager(modelContext: context))
-                .environmentObject(SeasonSessionManager(modelContext: context))
-        }
-    } catch {
-        fatalError("Could not create ModelContainer: \(error)")
     }
 }

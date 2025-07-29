@@ -24,31 +24,13 @@ struct ContentView: View {
             case .sessions:
                 SessionsView()
             case .waitlist:
-                WaitlistPlaceholder()
+                WaitlistView()
             case .allPlayers:
-                AllPlayersPlaceholder()
+                AllPlayersView()
             case .none:
                 Text("Select a view from the sidebar")
                     .foregroundColor(.secondary)
             }
         }
-    }
-}
-
-struct WaitlistPlaceholder: View {
-    var body: some View {
-        Text("Waitlist View")
-            .font(.largeTitle)
-            .foregroundColor(.green)
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
-    }
-}
-
-struct AllPlayersPlaceholder: View {
-    var body: some View {
-        Text("All Players View")
-            .font(.largeTitle)
-            .foregroundColor(.orange)
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 }
