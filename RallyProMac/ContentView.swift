@@ -4,98 +4,80 @@ import SwiftData
 struct ContentView: View {
     enum SidebarItem: Hashable {
         case sessions, waitlist, allPlayers
+        var displayName: String {
+            switch self {
+            case .sessions:  return "Sessions"
+            case .waitlist:  return "Waitlist"
+            case .allPlayers:return "All Players"
+            }
+        }
+        var icon: String {
+            switch self {
+            case .sessions:  return "list.bullet"
+            case .waitlist:  return "person.fill.badge.plus"
+            case .allPlayers:return "person.3.fill"
+            }
+        }
     }
 
-    @State private var selection: SidebarItem? = .sessions
+    @State private var sidebarSelection: SidebarItem? = .sessions
+    @State private var selectedSession: Session?
+    @EnvironmentObject var seasonManager: SeasonSessionManager
 
     init() {
-        // Ensure consistent appearance
         NSApp.keyWindow?.appearance = NSAppearance(named: .aqua)
     }
 
     var body: some View {
-        NavigationSplitView {
-            sidebar
-                .frame(minWidth: 240)
-                .background(
-                    LinearGradient(
-                        gradient: Gradient(colors: [Color(.windowBackgroundColor), Color(.controlBackgroundColor)]),
-                        startPoint: .top,
-                        endPoint: .bottom
-                    )
-                    .ignoresSafeArea()
-                )
-        } detail: {
-            detailView
-                .frame(minWidth: 600, minHeight: 400)
-                .background(Color(.textBackgroundColor).ignoresSafeArea())
+        NavigationStack {
+            NavigationSplitView {
+                // Sidebar
+                List(selection: $sidebarSelection) {
+                    ForEach([SidebarItem.sessions, .waitlist, .allPlayers], id: \.self) { item in
+                        Label(item.displayName, systemImage: item.icon)
+                            .tag(item)
+                    }
+                }
+                .navigationTitle("RallyPro")
+                .toolbar {
+                    ToolbarItem(placement: .navigation) {
+                        Button { toggleSidebar() } label: {
+                            Image(systemName: "sidebar.leading")
+                        }
+                    }
+                }
+            } content: {
+                // Second column
+                switch sidebarSelection {
+                case .sessions:
+                    SessionsView(selectedSession: $selectedSession)
+                        .environmentObject(seasonManager)
+                case .waitlist:
+                    WaitlistView()
+                case .allPlayers:
+                    AllPlayersView()
+                default:
+                    Text("Select a view")
+                        .foregroundColor(.secondary)
+                }
+            } detail: {
+                // Detail pane
+                if let session = selectedSession {
+                    SessionDetailView(session: session)
+                } else {
+                    Text("Select a session")
+                        .foregroundColor(.secondary)
+                }
+            }
+            .navigationDestination(for: Session.self) { session in
+                SessionDetailView(session: session)
+            }
         }
         .accentColor(.mint)
     }
 
-    private var sidebar: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            // App Header
-            HStack(spacing: 8) {
-                Image("AppIcon")
-                    .resizable()
-                    .frame(width: 32, height: 32)
-                Text("RallyPro")
-                    .font(.title2.bold())
-            }
-            .padding(.top, 16)
-
-            Divider()
-
-            // Navigation List
-            List(selection: $selection) {
-                sidebarItem(.sessions, label: "Sessions", icon: "list.bullet").tag(SidebarItem.sessions)
-                sidebarItem(.waitlist, label: "Waitlist", icon: "person.fill.badge.plus").tag(SidebarItem.waitlist)
-                sidebarItem(.allPlayers, label: "All Players", icon: "person.3.fill").tag(SidebarItem.allPlayers)
-            }
-            .listStyle(.sidebar)
-            .scrollIndicators(.hidden)
-
-            Spacer()
-        }
-        .padding(.horizontal, 12)
-    }
-
-    @ViewBuilder
-    private var detailView: some View {
-        Group {
-            switch selection {
-            case .sessions:
-                SessionsView()
-            case .waitlist:
-                WaitlistView()
-            case .allPlayers:
-                AllPlayersView()
-            default:
-                VStack {
-                    Text("Select a view from the sidebar")
-                        .font(.headline)
-                        .foregroundColor(.secondary)
-                }
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-            }
-        }
-        .padding()
-    }
-
-    private func sidebarItem(_ item: SidebarItem, label: String, icon: String) -> some View {
-        HStack(spacing: 12) {
-            Image(systemName: icon)
-                .frame(width: 25, alignment: .leading)
-            Text(label)
-                .font(.headline)
-                .frame(maxWidth: .infinity, alignment: .leading)
-        }
-        .padding(.vertical, 8)
-        .contentShape(Rectangle())
-    }
-
     private func toggleSidebar() {
-        NSApp.keyWindow?.firstResponder?.tryToPerform(#selector(NSSplitViewController.toggleSidebar(_:)), with: nil)
+        NSApp.keyWindow?.firstResponder?
+            .tryToPerform(#selector(NSSplitViewController.toggleSidebar(_:)), with: nil)
     }
 }

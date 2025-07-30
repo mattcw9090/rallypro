@@ -3,20 +3,48 @@ import SwiftData
 
 struct SessionsView: View {
     @EnvironmentObject var seasonManager: SeasonSessionManager
+    @Binding var selectedSession: Session?
 
     @State private var expandedSeasons: [Int: Bool] = [:]
     @State private var showAlert = false
     @State private var alertMessage = ""
 
     var body: some View {
-        VStack {
+        Group {
             if seasonManager.allSeasons.isEmpty {
                 emptyStateView
             } else {
-                seasonListView
+                List(selection: $selectedSession) {
+                    ForEach(seasonManager.allSeasons) { season in
+                        SeasonAccordionView(
+                            isExpanded: Binding(
+                                get: { expandedSeasons[season.seasonNumber] ?? false },
+                                set: { expandedSeasons[season.seasonNumber] = $0 }
+                            ),
+                            season: season,
+                            sessions: seasonManager.allSessions.filter { $0.season.id == season.id },
+                            isCompleted: season.isCompleted,
+                            markIncomplete: { markSeasonIncomplete(season) },
+                            addSession: { addSession(to: season) },
+                            markComplete: { markSeasonComplete(season) },
+                            deleteLatestSession: { _ in deleteLatestSession(for: season) },
+                            selectedSession: $selectedSession
+                        )
+                        .padding(.vertical, 4)
+                    }
+                }
+                .listStyle(.inset)
+                .background(Color.clear)
+                .safeAreaInset(edge: .bottom) {
+                    VStack {
+                        Divider()
+                        addSeasonButton
+                            .padding(.vertical, 10)
+                    }
+                }
             }
         }
-        .navigationTitle("Sessions")   // still picked up by the parent split view
+        .navigationTitle("Sessions")
         .alert("Error", isPresented: $showAlert) {
             Button("OK", role: .cancel) { }
         } message: {
@@ -57,36 +85,6 @@ struct SessionsView: View {
         }
         .padding()
         .transition(.opacity)
-    }
-
-    private var seasonListView: some View {
-        List {
-            ForEach(seasonManager.allSeasons) { season in
-                SeasonAccordionView(
-                    isExpanded: Binding(
-                        get: { expandedSeasons[season.seasonNumber] ?? false },
-                        set: { expandedSeasons[season.seasonNumber] = $0 }
-                    ),
-                    season: season,
-                    sessions: seasonManager.allSessions.filter { $0.season.id == season.id },
-                    isCompleted: season.isCompleted,
-                    markIncomplete: { markSeasonIncomplete(season) },
-                    addSession: { addSession(to: season) },
-                    markComplete: { markSeasonComplete(season) },
-                    deleteLatestSession: { _ in deleteLatestSession(for: season) }
-                )
-                .padding(.vertical, 4)
-            }
-        }
-        .listStyle(.inset)
-        .background(Color.clear)
-        .safeAreaInset(edge: .bottom) {
-            VStack {
-                Divider()
-                addSeasonButton
-                    .padding(.vertical, 10)
-            }
-        }
     }
 
     private var addSeasonButton: some View {
@@ -136,7 +134,7 @@ struct SessionsView: View {
             print("Error updating season: \(error)")
         }
     }
-    
+
     private func deleteLatestSession(for season: Season) {
         do {
             try seasonManager.deleteLatestSession(for: season)
@@ -156,6 +154,7 @@ struct SeasonAccordionView: View {
     let addSession: () -> Void
     let markComplete: () -> Void
     let deleteLatestSession: (Season) -> Void
+    @Binding var selectedSession: Session?
 
     var body: some View {
         DisclosureGroup(isExpanded: $isExpanded) {
@@ -166,19 +165,20 @@ struct SeasonAccordionView: View {
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(.vertical, 6)
             } else {
-                let sortedSessions = sessions.sorted { $0.sessionNumber < $1.sessionNumber }
-                ForEach(sortedSessions, id: \.id) { session in
-                    NavigationLink(destination: SessionDetailView(session: session)) {
-                        HStack(spacing: 10) {
-                            Image(systemName: "calendar.circle.fill")
-                                .foregroundColor(.accentColor)
-                            Text("Session \(session.sessionNumber)")
-                                .font(.body)
-                        }
-                        .padding(.vertical, 6)
+                let sorted = sessions.sorted { $0.sessionNumber < $1.sessionNumber }
+                ForEach(sorted, id: \.id) { session in
+                    HStack(spacing: 10) {
+                        Image(systemName: "calendar.circle.fill")
+                            .foregroundColor(.accentColor)
+                        Text("Session \(session.sessionNumber)")
+                            .font(.body)
                     }
+                    .padding(.vertical, 6)
+                    .contentShape(Rectangle())
+                    .tag(session)
+                    .onTapGesture { selectedSession = session }
                     .swipeActions(edge: .trailing, allowsFullSwipe: true) {
-                        if session == sortedSessions.last {
+                        if session == sorted.last {
                             Button(role: .destructive) {
                                 deleteLatestSession(season)
                             } label: {
