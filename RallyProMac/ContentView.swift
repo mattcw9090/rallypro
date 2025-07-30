@@ -84,11 +84,12 @@ struct ContentView: View {
     }
 
     private func sidebarItem(_ item: SidebarItem, label: String, icon: String) -> some View {
-        Label {
+        HStack(spacing: 12) {
+            Image(systemName: icon)
+                .frame(width: 25, alignment: .leading)
             Text(label)
                 .font(.headline)
-        } icon: {
-            Image(systemName: icon)
+                .frame(maxWidth: .infinity, alignment: .leading)
         }
         .padding(.vertical, 8)
         .contentShape(Rectangle())
