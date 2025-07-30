@@ -176,37 +176,3 @@ struct PaymentsView: View {
         .onChange(of: costPerShuttleText) { _ in commitChanges() }
     }
 }
-
-#Preview {
-    let schema = Schema([Season.self, Session.self, Player.self, SessionParticipant.self])
-    let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: true)
-
-    do {
-        let mockContainer = try ModelContainer(for: schema, configurations: [modelConfiguration])
-        let context = mockContainer.mainContext
-        
-        let season = Season(seasonNumber: 4)
-        context.insert(season)
-        let session = Session(sessionNumber: 5, season: season)
-        session.courtCost = 50.0
-        session.numberOfShuttles = 2
-        session.costPerShuttle = 15.0
-        context.insert(session)
-        
-        let player1 = Player(name: "Alice")
-        let player2 = Player(name: "Bob")
-        context.insert(player1)
-        context.insert(player2)
-
-        let sp1 = SessionParticipant(session: session, player: player1)
-        let sp2 = SessionParticipant(session: session, player: player2)
-        context.insert(sp1)
-        context.insert(sp2)
-        session.participants = [sp1, sp2]
-
-        return PaymentsView(session: session)
-            .modelContainer(mockContainer)
-    } catch {
-        fatalError("Failed to create preview container: \(error)")
-    }
-}

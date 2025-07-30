@@ -6,7 +6,7 @@ enum DetailSegment: String, CaseIterable, Identifiable {
     case draws = "Draws"
     case results = "Results"
     case payments = "Payments"
-    
+
     var id: String { rawValue }
 }
 
@@ -16,33 +16,53 @@ struct SessionDetailView: View {
 
     var body: some View {
         NavigationStack {
-            VStack(spacing: 0) {
-                Picker("View", selection: $selectedSegment) {
-                    ForEach(DetailSegment.allCases) { segment in
-                        Text(segment.rawValue).tag(segment)
-                    }
-                }
-                .pickerStyle(.segmented)
-                .padding(.horizontal)
-                .padding([.top, .bottom])
+            ZStack {
+                // Subtle background gradient for a modern touch
+                LinearGradient(
+                    gradient: Gradient(colors: [Color.blue.opacity(0.2), Color.purple.opacity(0.2)]),
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
+                .ignoresSafeArea()
 
-                Divider()
+                VStack(spacing: 16) {
+                    // Enhanced segmented picker
+                    Picker(selection: $selectedSegment) {
+                        ForEach(DetailSegment.allCases) { segment in
+                            Text(segment.rawValue)
+                                .font(.headline)
+                                .padding(.vertical, 4)
+                        }
+                    } label: {}
+                    .pickerStyle(.segmented)
+                    .controlSize(.large)
+                    .padding(.horizontal)
 
-                Group {
-                    switch selectedSegment {
-                    case .teams:
-                        TeamsView(session: session)
-                    case .draws:
-                        DrawsView(session: session)
-                    case .results:
-                        ResultsView(session: session)
-                    case .payments:
-                        PaymentsView(session: session)
+                    // Card-like container for content
+                    Group {
+                        switch selectedSegment {
+                        case .teams:
+                            TeamsView(session: session)
+                        case .draws:
+                            DrawsView(session: session)
+                        case .results:
+                            ResultsView(session: session)
+                        case .payments:
+                            PaymentsView(session: session)
+                        }
                     }
+                    .padding()
+                    .background(
+                        RoundedRectangle(cornerRadius: 12)
+                            .fill(Color.white.opacity(0.85))
+                    )
+                    .shadow(color: Color.black.opacity(0.15), radius: 8, x: 0, y: 4)
+                    .animation(.easeInOut(duration: 0.25), value: selectedSegment)
                 }
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .padding()
             }
             .navigationTitle("Season \(session.seasonNumber) Session \(session.sessionNumber)")
+            .accentColor(.purple)
         }
     }
 }
