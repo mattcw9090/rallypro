@@ -13,39 +13,50 @@ struct AddPlayerView: View {
     @State private var isMale: Bool = true
 
     var body: some View {
-        NavigationStack {
-            Form {
-                Section(header: Text("Player Details")) {
-                    TextField("Name", text: $name)
+        VStack(spacing: 16) {
+            Text("Add New Player")
+                .font(.largeTitle)
+                .bold()
 
-                    Picker("Status", selection: $status) {
-                        ForEach(Player.PlayerStatus.allCases, id: \.self) { status in
-                            Text(status.rawValue).tag(status)
-                        }
-                    }
+            TextField("Name", text: $name)
+                .textFieldStyle(RoundedBorderTextFieldStyle())
 
-                    Toggle("Is Male", isOn: $isMale)
+            Picker("Status", selection: $status) {
+                ForEach(Player.PlayerStatus.allCases, id: \.self) { status in
+                    Text(status.rawValue).tag(status)
                 }
             }
-            .navigationTitle("Add Player")
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") {
-                        dismiss()
-                    }
+            .pickerStyle(SegmentedPickerStyle())
+
+            Toggle("Is Male", isOn: $isMale)
+
+            HStack(spacing: 20) {
+                Button("Cancel") {
+                    dismiss()
                 }
-                ToolbarItem(placement: .confirmationAction) {
-                    Button("Save") {
-                        addPlayer()
-                    }
-                    .disabled(name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                .buttonStyle(.bordered)
+
+                Button("Save") {
+                    addPlayer()
                 }
+                .buttonStyle(.borderedProminent)
+                .disabled(name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
             }
-            .alert("Error", isPresented: $showingAlert) {
-                Button("OK", role: .cancel) { }
-            } message: {
-                Text(alertMessage)
-            }
+        }
+        .padding()
+        .background(
+            LinearGradient(
+                gradient: Gradient(colors: [Color.blue.opacity(0.1), Color.white]),
+                startPoint: .top,
+                endPoint: .bottom
+            )
+        )
+        .cornerRadius(12)
+        .padding()
+        .alert("Error", isPresented: $showingAlert) {
+            Button("OK", role: .cancel) { }
+        } message: {
+            Text(alertMessage)
         }
     }
 
