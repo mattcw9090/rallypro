@@ -30,16 +30,6 @@ struct ContentView: View {
                 .frame(minWidth: 600, minHeight: 400)
                 .background(Color(.textBackgroundColor).ignoresSafeArea())
         }
-        .toolbar {
-            ToolbarItem(placement: .navigation) {
-                Button {
-                    toggleSidebar()
-                } label: {
-                    Image(systemName: "sidebar.leading")
-                }
-                .help("Toggle Sidebar")
-            }
-        }
         .accentColor(.mint)
     }
 
@@ -59,9 +49,9 @@ struct ContentView: View {
 
             // Navigation List
             List(selection: $selection) {
-                sidebarItem(.sessions, label: "Sessions", icon: "list.bullet")
-                sidebarItem(.waitlist, label: "Waitlist", icon: "person.fill.badge.plus")
-                sidebarItem(.allPlayers, label: "All Players", icon: "person.3.fill")
+                sidebarItem(.sessions, label: "Sessions", icon: "list.bullet").tag(SidebarItem.sessions)
+                sidebarItem(.waitlist, label: "Waitlist", icon: "person.fill.badge.plus").tag(SidebarItem.waitlist)
+                sidebarItem(.allPlayers, label: "All Players", icon: "person.3.fill").tag(SidebarItem.allPlayers)
             }
             .listStyle(.sidebar)
             .scrollIndicators(.hidden)

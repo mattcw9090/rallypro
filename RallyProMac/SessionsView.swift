@@ -9,22 +9,20 @@ struct SessionsView: View {
     @State private var alertMessage = ""
 
     var body: some View {
-        NavigationStack {
-            VStack {
-                if seasonManager.allSeasons.isEmpty {
-                    emptyStateView
-                } else {
-                    seasonListView
-                }
+        VStack {
+            if seasonManager.allSeasons.isEmpty {
+                emptyStateView
+            } else {
+                seasonListView
             }
-            .navigationTitle("Sessions")
-            .alert("Error", isPresented: $showAlert) {
-                Button("OK", role: .cancel) { }
-            } message: {
-                Text(alertMessage)
-            }
-            .animation(.default, value: seasonManager.allSeasons.isEmpty)
         }
+        .navigationTitle("Sessions")   // still picked up by the parent split view
+        .alert("Error", isPresented: $showAlert) {
+            Button("OK", role: .cancel) { }
+        } message: {
+            Text(alertMessage)
+        }
+        .animation(.default, value: seasonManager.allSeasons.isEmpty)
     }
 
     private var emptyStateView: some View {
