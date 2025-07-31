@@ -322,10 +322,10 @@ extension MatchView {
             Spacer()
         }
         .padding(.top, 4)
-        .onChange(of: redFirstSetScore)     { _ in handleScoreChange() }
-        .onChange(of: blackFirstSetScore)   { _ in handleScoreChange() }
-        .onChange(of: redSecondSetScore)    { _ in handleScoreChange() }
-        .onChange(of: blackSecondSetScore)  { _ in handleScoreChange() }
+        .onChange(of: redFirstSetScore)     { handleScoreChange() }
+        .onChange(of: blackFirstSetScore)   { handleScoreChange() }
+        .onChange(of: redSecondSetScore)    { handleScoreChange() }
+        .onChange(of: blackSecondSetScore)  { handleScoreChange() }
     }
     
     private func handleScoreChange() {

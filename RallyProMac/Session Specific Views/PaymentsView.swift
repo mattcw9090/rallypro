@@ -164,8 +164,8 @@ struct PaymentsView: View {
             shuttleNumberText = String(session.numberOfShuttles)
             costPerShuttleText = String(format: "%.2f", session.costPerShuttle)
         }
-        .onChange(of: courtCostText) { _ in commitChanges() }
-        .onChange(of: shuttleNumberText) { _ in commitChanges() }
-        .onChange(of: costPerShuttleText) { _ in commitChanges() }
+        .onChange(of: courtCostText) { commitChanges() }
+        .onChange(of: shuttleNumberText) { commitChanges() }
+        .onChange(of: costPerShuttleText) { commitChanges() }
     }
 }
