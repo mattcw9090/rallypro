@@ -322,8 +322,33 @@ extension MatchView {
             Spacer()
         }
         .padding(.top, 4)
+        .onChange(of: redFirstSetScore)     { _ in handleScoreChange() }
+        .onChange(of: blackFirstSetScore)   { _ in handleScoreChange() }
+        .onChange(of: redSecondSetScore)    { _ in handleScoreChange() }
+        .onChange(of: blackSecondSetScore)  { _ in handleScoreChange() }
     }
     
+    private func handleScoreChange() {
+        // 1) parse out your Ints & mark complete
+        match.redTeamScoreFirstSet    = Int(redFirstSetScore)   ?? 0
+        match.blackTeamScoreFirstSet  = Int(blackFirstSetScore) ?? 0
+        match.redTeamScoreSecondSet   = Int(redSecondSetScore)  ?? 0
+        match.blackTeamScoreSecondSet = Int(blackSecondSetScore) ?? 0
+
+        // 2) only mark “complete” if both sets have values
+        let set1Done = !redFirstSetScore.isEmpty && !blackFirstSetScore.isEmpty
+        let set2Done = !redSecondSetScore.isEmpty && !blackSecondSetScore.isEmpty
+        match.isComplete = set1Done && set2Done
+
+        // 3) save & surface any errors
+        do {
+            try modelContext.save()
+        } catch {
+            alertMessage = "Failed to save scores: \(error.localizedDescription)"
+            showingAlert = true
+        }
+    }
+
     private func initializeScores() {
         if match.redTeamScoreFirstSet != 0 || match.blackTeamScoreFirstSet != 0 {
             redFirstSetScore = "\(match.redTeamScoreFirstSet)"
