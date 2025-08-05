@@ -20,6 +20,11 @@ struct AddPlayerView: View {
 
             TextField("Name", text: $name)
                 .textFieldStyle(RoundedBorderTextFieldStyle())
+                .onSubmit {
+                    guard !name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return }
+                    addPlayer()
+                }
+                .submitLabel(.done)
 
             Picker("Status", selection: $status) {
                 ForEach(Player.PlayerStatus.allCases, id: \.self) { status in
