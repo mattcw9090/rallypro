@@ -3,12 +3,14 @@ import SwiftData
 import AppKit
 
 // MARK: - Alert Helper
+
 struct AlertMessage: Identifiable {
     let id = UUID()
     let message: String
 }
 
 // MARK: - TeamsView
+
 struct TeamsView: View {
     let session: Session
     @EnvironmentObject var teamsManager: TeamsManager
@@ -17,7 +19,6 @@ struct TeamsView: View {
 
     var body: some View {
         VStack(spacing: 16) {
-            // Teams Columns
             ScrollView(.vertical) {
                 HStack(alignment: .top, spacing: 16) {
                     teamColumn(
@@ -52,7 +53,6 @@ struct TeamsView: View {
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
 
-            // Generate Button Only
             Button(action: generate) {
                 Label("Generate Draws", systemImage: "shuffle")
                     .font(.headline)
@@ -78,7 +78,15 @@ struct TeamsView: View {
         }
     }
 
-    // MARK: - Generic Column Builder
+    private func generate() {
+        if teamsManager.validateTeams() {
+            teamsManager.generateDrawsStatic()
+            alertMessage = AlertMessage(message: "Draws generated. Check console for details.")
+        } else {
+            alertMessage = AlertMessage(message: "Team validation failed.")
+        }
+    }
+
     @ViewBuilder
     private func teamColumn<Content: View>(
         title: String,
@@ -89,10 +97,8 @@ struct TeamsView: View {
         VStack(alignment: .leading, spacing: 8) {
             teamHeader(title: title, color: color, count: members.count)
 
-            // enumerate so we can show index+1
             ForEach(Array(members.enumerated()), id: \.element.id) { index, player in
                 HStack(spacing: 8) {
-                    // index badge
                     Text("\(index + 1)")
                         .font(.subheadline).bold()
                         .frame(width: 24, alignment: .trailing)
@@ -106,17 +112,6 @@ struct TeamsView: View {
         .frame(maxWidth: .infinity, alignment: .topLeading)
     }
 
-    // MARK: - Generate Action
-    private func generate() {
-        if teamsManager.validateTeams() {
-            teamsManager.generateDrawsStatic()
-            alertMessage = AlertMessage(message: "Draws generated. Check console for details.")
-        } else {
-            alertMessage = AlertMessage(message: "Team validation failed.")
-        }
-    }
-
-    // MARK: - Helpers
     private func teamHeader(title: String, color: Color, count: Int) -> some View {
         HStack(spacing: 8) {
             Circle()
@@ -133,14 +128,15 @@ struct TeamsView: View {
 
     private func teamForTitle(_ title: String) -> Team? {
         switch title {
-        case "Red Team":   return .Red
+        case "Red Team": return .Red
         case "Black Team": return .Black
-        default:            return nil
+        default: return nil
         }
     }
 }
 
-// MARK: - Row Style Modifier
+// MARK: - TeamRowStyle
+
 struct TeamRowStyle: ViewModifier {
     func body(content: Content) -> some View {
         content
@@ -154,6 +150,7 @@ struct TeamRowStyle: ViewModifier {
 }
 
 // MARK: - TeamMemberRow
+
 struct TeamMemberRow: View {
     let name: String
     let team: Team?
@@ -175,9 +172,9 @@ struct TeamMemberRow: View {
 
     private func color(for team: Team?) -> Color {
         switch team {
-        case .Red:   return .red
+        case .Red: return .red
         case .Black: return .black
-        default:     return .gray
+        default: return .gray
         }
     }
 }
