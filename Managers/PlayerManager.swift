@@ -195,6 +195,7 @@ enum PlayerManagerError: LocalizedError {
     case noActiveSession
     case participantTeamAssigned
     case participantNotFound
+    case playerHasSessionRecords
 
     var errorDescription: String? {
         switch self {
@@ -206,6 +207,31 @@ enum PlayerManagerError: LocalizedError {
             return "Please unassign the player from the team before changing their status."
         case .participantNotFound:
             return "Player is not found in the current session participants."
+        case .playerHasSessionRecords:
+            return "Cannot delete a player who’s already in a session."
         }
     }
 }
+
+extension PlayerManager {
+    /// Deletes a player (or, if they're on the waitlist, just removes them from it.)
+    func deletePlayer(_ player: Player) throws {
+        // 1) Otherwise ensure they have no session records:
+        let descriptor = FetchDescriptor<SessionParticipant>()
+        let participants = try modelContext.fetch(descriptor)
+        if participants.contains(where: { $0.player.id == player.id }) {
+            throw PlayerManagerError.playerHasSessionRecords
+        }
+        
+        // 2) If on the waitlist, remove them from it:
+        if player.status == .onWaitlist {
+            try removeFromWaitlist(player)
+        }
+
+        // 3) Safe to delete entirely:
+        modelContext.delete(player)
+        try modelContext.save()
+        fetchAllPlayers()
+    }
+}
+

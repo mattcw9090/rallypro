@@ -6,6 +6,8 @@ struct AllPlayersView: View {
     @State private var showingAddPlayerSheet = false
     @State private var selectedPlayerForEditing: Player?
     @State private var searchText = ""
+    @State private var showingDeleteError = false
+    @State private var deleteErrorMessage = ""
 
     // Adaptive grid items with a minimum of 200, ensures consistent sizing
     private let columns = [
@@ -23,6 +25,11 @@ struct AllPlayersView: View {
                     }
                 }
                 .padding()
+            }
+            .alert("Error", isPresented: $showingDeleteError) {
+                Button("OK", role: .cancel) { }
+            } message: {
+                Text(deleteErrorMessage)
             }
             .searchable(text: $searchText)
             .navigationTitle("All Players")
@@ -50,6 +57,17 @@ struct AllPlayersView: View {
             Button { playerManager.addNewPlayerToWaitlist(player) } label: {
                 Label("Add to Waitlist", systemImage: "list.bullet")
             }
+        }
+
+        Button(role: .destructive) {
+            do {
+                try playerManager.deletePlayer(player)
+            } catch {
+                deleteErrorMessage = error.localizedDescription
+                showingDeleteError = true
+            }
+        } label: {
+            Label("Delete Player", systemImage: "trash")
         }
     }
 }
