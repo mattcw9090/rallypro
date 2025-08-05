@@ -115,47 +115,72 @@ class TeamsManager: ObservableObject {
         refreshData()
         print("All existing DoublesMatch records for this session have been deleted.")
     }
+    
+    private let staticLineup: [[((Int,Int),(Int,Int))]] = [
+        // Wave 1
+        [ ((6,9),(6,9)),
+          ((5,7),(4,8)),
+          ((4,8),(5,7)) ],
+        // Wave 2
+        [ ((1,8),(2,6)),
+          ((3,11),(4,10)),
+          ((4,10),(3,11)) ],
+        // Wave 3
+        [ ((5,12),(7,11)),
+          ((2,6),(1,8)),
+          ((7,11),(5,12)) ],
+        // Wave 4
+        [ ((3,9),(1,12)),
+          ((2,10),(2,10)),
+          ((1,12),(3,9)) ],
+        // Wave 5
+        [ ((11,12),(11,12)),
+          ((3,4),(3,4)),
+          ((7,8),(7,8)) ],
+        // Wave 6
+        [ ((1,2),(1,2)),
+          ((9,10),(9,10)),
+          ((5,6),(5,6)) ]
+    ]
 
-    func generateDraws(numberOfWaves: Int, numberOfCourts: Int, numberOfPlayersPerTeam: Int = 6) {
-        guard validateTeams() else {
-            print("Team validation failed.")
+    func generateDrawsStatic() {
+        guard let session = session else { return }
+
+        // 1) Exactly 24 participants, split 12 vs 12
+        let redCount = redTeamMembers.count
+        let blackCount = blackTeamMembers.count
+        guard redCount == 12 && blackCount == 12 else {
+            print("Static draw requires exactly 12 Red and 12 Black.")
             return
         }
 
-        let logic = Logic()
-        if let overallLineup = logic.generateCombinedLineup(
-            numberOfPlayersPerTeam: numberOfPlayersPerTeam,
-            numberOfWaves: numberOfWaves,
-            numberOfCourts: numberOfCourts
-        ) {
-            print("Overall Lineup: \(overallLineup)")
-            deleteExistingDoublesMatches()
+        // 2) Wipe out any existing matches
+        deleteExistingDoublesMatches()
 
-            guard let session = session else { return }
-            for (waveIndex, wave) in overallLineup.enumerated() {
-                for match in wave {
-                    let firstPair = match[0]
-                    let secondPair = match[1]
+        // 3) Walk our staticLineup
+        for (waveIndex, wave) in staticLineup.enumerated() {
+            for (redPair, blackPair) in wave {
+                let red1 = redTeamMembers[redPair.0 - 1]
+                let red2 = redTeamMembers[redPair.1 - 1]
+                let black1 = blackTeamMembers[blackPair.0 - 1]
+                let black2 = blackTeamMembers[blackPair.1 - 1]
 
-                    let redMembers = redTeamMembers
-                    let blackMembers = blackTeamMembers
-
-                    let newMatch = DoublesMatch(
-                        session: session,
-                        waveNumber: waveIndex + 1,
-                        redPlayer1: redMembers[firstPair.0 - 1],
-                        redPlayer2: redMembers[firstPair.1 - 1],
-                        blackPlayer1: blackMembers[secondPair.0 - 1],
-                        blackPlayer2: blackMembers[secondPair.1 - 1]
-                    )
-                    context.insert(newMatch)
-                }
+                let match = DoublesMatch(
+                    session: session,
+                    waveNumber: waveIndex + 1,
+                    redPlayer1: red1,
+                    redPlayer2: red2,
+                    blackPlayer1: black1,
+                    blackPlayer2: black2
+                )
+                context.insert(match)
             }
-            saveContext()
-            refreshData()
-        } else {
-            print("No valid lineup found after attempts.")
         }
+
+        // 4) Save & refresh
+        saveContext()
+        refreshData()
+        print("Static draws generated (\(staticLineup.count) waves of \(staticLineup.first?.count ?? 0) courts).")
     }
 
     func validateTeams() -> Bool {

@@ -14,8 +14,6 @@ struct TeamsView: View {
     @EnvironmentObject var teamsManager: TeamsManager
 
     @State private var alertMessage: AlertMessage?
-    @State private var selectedNumberOfWaves = 5
-    @State private var selectedNumberOfCourts = 2
 
     var body: some View {
         VStack(spacing: 16) {
@@ -54,13 +52,18 @@ struct TeamsView: View {
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
 
-            // Controls
-            controlsView
-                .padding()
-                .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12))
-                .shadow(color: .black.opacity(0.05), radius: 4, x: 0, y: 2)
+            // Generate Button Only
+            Button(action: generate) {
+                Label("Generate Draws", systemImage: "shuffle")
+                    .font(.headline)
+                    .frame(maxWidth: .infinity)
+            }
+            .buttonStyle(.borderedProminent)
+            .controlSize(.large)
+            .padding()
+            .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12))
+            .shadow(color: .black.opacity(0.05), radius: 4, x: 0, y: 2)
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         .navigationTitle("Teams")
         .onAppear {
             teamsManager.setSession(session)
@@ -86,52 +89,27 @@ struct TeamsView: View {
         VStack(alignment: .leading, spacing: 8) {
             teamHeader(title: title, color: color, count: members.count)
 
-            ForEach(members, id: \.id) { player in
-                TeamMemberRow(name: player.name, team: teamForTitle(title))
-                    .modifier(TeamRowStyle())
-                    .contextMenu { menuItems(player) }
+            // enumerate so we can show index+1
+            ForEach(Array(members.enumerated()), id: \.element.id) { index, player in
+                HStack(spacing: 8) {
+                    // index badge
+                    Text("\(index + 1)")
+                        .font(.subheadline).bold()
+                        .frame(width: 24, alignment: .trailing)
+
+                    TeamMemberRow(name: player.name, team: teamForTitle(title))
+                        .modifier(TeamRowStyle())
+                }
+                .contextMenu { menuItems(player) }
             }
         }
         .frame(maxWidth: .infinity, alignment: .topLeading)
     }
 
-    // MARK: - Controls View
-    private var controlsView: some View {
-        HStack(spacing: 20) {
-            pickerStack(label: "Waves", selection: $selectedNumberOfWaves)
-            pickerStack(label: "Courts", selection: $selectedNumberOfCourts)
-
-            Button(action: generate) {
-                Label("Generate Draws", systemImage: "shuffle")
-                    .font(.headline)
-            }
-            .buttonStyle(.borderedProminent)
-            .controlSize(.large)
-        }
-    }
-
-    // MARK: - Picker Stack
-    private func pickerStack(label: String, selection: Binding<Int>) -> some View {
-        VStack(alignment: .leading, spacing: 4) {
-            Text(label)
-                .font(.subheadline)
-                .foregroundColor(.secondary)
-
-            Picker(label, selection: selection) {
-                ForEach(1...10, id: \.self) { Text("\($0)") }
-            }
-            .pickerStyle(.menu)
-            .labelsHidden()
-        }
-    }
-
     // MARK: - Generate Action
     private func generate() {
         if teamsManager.validateTeams() {
-            teamsManager.generateDraws(
-                numberOfWaves: selectedNumberOfWaves,
-                numberOfCourts: selectedNumberOfCourts
-            )
+            teamsManager.generateDrawsStatic()
             alertMessage = AlertMessage(message: "Draws generated. Check console for details.")
         } else {
             alertMessage = AlertMessage(message: "Team validation failed.")
