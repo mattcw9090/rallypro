@@ -29,9 +29,6 @@ struct RallyProMacApp: App {
         _teamsManager = StateObject(wrappedValue: TeamsManager(modelContext: modelContext))
         _drawsManager = StateObject(wrappedValue: DrawsManager(modelContext: modelContext))
         _resultsManager = StateObject(wrappedValue: ResultsManager(modelContext: modelContext))
-
-        // ✅ Fix team positions on launch
-        assignTeamPositionsIfNeeded(context: modelContext)
     }
 
     var body: some Scene {
@@ -47,43 +44,4 @@ struct RallyProMacApp: App {
         }
         .modelContainer(sharedModelContainer)
     }
-    
-    // 1️⃣ A lightweight Hashable key
-    private struct SessionTeamKey: Hashable {
-        let sessionID: String
-        let teamValue: String
-    }
-
-    // 2️⃣ Your helper that assigns positions
-    private func assignTeamPositionsIfNeeded(context: ModelContext) {
-        do {
-            let participants = try context.fetch(FetchDescriptor<SessionParticipant>())
-
-            // 3️⃣ Group with the Hashable key
-            let grouped = Dictionary(grouping: participants) { p in
-                SessionTeamKey(
-                    sessionID: p.session.uniqueIdentifier,
-                    teamValue: p.teamRawValue ?? "Unassigned"
-                )
-            }
-
-            // 4️⃣ Walk each (session, team) bucket
-            for (key, teamMembers) in grouped {
-                guard key.teamValue != "Unassigned" else { continue }          // skip folks not on a team
-                guard teamMembers.contains(where: { $0.teamPosition == -1 }) else { continue } // already done
-
-                // 🔀 Sort however you like here
-                for (index, participant) in teamMembers
-                        .sorted(by: { $0.player.name < $1.player.name })
-                        .enumerated() {
-                    participant.teamPosition = index
-                }
-            }
-
-            try context.save()
-        } catch {
-            print("❌ Couldn’t auto-assign teamPositions: \(error)")
-        }
-    }
-
 }

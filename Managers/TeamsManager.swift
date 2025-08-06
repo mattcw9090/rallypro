@@ -87,10 +87,49 @@ class TeamsManager: ObservableObject {
 
     // MARK: - Team Operations
 
-    func updateTeam(for player: Player, to team: Team?) {
-        // Find the participant corresponding to this player in the filtered (session) list.
+    func updateTeam(for player: Player, to newTeam: Team?) {
+        // 1. Get the current participant in the session
         guard let participant = participants.first(where: { $0.player == player }) else { return }
-        participant.team = team
+
+        let oldTeam = participant.team
+        let oldPosition = participant.teamPosition
+
+        // 2. If participant is switching *from* a team, dequeue them
+        if let oldTeam {
+            // Get all teammates in the same team, sorted by position
+            var teammates = participants
+                .filter { $0.team == oldTeam }
+                .sorted(by: { $0.teamPosition < $1.teamPosition })
+
+            // Find index of the exiting participant
+            if let index = teammates.firstIndex(where: { $0.player.id == participant.player.id }) {
+                // Remove the participant
+                teammates.remove(at: index)
+
+                // Reassign teamPositions: compact from 0...n
+                for (i, p) in teammates.enumerated() {
+                    p.teamPosition = i
+                }
+            }
+        }
+
+        // 3. If moving to a new team, enqueue to the end
+        if let newTeam {
+            let newTeamMembers = participants
+                .filter { $0.team == newTeam }
+
+            let maxPosition = newTeamMembers
+                .map(\.teamPosition)
+                .max() ?? -1
+
+            participant.team = newTeam
+            participant.teamPosition = maxPosition + 1
+        } else {
+            // 4. Unassigning from all teams
+            participant.team = nil
+            participant.teamPosition = -1
+        }
+
         saveContext()
         refreshData()
     }
