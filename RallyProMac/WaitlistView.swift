@@ -4,6 +4,7 @@ import SwiftData
 struct WaitlistView: View {
     @EnvironmentObject var playerManager: PlayerManager
     @EnvironmentObject var seasonManager: SeasonSessionManager
+    @EnvironmentObject var teamsManager: TeamsManager
 
     @State private var showingAlert = false
     @State private var alertMessage = ""
@@ -66,6 +67,7 @@ struct WaitlistView: View {
     private func movePlayerToSession(_ player: Player) {
         do {
             try playerManager.movePlayerFromWaitlistToCurrentSession(player, session: seasonManager.latestSession)
+            teamsManager.refreshData()
         } catch {
             alertMessage = error.localizedDescription
             showingAlert = true
