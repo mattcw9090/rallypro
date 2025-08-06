@@ -102,9 +102,16 @@ struct TeamsView: View {
                     Text("\(index + 1)")
                         .font(.subheadline).bold()
                         .frame(width: 24, alignment: .trailing)
-
-                    TeamMemberRow(name: player.name, team: teamForTitle(title))
+                    
+                    if let participant = teamsManager.participant(for: player) {
+                        TeamMemberRow(
+                            name: participant.player.name,
+                            team: participant.team,
+                            teamPosition: participant.teamPosition
+                        )
                         .modifier(TeamRowStyle())
+                    }
+
                 }
                 .contextMenu { menuItems(player) }
             }
@@ -150,10 +157,10 @@ struct TeamRowStyle: ViewModifier {
 }
 
 // MARK: - TeamMemberRow
-
 struct TeamMemberRow: View {
     let name: String
     let team: Team?
+    let teamPosition: Int
 
     var body: some View {
         HStack {
@@ -161,7 +168,8 @@ struct TeamMemberRow: View {
                 .foregroundColor(color(for: team))
                 .frame(width: 30, height: 30)
 
-            Text(name)
+            // 🆕 Show name and teamPosition
+            Text("\(name) [\(teamPosition)]")
                 .font(.body)
                 .padding(.leading, 5)
 

@@ -216,4 +216,8 @@ class TeamsManager: ObservableObject {
         fetchAllParticipants()
         fetchAllDoublesMatches()
     }
+    
+    func participant(for player: Player) -> SessionParticipant? {
+        participants.first(where: { $0.player.id == player.id })
+    }
 }
