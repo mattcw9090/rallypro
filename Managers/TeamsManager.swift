@@ -190,7 +190,7 @@ class TeamsManager: ObservableObject {
     func generateDrawsStatic() {
         guard let session = session else { return }
 
-        // 1) Exactly 24 participants, split 12 vs 12
+        // 1) Validate team sizes
         let redCount = redTeamParticipants.count
         let blackCount = blackTeamParticipants.count
         guard redCount == 12 && blackCount == 12 else {
@@ -198,16 +198,31 @@ class TeamsManager: ObservableObject {
             return
         }
 
-        // 2) Wipe out any existing matches
+        // 2) Wipe out existing matches
         deleteExistingDoublesMatches()
 
-        // 3) Walk our staticLineup
+        // 3) Build lookup dictionaries: [teamPosition: Player]
+        let redLookup = Dictionary(uniqueKeysWithValues: redTeamParticipants.map { ($0.teamPosition + 1, $0.player) })
+        let blackLookup = Dictionary(uniqueKeysWithValues: blackTeamParticipants.map { ($0.teamPosition + 1, $0.player) })
+        
+        // 🔍 Debug print red team lookup
+        print("🔍 Red Team Position Lookup:")
+        for (position, player) in redLookup.sorted(by: { $0.key < $1.key }) {
+            print("  [\(position)]: \(player.name)")
+        }
+
+        // 4) Generate matches from staticLineup
         for (waveIndex, wave) in staticLineup.enumerated() {
             for (redPair, blackPair) in wave {
-                let red1 = redTeamParticipants[redPair.0 - 1].player
-                let red2 = redTeamParticipants[redPair.1 - 1].player
-                let black1 = blackTeamParticipants[blackPair.0 - 1].player
-                let black2 = blackTeamParticipants[blackPair.1 - 1].player
+                guard
+                    let red1 = redLookup[redPair.0],
+                    let red2 = redLookup[redPair.1],
+                    let black1 = blackLookup[blackPair.0],
+                    let black2 = blackLookup[blackPair.1]
+                else {
+                    print("❌ Missing players at required teamPositions. Aborting draws.")
+                    return
+                }
 
                 let match = DoublesMatch(
                     session: session,
