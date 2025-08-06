@@ -126,6 +126,10 @@ struct TeamsView: View {
 
         }
         .navigationTitle("Teams")
+        .onChange(of: session.id) { _ in
+            teamsManager.setSession(session)
+            teamsManager.refreshData()
+        }
         .onAppear {
             teamsManager.setSession(session)
             teamsManager.refreshData()

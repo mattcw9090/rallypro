@@ -63,14 +63,14 @@ struct ContentView: View {
             } detail: {
                 // Detail pane
                 if let session = selectedSession {
-                    SessionDetailView(session: session)
+                    SessionDetailView(session: session).id(session.id) 
                 } else {
                     Text("Select a session")
                         .foregroundColor(.secondary)
                 }
             }
             .navigationDestination(for: Session.self) { session in
-                SessionDetailView(session: session)
+                SessionDetailView(session: session).id(session.id)
             }
         }
         .accentColor(.mint)

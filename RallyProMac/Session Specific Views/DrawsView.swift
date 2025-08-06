@@ -82,6 +82,12 @@ struct DrawsView: View {
                 }
             }
         }
+        .onAppear {
+            drawsManager.refreshData()
+        }
+        .onChange(of: session.id) { _ in
+            drawsManager.refreshData()
+        }
     }
 }
 

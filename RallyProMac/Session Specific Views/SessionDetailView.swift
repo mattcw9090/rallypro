@@ -48,10 +48,18 @@ struct SessionDetailView: View {
     @ViewBuilder
     private var contentView: some View {
         switch selectedSegment {
-        case .teams:    TeamsView(session: session)
-        case .draws:    DrawsView(session: session)
-        case .results:  ResultsView(session: session)
-        case .payments: PaymentsView(session: session)
+        case .teams:
+            TeamsView(session: session)
+                .id(session.id)
+        case .draws:
+            DrawsView(session: session)
+                .id(session.id)
+        case .results:
+            ResultsView(session: session)
+                .id(session.id)
+        case .payments:
+            PaymentsView(session: session)
+                .id(session.id)
         }
     }
 }
