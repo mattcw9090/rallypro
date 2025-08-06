@@ -241,6 +241,51 @@ class TeamsManager: ObservableObject {
         refreshData()
         print("Static draws generated (\(staticLineup.count) waves of \(staticLineup.first?.count ?? 0) courts). Please close app and reopen to view.")
     }
+    
+    func swapParticipants(_ first: Player, _ second: Player) {
+        guard
+            let participant1 = participants.first(where: { $0.player.id == first.id }),
+            let participant2 = participants.first(where: { $0.player.id == second.id })
+        else {
+            print("❌ Could not find participants for both players in session.")
+            return
+        }
+
+        // ❌ Restrict unassigned participants
+        guard let team1 = participant1.team, let team2 = participant2.team else {
+            print("🚫 Cannot swap unassigned players.")
+            return
+        }
+
+        // ✅ Allow only Red ↔︎ Red, Black ↔︎ Black, Red ↔︎ Black
+        let allowedTeams: Set<Set<Team>> = [
+            [.Red, .Red],
+            [.Black, .Black],
+            [.Red, .Black]
+        ]
+
+        let actualPair = Set([team1, team2])
+        guard allowedTeams.contains(actualPair) else {
+            print("🚫 Invalid swap: \(team1.rawValue) ↔︎ \(team2.rawValue) not allowed.")
+            return
+        }
+
+        // ✅ Proceed with swap
+        let tempPosition = participant1.teamPosition
+        participant1.teamPosition = participant2.teamPosition
+        participant2.teamPosition = tempPosition
+
+        // Swap teams if different
+        if team1 != team2 {
+            participant1.team = team2
+            participant2.team = team1
+        }
+
+        print("🔁 Swapped \(participant1.player.name) (\(team1)) ↔︎ \(participant2.player.name) (\(team2))")
+
+        saveContext()
+        refreshData()
+    }
 
     func validateTeams() -> Bool {
         // Check that there are no unassigned players.
