@@ -24,8 +24,9 @@ struct TeamsView: View {
                     teamColumn(
                         title: "Red Team",
                         color: .red,
-                        members: teamsManager.redTeamMembers
-                    ) { player in
+                        participants: teamsManager.redTeamParticipants
+                    ) { participant in
+                        let player = participant.player
                         Button("Unassign") { teamsManager.updateTeam(for: player, to: nil) }
                         Button("Move to Black") { teamsManager.updateTeam(for: player, to: .Black) }
                     }
@@ -33,8 +34,9 @@ struct TeamsView: View {
                     teamColumn(
                         title: "Black Team",
                         color: .black,
-                        members: teamsManager.blackTeamMembers
-                    ) { player in
+                        participants: teamsManager.blackTeamParticipants
+                    ) { participant in
+                        let player = participant.player
                         Button("Unassign") { teamsManager.updateTeam(for: player, to: nil) }
                         Button("Move to Red") { teamsManager.updateTeam(for: player, to: .Red) }
                     }
@@ -42,8 +44,9 @@ struct TeamsView: View {
                     teamColumn(
                         title: "Unassigned",
                         color: .gray,
-                        members: teamsManager.unassignedMembers
-                    ) { player in
+                        participants: teamsManager.unassignedParticipants
+                    ) { participant in
+                        let player = participant.player
                         Button("Add to Waitlist") { teamsManager.moveToWaitlist(player: player) }
                         Button("Move to Black") { teamsManager.updateTeam(for: player, to: .Black) }
                         Button("Move to Red") { teamsManager.updateTeam(for: player, to: .Red) }
@@ -91,29 +94,26 @@ struct TeamsView: View {
     private func teamColumn<Content: View>(
         title: String,
         color: Color,
-        members: [Player],
-        @ViewBuilder menuItems: @escaping (Player) -> Content
-    ) -> some View {
+        participants: [SessionParticipant],
+        @ViewBuilder menuItems: @escaping (SessionParticipant) -> Content
+    )-> some View {
         VStack(alignment: .leading, spacing: 8) {
-            teamHeader(title: title, color: color, count: members.count)
+            teamHeader(title: title, color: color, count: participants.count)
 
-            ForEach(Array(members.enumerated()), id: \.element.id) { index, player in
+            ForEach(Array(participants.enumerated()), id: \.element.id) { index, participant in
                 HStack(spacing: 8) {
                     Text("\(index + 1)")
                         .font(.subheadline).bold()
                         .frame(width: 24, alignment: .trailing)
-                    
-                    if let participant = teamsManager.participant(for: player) {
-                        TeamMemberRow(
-                            name: participant.player.name,
-                            team: participant.team,
-                            teamPosition: participant.teamPosition
-                        )
-                        .modifier(TeamRowStyle())
-                    }
 
+                    TeamMemberRow(
+                        name: participant.player.name,
+                        team: participant.team,
+                        teamPosition: participant.teamPosition
+                    )
+                    .modifier(TeamRowStyle())
                 }
-                .contextMenu { menuItems(player) }
+                .contextMenu { menuItems(participant) }
             }
         }
         .frame(maxWidth: .infinity, alignment: .topLeading)

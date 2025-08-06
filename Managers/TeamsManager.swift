@@ -68,16 +68,21 @@ class TeamsManager: ObservableObject {
     }
 
     /// Computed properties for team members.
-    var redTeamMembers: [Player] {
-        participants.filter { $0.team == .Red }.map { $0.player }
+    var redTeamParticipants: [SessionParticipant] {
+        participants
+            .filter { $0.team == .Red }
+            .sorted(by: { $0.teamPosition < $1.teamPosition })
     }
 
-    var blackTeamMembers: [Player] {
-        participants.filter { $0.team == .Black }.map { $0.player }
+    var blackTeamParticipants: [SessionParticipant] {
+        participants
+            .filter { $0.team == .Black }
+            .sorted(by: { $0.teamPosition < $1.teamPosition })
     }
 
-    var unassignedMembers: [Player] {
-        participants.filter { $0.team == nil }.map { $0.player }
+    var unassignedParticipants: [SessionParticipant] {
+        participants
+            .filter { $0.team == nil }
     }
 
     // MARK: - Team Operations
@@ -147,8 +152,8 @@ class TeamsManager: ObservableObject {
         guard let session = session else { return }
 
         // 1) Exactly 24 participants, split 12 vs 12
-        let redCount = redTeamMembers.count
-        let blackCount = blackTeamMembers.count
+        let redCount = redTeamParticipants.count
+        let blackCount = blackTeamParticipants.count
         guard redCount == 12 && blackCount == 12 else {
             print("Static draw requires exactly 12 Red and 12 Black.")
             return
@@ -160,10 +165,10 @@ class TeamsManager: ObservableObject {
         // 3) Walk our staticLineup
         for (waveIndex, wave) in staticLineup.enumerated() {
             for (redPair, blackPair) in wave {
-                let red1 = redTeamMembers[redPair.0 - 1]
-                let red2 = redTeamMembers[redPair.1 - 1]
-                let black1 = blackTeamMembers[blackPair.0 - 1]
-                let black2 = blackTeamMembers[blackPair.1 - 1]
+                let red1 = redTeamParticipants[redPair.0 - 1].player
+                let red2 = redTeamParticipants[redPair.1 - 1].player
+                let black1 = blackTeamParticipants[blackPair.0 - 1].player
+                let black2 = blackTeamParticipants[blackPair.1 - 1].player
 
                 let match = DoublesMatch(
                     session: session,
@@ -185,7 +190,7 @@ class TeamsManager: ObservableObject {
 
     func validateTeams() -> Bool {
         // Check that there are no unassigned players.
-        if !unassignedMembers.isEmpty {
+        if !unassignedParticipants.isEmpty {
             return false
         }
 
@@ -194,7 +199,7 @@ class TeamsManager: ObservableObject {
             return false
         }
 
-        if redTeamMembers.count != blackTeamMembers.count {
+        if redTeamParticipants.count != blackTeamParticipants.count {
             return false
         }
         return true
