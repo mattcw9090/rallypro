@@ -239,7 +239,7 @@ class TeamsManager: ObservableObject {
         // 4) Save & refresh
         saveContext()
         refreshData()
-        print("Static draws generated (\(staticLineup.count) waves of \(staticLineup.first?.count ?? 0) courts).")
+        print("Static draws generated (\(staticLineup.count) waves of \(staticLineup.first?.count ?? 0) courts). Please close app and reopen to view.")
     }
 
     func validateTeams() -> Bool {
