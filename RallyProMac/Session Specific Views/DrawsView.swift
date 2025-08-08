@@ -85,7 +85,7 @@ struct DrawsView: View {
         .onAppear {
             drawsManager.refreshData()
         }
-        .onChange(of: session.id) { _ in
+        .onChange(of: session.id) {
             drawsManager.refreshData()
         }
     }
@@ -218,8 +218,8 @@ struct MatchView: View {
             }
             .disabled(match.isComplete)
         }
-        .onChange(of: match.isComplete) { isComplete in
-            if isComplete, match.isOngoing {
+        .onChange(of: match.isComplete) {
+            if match.isComplete, match.isOngoing {
                 match.isOngoing = false
                 do { try modelContext.save() }
                 catch {

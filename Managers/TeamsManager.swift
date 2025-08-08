@@ -92,7 +92,6 @@ class TeamsManager: ObservableObject {
         guard let participant = participants.first(where: { $0.player == player }) else { return }
 
         let oldTeam = participant.team
-        let oldPosition = participant.teamPosition
 
         // 2. If participant is switching *from* a team, dequeue them
         if let oldTeam {

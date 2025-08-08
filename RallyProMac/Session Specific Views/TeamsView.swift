@@ -132,7 +132,7 @@ struct TeamsView: View {
 
         }
         .navigationTitle("Teams")
-        .onChange(of: session.id) { _ in
+        .onChange(of: session.id) {
             teamsManager.setSession(session)
             teamsManager.refreshData()
         }
