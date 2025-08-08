@@ -181,8 +181,19 @@ struct MatchView: View {
     
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
-            matchHeader
-            
+            HStack(spacing: 8) {
+                matchHeader
+
+                if match.isOngoing && !match.isComplete {
+                    Text("ONGOING")
+                        .font(.caption2).bold()
+                        .padding(.horizontal, 6)
+                        .padding(.vertical, 2)
+                        .background(Color.yellow.opacity(0.6))
+                        .cornerRadius(4)
+                }
+            }
+
             if isEditingPlayers {
                 scoreInputView
             } else if match.isComplete {
@@ -191,18 +202,65 @@ struct MatchView: View {
             }
         }
         .padding()
-        .background(match.isComplete ? winningTeamColor : Color.clear)
+        .background(matchBackground)
+        .overlay(ongoingBorder)
         .cornerRadius(8)
         .shadow(radius: 2)
-        .onAppear {
-            initializeScores()
-        }
+        .onAppear { initializeScores() }
         .alert(isPresented: $showingAlert) {
-            Alert(
-                title: Text("Error"),
-                message: Text(alertMessage),
-                dismissButton: .default(Text("OK"))
-            )
+            Alert(title: Text("Error"),
+                  message: Text(alertMessage),
+                  dismissButton: .default(Text("OK")))
+        }
+        .contextMenu {
+            Button(match.isOngoing ? "Clear Ongoing" : "Mark Ongoing") {
+                toggleOngoing()
+            }
+            .disabled(match.isComplete)
+        }
+        .onChange(of: match.isComplete) { isComplete in
+            if isComplete, match.isOngoing {
+                match.isOngoing = false
+                do { try modelContext.save() }
+                catch {
+                    alertMessage = "Failed to update match status: \(error.localizedDescription)"
+                    showingAlert = true
+                }
+            }
+        }
+    }
+
+    private var matchBackground: Color {
+        if match.isComplete {
+            return Color.clear
+        } else if match.isOngoing {
+            return Color.yellow.opacity(0.18)
+        } else {
+            return Color.clear
+        }
+    }
+
+    private var ongoingBorder: some View {
+        Group {
+            if match.isOngoing && !match.isComplete {
+                RoundedRectangle(cornerRadius: 8)
+                    .stroke(Color.yellow.opacity(0.7), lineWidth: 2)
+            } else {
+                RoundedRectangle(cornerRadius: 8)
+                    .stroke(Color.clear, lineWidth: 0)
+            }
+        }
+    }
+
+    // MARK: - Action
+
+    private func toggleOngoing() {
+        guard !match.isComplete else { return }
+        match.isOngoing.toggle()
+        do { try modelContext.save() }
+        catch {
+            alertMessage = "Failed to update match status: \(error.localizedDescription)"
+            showingAlert = true
         }
     }
 }
@@ -335,18 +393,23 @@ extension MatchView {
     }
     
     private func handleScoreChange() {
-        // 1) parse out your Ints & mark complete
+        // 1) parse out Ints
         match.redTeamScoreFirstSet    = Int(redFirstSetScore)   ?? 0
         match.blackTeamScoreFirstSet  = Int(blackFirstSetScore) ?? 0
         match.redTeamScoreSecondSet   = Int(redSecondSetScore)  ?? 0
         match.blackTeamScoreSecondSet = Int(blackSecondSetScore) ?? 0
 
-        // 2) only mark “complete” if both sets have values
+        // 2) mark complete if both sets have values
         let set1Done = !redFirstSetScore.isEmpty && !blackFirstSetScore.isEmpty
         let set2Done = !redSecondSetScore.isEmpty && !blackSecondSetScore.isEmpty
         match.isComplete = set1Done && set2Done
 
-        // 3) save & surface any errors
+        // ✅ If complete, auto-clear ongoing
+        if match.isComplete {
+            match.isOngoing = false
+        }
+
+        // 3) save
         do {
             try modelContext.save()
         } catch {

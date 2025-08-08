@@ -16,7 +16,8 @@ class DoublesMatch {
     var redTeamScoreSecondSet: Int
     var blackTeamScoreSecondSet: Int
     var isComplete: Bool
-    
+    var isOngoing: Bool = false
+
     init(
         id: UUID = UUID(),
         session: Session,
@@ -29,7 +30,8 @@ class DoublesMatch {
         blackTeamScoreFirstSet: Int = 0,
         redTeamScoreSecondSet: Int = 0,
         blackTeamScoreSecondSet: Int = 0,
-        isComplete: Bool = false
+        isComplete: Bool = false,
+        isOngoing: Bool = false
     ) {
         self.id = id
         self.session = session
@@ -43,6 +45,6 @@ class DoublesMatch {
         self.redTeamScoreSecondSet = redTeamScoreSecondSet
         self.blackTeamScoreSecondSet = blackTeamScoreSecondSet
         self.isComplete = isComplete
+        self.isOngoing = isOngoing
     }
 }
-
