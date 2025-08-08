@@ -22,10 +22,12 @@ struct TeamsView: View {
         VStack(spacing: 16) {
             ScrollView(.vertical) {
                 HStack(alignment: .top, spacing: 16) {
+                    // Red
                     teamColumn(
                         title: "Red Team",
                         color: .red,
-                        participants: teamsManager.redTeamParticipants
+                        participants: teamsManager.redTeamParticipants,
+                        allowsSwapSelection: true // ⬅️ NEW
                     ) { participant in
                         let player = participant.player
                         Button("Unassign") { teamsManager.updateTeam(for: player, to: nil) }
@@ -37,10 +39,12 @@ struct TeamsView: View {
                         }
                     }
 
+                    // Black
                     teamColumn(
                         title: "Black Team",
                         color: .black,
-                        participants: teamsManager.blackTeamParticipants
+                        participants: teamsManager.blackTeamParticipants,
+                        allowsSwapSelection: true // ⬅️ NEW
                     ) { participant in
                         let player = participant.player
                         Button("Unassign") { teamsManager.updateTeam(for: player, to: nil) }
@@ -52,10 +56,12 @@ struct TeamsView: View {
                         }
                     }
 
+                    // Unassigned (no selection)
                     teamColumn(
                         title: "Unassigned",
                         color: .gray,
-                        participants: teamsManager.unassignedParticipants
+                        participants: teamsManager.unassignedParticipants,
+                        allowsSwapSelection: false // ⬅️ NEW
                     ) { participant in
                         let player = participant.player
                         Button("Add to Waitlist") { teamsManager.moveToWaitlist(player: player) }
@@ -165,6 +171,7 @@ struct TeamsView: View {
         title: String,
         color: Color,
         participants: [SessionParticipant],
+        allowsSwapSelection: Bool = true, // ⬅️ NEW
         @ViewBuilder menuItems: @escaping (SessionParticipant) -> Content
     )-> some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -180,10 +187,12 @@ struct TeamsView: View {
                         name: participant.player.name,
                         team: participant.team,
                         teamPosition: participant.teamPosition,
-                        isSelected: swapCandidates.contains(where: { $0.id == participant.player.id })
+                        isSelected: allowsSwapSelection && swapCandidates.contains(where: { $0.id == participant.player.id })
                     )
                     .onTapGesture {
-                        toggleSwapCandidate(participant.player)
+                        if allowsSwapSelection {
+                            toggleSwapCandidate(participant.player)
+                        }
                     }
                     .modifier(TeamRowStyle())
                 }
