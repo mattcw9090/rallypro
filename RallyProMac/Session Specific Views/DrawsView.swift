@@ -232,7 +232,7 @@ struct MatchView: View {
 
     private var matchBackground: Color {
         if match.isComplete {
-            return Color.clear
+            return winningTeamColor
         } else if match.isOngoing {
             return Color.yellow.opacity(0.18)
         } else {
