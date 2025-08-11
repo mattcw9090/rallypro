@@ -196,8 +196,8 @@ struct MatchView: View {
 
             if isEditingPlayers {
                 scoreInputView
-            } else if match.isComplete {
-                Text("Score: \(matchScore)")
+            } else if let text = partialScoreText {
+                Text("Score: \(text)")
                     .font(.subheadline)
             }
         }
@@ -251,6 +251,21 @@ struct MatchView: View {
             }
         }
     }
+    
+    private var partialScoreText: String? {
+        var pieces: [String] = []
+
+        // Treat 0/0 as "not entered" (matches your current initialize/save logic).
+        if match.redTeamScoreFirstSet != 0 || match.blackTeamScoreFirstSet != 0 {
+            pieces.append("\(match.redTeamScoreFirstSet)-\(match.blackTeamScoreFirstSet)")
+        }
+        if match.redTeamScoreSecondSet != 0 || match.blackTeamScoreSecondSet != 0 {
+            pieces.append("\(match.redTeamScoreSecondSet)-\(match.blackTeamScoreSecondSet)")
+        }
+
+        return pieces.isEmpty ? nil : pieces.joined(separator: ", ")
+    }
+
 
     // MARK: - Action
 
@@ -498,9 +513,5 @@ extension MatchView {
             return Color.clear
         }
     }
-    
-    private var matchScore: String {
-        "\(match.redTeamScoreFirstSet)-\(match.blackTeamScoreFirstSet), " +
-        "\(match.redTeamScoreSecondSet)-\(match.blackTeamScoreSecondSet)"
-    }
+
 }
