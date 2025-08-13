@@ -126,7 +126,6 @@ struct MatchView: View {
     @Bindable var match: DoublesMatch
 
     @FocusState private var activeScoreField: ScoreField?
-
     private enum ScoreField { case redFirst, blackFirst, redSecond, blackSecond }
 
     let isEditingPlayers: Bool
@@ -191,51 +190,6 @@ struct MatchView: View {
         }
     }
 
-    private var matchBackground: Color {
-        if match.isComplete {
-            return winningTeamColor
-        } else if match.isOngoing {
-            return Color.yellow.opacity(0.18)
-        } else {
-            return Color.clear
-        }
-    }
-
-    private var ongoingBorder: some View {
-        Group {
-            if match.isOngoing && !match.isComplete {
-                RoundedRectangle(cornerRadius: 8)
-                    .stroke(Color.yellow.opacity(0.7), lineWidth: 2)
-            } else {
-                RoundedRectangle(cornerRadius: 8)
-                    .stroke(Color.clear, lineWidth: 0)
-            }
-        }
-    }
-
-    private var partialScoreText: String? {
-        var pieces: [String] = []
-        if match.redTeamScoreFirstSet != 0 || match.blackTeamScoreFirstSet != 0 {
-            pieces.append("\(match.redTeamScoreFirstSet)-\(match.blackTeamScoreFirstSet)")
-        }
-        if match.redTeamScoreSecondSet != 0 || match.blackTeamScoreSecondSet != 0 {
-            pieces.append("\(match.redTeamScoreSecondSet)-\(match.blackTeamScoreSecondSet)")
-        }
-        return pieces.isEmpty ? nil : pieces.joined(separator: ", ")
-    }
-
-    private func toggleOngoing() {
-        guard !match.isComplete else { return }
-        match.isOngoing.toggle()
-        do { try modelContext.save() }
-        catch {
-            alertMessage = "Failed to update match status: \(error.localizedDescription)"
-            showingAlert = true
-        }
-    }
-}
-
-extension MatchView {
     private var matchHeader: some View {
         HStack {
             VStack(alignment: .leading, spacing: 6) {
@@ -386,6 +340,65 @@ extension MatchView {
         match.isComplete = set1Complete && set2Complete
     }
 
+    private var matchBackground: Color {
+        if match.isComplete {
+            return winningTeamColor
+        } else if match.isOngoing {
+            return Color.yellow.opacity(0.18)
+        } else {
+            return Color.clear
+        }
+    }
+
+    private var ongoingBorder: some View {
+        Group {
+            if match.isOngoing && !match.isComplete {
+                RoundedRectangle(cornerRadius: 8)
+                    .stroke(Color.yellow.opacity(0.7), lineWidth: 2)
+            } else {
+                RoundedRectangle(cornerRadius: 8)
+                    .stroke(Color.clear, lineWidth: 0)
+            }
+        }
+    }
+
+    private var partialScoreText: String? {
+        var pieces: [String] = []
+        if match.redTeamScoreFirstSet != 0 || match.blackTeamScoreFirstSet != 0 {
+            pieces.append("\(match.redTeamScoreFirstSet)-\(match.blackTeamScoreFirstSet)")
+        }
+        if match.redTeamScoreSecondSet != 0 || match.blackTeamScoreSecondSet != 0 {
+            pieces.append("\(match.redTeamScoreSecondSet)-\(match.blackTeamScoreSecondSet)")
+        }
+        return pieces.isEmpty ? nil : pieces.joined(separator: ", ")
+    }
+
+    private func toggleOngoing() {
+        guard !match.isComplete else { return }
+        match.isOngoing.toggle()
+        do { try modelContext.save() }
+        catch {
+            alertMessage = "Failed to update match status: \(error.localizedDescription)"
+            showingAlert = true
+        }
+    }
+
+    private var winningTeam: Team? {
+        let redTotal = match.redTeamScoreFirstSet + match.redTeamScoreSecondSet
+        let blackTotal = match.blackTeamScoreFirstSet + match.blackTeamScoreSecondSet
+        if redTotal > blackTotal { return .Red }
+        else if blackTotal > redTotal { return .Black }
+        else { return nil }
+    }
+
+    private var winningTeamColor: Color {
+        switch winningTeam {
+        case .Red: return Color.red.opacity(0.2)
+        case .Black: return Color.black.opacity(0.2)
+        case .none: return Color.clear
+        }
+    }
+
     private func updateRedPlayer1(to newPlayer: Player) {
         do {
             match.redPlayer1 = newPlayer
@@ -423,22 +436,6 @@ extension MatchView {
         } catch {
             alertMessage = "Failed to save player selection: \(error.localizedDescription)"
             showingAlert = true
-        }
-    }
-
-    private var winningTeam: Team? {
-        let redTotal = match.redTeamScoreFirstSet + match.redTeamScoreSecondSet
-        let blackTotal = match.blackTeamScoreFirstSet + match.blackTeamScoreSecondSet
-        if redTotal > blackTotal { return .Red }
-        else if blackTotal > redTotal { return .Black }
-        else { return nil }
-    }
-
-    private var winningTeamColor: Color {
-        switch winningTeam {
-        case .Red: return Color.red.opacity(0.2)
-        case .Black: return Color.black.opacity(0.2)
-        case .none: return Color.clear
         }
     }
 }
