@@ -29,10 +29,8 @@ class SessionParticipant {
             teamRawValue = newValue?.rawValue
         }
     }
-    
-    /// The position of the participant within their team (e.g., 0-based index)
-    var teamPosition: Int = -1
 
+    var teamPosition: Int = -1
     var hasPaid: Bool = false
 
     init(session: Session, player: Player, team: Team? = nil, teamPosition: Int = -1) {

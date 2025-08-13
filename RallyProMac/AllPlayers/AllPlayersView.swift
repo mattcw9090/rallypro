@@ -9,7 +9,6 @@ struct AllPlayersView: View {
     @State private var showingDeleteError = false
     @State private var deleteErrorMessage = ""
 
-    // Adaptive grid items with a minimum of 200, ensures consistent sizing
     private let columns = [
         GridItem(.adaptive(minimum: 200), spacing: 16)
     ]
@@ -94,7 +93,6 @@ struct PlayerCardView: View {
                 .foregroundColor(.secondary)
         }
         .padding()
-        // Make the card a square via aspect ratio
         .frame(maxWidth: .infinity)
         .background(
             RoundedRectangle(cornerRadius: 12, style: .continuous)
