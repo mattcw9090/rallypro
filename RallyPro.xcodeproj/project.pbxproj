@@ -22,16 +22,6 @@
 		FBD9CBCC2E4C270300C04572 /* RallyProDesktop-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = "RallyProDesktop-Info.plist"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
-/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
-		FB1D91912E37616200726576 /* Exceptions for "Managers" folder in "RallyProDesktop" target */ = {
-			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
-			membershipExceptions = (
-				SnapshotHelper.swift,
-			);
-			target = FB1D91642E375E0D00726576 /* RallyProDesktop */;
-		};
-/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
-
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		FB1D91412E375D4F00726576 /* Models */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
@@ -45,9 +35,6 @@
 		};
 		FB1D917B2E375FD100726576 /* Managers */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			exceptions = (
-				FB1D91912E37616200726576 /* Exceptions for "Managers" folder in "RallyProDesktop" target */,
-			);
 			path = Managers;
 			sourceTree = "<group>";
 		};
