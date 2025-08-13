@@ -2,9 +2,7 @@ import SwiftUI
 import SwiftData
 import AppKit
 
-// MARK: - Fancy Input Box Style
 extension View {
-    /// A macOS-friendly styled input box with padding, background, and accent border.
     func styledInputBox(width: CGFloat = 100) -> some View {
         self
             .padding(.vertical, 6)
@@ -27,22 +25,11 @@ struct PaymentsView: View {
     @State private var shuttleNumberText: String = ""
     @State private var costPerShuttleText: String = ""
 
-    // Computed properties based on session data.
-    private var numberOfParticipants: Int {
-        session.participants.count
-    }
-    private var participantsPayment: Double {
-        Double(numberOfParticipants) * 25
-    }
-    private var payout: Double {
-        (Double(numberOfParticipants) / 2.0) * 10
-    }
-    private var shuttleCost: Double {
-        Double(session.numberOfShuttles) * session.costPerShuttle
-    }
-    private var netIncome: Double {
-        participantsPayment - session.courtCost - payout - shuttleCost
-    }
+    private var numberOfParticipants: Int { session.participants.count }
+    private var participantsPayment: Double { Double(numberOfParticipants) * 25 }
+    private var payout: Double { (Double(numberOfParticipants) / 2.0) * 10 }
+    private var shuttleCost: Double { Double(session.numberOfShuttles) * session.costPerShuttle }
+    private var netIncome: Double { participantsPayment - session.courtCost - payout - shuttleCost }
 
     private func commitChanges() {
         session.courtCost = Double(courtCostText) ?? 0
@@ -54,12 +41,10 @@ struct PaymentsView: View {
     var body: some View {
         ScrollView {
             VStack(spacing: 20) {
-                // Financial Summary Card
                 VStack(alignment: .leading, spacing: 16) {
                     Text("Financial Summary")
                         .font(.headline)
 
-                    // Court Cost Row
                     HStack {
                         Text("Court Cost")
                             .fontWeight(.semibold)
@@ -70,7 +55,6 @@ struct PaymentsView: View {
 
                     Divider()
 
-                    // Shuttle Costs Group
                     Text("Shuttle Costs")
                         .font(.subheadline)
                         .fontWeight(.semibold)
@@ -97,7 +81,6 @@ struct PaymentsView: View {
 
                     Divider()
 
-                    // Payment Summary
                     HStack {
                         Text("Participants Payment")
                         Spacer()
@@ -126,7 +109,6 @@ struct PaymentsView: View {
                 .shadow(radius: 4)
                 .padding(.horizontal)
 
-                // Participants List Card
                 VStack(alignment: .leading, spacing: 0) {
                     Text("Participants")
                         .font(.headline)
@@ -138,17 +120,21 @@ struct PaymentsView: View {
                             Text(participant.player.name)
                                 .font(.body)
                             Spacer()
-                            Toggle("", isOn: Binding(
-                                get: { participant.hasPaid },
-                                set: { newValue in
-                                    participant.hasPaid = newValue
-                                    try? modelContext.save()
-                                }
-                            ))
+                            Toggle(
+                                "",
+                                isOn: Binding(
+                                    get: { participant.hasPaid },
+                                    set: { newValue in
+                                        participant.hasPaid = newValue
+                                        try? modelContext.save()
+                                    }
+                                )
+                            )
                             .toggleStyle(SwitchToggleStyle(tint: .blue))
                         }
                         .padding(.horizontal)
                         .padding(.vertical, 8)
+
                         Divider()
                     }
                 }

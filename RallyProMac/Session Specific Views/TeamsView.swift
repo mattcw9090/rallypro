@@ -2,14 +2,10 @@ import SwiftUI
 import SwiftData
 import AppKit
 
-// MARK: - Alert Helper
-
 struct AlertMessage: Identifiable {
     let id = UUID()
     let message: String
 }
-
-// MARK: - TeamsView
 
 struct TeamsView: View {
     let session: Session
@@ -22,12 +18,11 @@ struct TeamsView: View {
         VStack(spacing: 16) {
             ScrollView(.vertical) {
                 HStack(alignment: .top, spacing: 16) {
-                    // Red
                     teamColumn(
                         title: "Red Team",
                         color: .red,
                         participants: teamsManager.redTeamParticipants,
-                        allowsSwapSelection: true // ⬅️ NEW
+                        allowsSwapSelection: true
                     ) { participant in
                         let player = participant.player
                         Button("Unassign") { teamsManager.updateTeam(for: player, to: nil) }
@@ -39,12 +34,11 @@ struct TeamsView: View {
                         }
                     }
 
-                    // Black
                     teamColumn(
                         title: "Black Team",
                         color: .black,
                         participants: teamsManager.blackTeamParticipants,
-                        allowsSwapSelection: true // ⬅️ NEW
+                        allowsSwapSelection: true
                     ) { participant in
                         let player = participant.player
                         Button("Unassign") { teamsManager.updateTeam(for: player, to: nil) }
@@ -56,12 +50,11 @@ struct TeamsView: View {
                         }
                     }
 
-                    // Unassigned (no selection)
                     teamColumn(
                         title: "Unassigned",
                         color: .gray,
                         participants: teamsManager.unassignedParticipants,
-                        allowsSwapSelection: false // ⬅️ NEW
+                        allowsSwapSelection: false
                     ) { participant in
                         let player = participant.player
                         Button("Add to Waitlist") { teamsManager.moveToWaitlist(player: player) }
@@ -83,7 +76,7 @@ struct TeamsView: View {
             .padding()
             .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12))
             .shadow(color: .black.opacity(0.05), radius: 4, x: 0, y: 2)
-            
+
             if !swapCandidates.isEmpty {
                 VStack(spacing: 12) {
                     HStack(spacing: 8) {
@@ -129,7 +122,6 @@ struct TeamsView: View {
                 .padding(.horizontal)
                 .padding(.bottom, 8)
             }
-
         }
         .navigationTitle("Teams")
         .onChange(of: session.id) {
@@ -148,7 +140,7 @@ struct TeamsView: View {
             )
         }
     }
-    
+
     private func toggleSwapCandidate(_ player: Player) {
         if swapCandidates.contains(where: { $0.id == player.id }) {
             swapCandidates.removeAll { $0.id == player.id }
@@ -171,9 +163,9 @@ struct TeamsView: View {
         title: String,
         color: Color,
         participants: [SessionParticipant],
-        allowsSwapSelection: Bool = true, // ⬅️ NEW
+        allowsSwapSelection: Bool = true,
         @ViewBuilder menuItems: @escaping (SessionParticipant) -> Content
-    )-> some View {
+    ) -> some View {
         VStack(alignment: .leading, spacing: 8) {
             teamHeader(title: title, color: color, count: participants.count)
 
@@ -225,8 +217,6 @@ struct TeamsView: View {
     }
 }
 
-// MARK: - TeamRowStyle
-
 struct TeamRowStyle: ViewModifier {
     func body(content: Content) -> some View {
         content
@@ -239,7 +229,6 @@ struct TeamRowStyle: ViewModifier {
     }
 }
 
-// MARK: - TeamMemberRow
 struct TeamMemberRow: View {
     let name: String
     let team: Team?

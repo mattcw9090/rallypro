@@ -25,14 +25,8 @@ struct SessionDetailView: View {
 
     var body: some View {
         VStack(spacing: 16) {
-            Picker("View", selection: $selectedSegment) {
-                ForEach(DetailSegment.allCases) { segment in
-                    Label(segment.rawValue, systemImage: segment.icon)
-                        .tag(segment)
-                }
-            }
-            .pickerStyle(.segmented)
-            .padding(.horizontal)
+            segmentPicker
+                .padding(.horizontal)
 
             contentView
                 .padding()
@@ -45,21 +39,27 @@ struct SessionDetailView: View {
         .padding(.top)
     }
 
+    private var segmentPicker: some View {
+        Picker("View", selection: $selectedSegment) {
+            ForEach(DetailSegment.allCases) { segment in
+                Label(segment.rawValue, systemImage: segment.icon)
+                    .tag(segment)
+            }
+        }
+        .pickerStyle(.segmented)
+    }
+
     @ViewBuilder
     private var contentView: some View {
         switch selectedSegment {
         case .teams:
-            TeamsView(session: session)
-                .id(session.id)
+            TeamsView(session: session).id(session.id)
         case .draws:
-            DrawsView(session: session)
-                .id(session.id)
+            DrawsView(session: session).id(session.id)
         case .results:
-            ResultsView(session: session)
-                .id(session.id)
+            ResultsView(session: session).id(session.id)
         case .payments:
-            PaymentsView(session: session)
-                .id(session.id)
+            PaymentsView(session: session).id(session.id)
         }
     }
 }
