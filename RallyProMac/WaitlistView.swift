@@ -13,44 +13,29 @@ struct WaitlistView: View {
         NavigationStack {
             List {
                 ForEach(playerManager.waitlistPlayers) { player in
-                    HStack {
-                        Image(systemName: "person.circle.fill")
-                            .resizable()
-                            .frame(width: 40, height: 40)
-                            .foregroundColor(player.isMale ?? true ? .blue : .pink)
+                    WaitlistRow(player: player)
+                        .padding(.vertical, 5)
+                        .contextMenu {
+                            Button {
+                                movePlayerToSession(player)
+                            } label: {
+                                Label("Move to Current Session", systemImage: "sportscourt")
+                            }
 
-                        VStack(alignment: .leading) {
-                            Text(player.name)
-                                .font(.headline)
-                            if let pos = player.waitlistPosition {
-                                Text("Position: \(pos)")
-                                    .font(.caption)
-                                    .foregroundColor(.secondary)
+                            Button {
+                                movePlayerToBottom(player)
+                            } label: {
+                                Label("Move to Bottom", systemImage: "arrow.down")
+                            }
+
+                            Divider()
+
+                            Button(role: .destructive) {
+                                removePlayerFromWaitlist(player)
+                            } label: {
+                                Label("Remove from Waitlist", systemImage: "minus.circle")
                             }
                         }
-                    }
-                    .padding(.vertical, 5)
-                    .contextMenu {
-                        Button {
-                            movePlayerToSession(player)
-                        } label: {
-                            Label("Move to Current Session", systemImage: "sportscourt")
-                        }
-
-                        Button {
-                            movePlayerToBottom(player)
-                        } label: {
-                            Label("Move to Bottom", systemImage: "arrow.down")
-                        }
-
-                        Divider()
-
-                        Button(role: .destructive) {
-                            removePlayerFromWaitlist(player)
-                        } label: {
-                            Label("Remove from Waitlist", systemImage: "minus.circle")
-                        }
-                    }
                 }
             }
             .listStyle(.inset)
@@ -63,32 +48,59 @@ struct WaitlistView: View {
             Text(alertMessage)
         }
     }
+}
 
-    private func movePlayerToSession(_ player: Player) {
+private extension WaitlistView {
+    func movePlayerToSession(_ player: Player) {
         do {
             try playerManager.movePlayerFromWaitlistToCurrentSession(player, session: seasonManager.latestSession)
             teamsManager.refreshData()
         } catch {
-            alertMessage = error.localizedDescription
-            showingAlert = true
+            showError(error.localizedDescription)
         }
     }
 
-    private func movePlayerToBottom(_ player: Player) {
+    func movePlayerToBottom(_ player: Player) {
         do {
             try playerManager.moveWaitlistPlayerToBottom(player)
         } catch {
-            alertMessage = error.localizedDescription
-            showingAlert = true
+            showError(error.localizedDescription)
         }
     }
 
-    private func removePlayerFromWaitlist(_ player: Player) {
+    func removePlayerFromWaitlist(_ player: Player) {
         do {
             try playerManager.removeFromWaitlist(player)
         } catch {
-            alertMessage = error.localizedDescription
-            showingAlert = true
+            showError(error.localizedDescription)
+        }
+    }
+
+    func showError(_ message: String) {
+        alertMessage = message
+        showingAlert = true
+    }
+}
+
+private struct WaitlistRow: View {
+    let player: Player
+
+    var body: some View {
+        HStack {
+            Image(systemName: "person.circle.fill")
+                .resizable()
+                .frame(width: 40, height: 40)
+                .foregroundColor((player.isMale ?? true) ? .blue : .pink)
+
+            VStack(alignment: .leading) {
+                Text(player.name)
+                    .font(.headline)
+                if let pos = player.waitlistPosition {
+                    Text("Position: \(pos)")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                }
+            }
         }
     }
 }

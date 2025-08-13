@@ -156,6 +156,10 @@ struct SeasonAccordionView: View {
     let deleteLatestSession: (Season) -> Void
     @Binding var selectedSession: Session?
 
+    private var sortedSessions: [Session] {
+        sessions.sorted { $0.sessionNumber < $1.sessionNumber }
+    }
+
     var body: some View {
         DisclosureGroup(isExpanded: $isExpanded) {
             if sessions.isEmpty {
@@ -165,8 +169,7 @@ struct SeasonAccordionView: View {
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(.vertical, 6)
             } else {
-                let sorted = sessions.sorted { $0.sessionNumber < $1.sessionNumber }
-                ForEach(sorted, id: \.id) { session in
+                ForEach(sortedSessions, id: \.id) { session in
                     HStack(spacing: 10) {
                         Image(systemName: "calendar.circle.fill")
                             .foregroundColor(.accentColor)
@@ -178,7 +181,7 @@ struct SeasonAccordionView: View {
                     .tag(session)
                     .onTapGesture { selectedSession = session }
                     .swipeActions(edge: .trailing, allowsFullSwipe: true) {
-                        if session == sorted.last {
+                        if session == sortedSessions.last {
                             Button(role: .destructive) {
                                 deleteLatestSession(season)
                             } label: {
