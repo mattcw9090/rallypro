@@ -66,20 +66,15 @@ struct TeamsView: View {
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
 
-            Button(action: generate) {
-                Label("Generate Draws", systemImage: "shuffle")
-                    .font(.headline)
-                    .frame(maxWidth: .infinity)
-            }
-            .buttonStyle(.borderedProminent)
-            .controlSize(.large)
-            .padding()
-            .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12))
-            .shadow(color: .black.opacity(0.05), radius: 4, x: 0, y: 2)
-
-            if !swapCandidates.isEmpty {
-                VStack(spacing: 12) {
-                    HStack(spacing: 8) {
+            // Swap panel (always visible)
+            let swapReady = swapCandidates.count == 2
+            VStack(spacing: 12) {
+                HStack(spacing: 8) {
+                    if swapCandidates.isEmpty {
+                        Label("Select two players to swap", systemImage: "person.2")
+                            .font(.subheadline)
+                            .foregroundColor(.secondary)
+                    } else {
                         ForEach(swapCandidates, id: \.id) { player in
                             HStack(spacing: 6) {
                                 Image(systemName: "person.crop.circle.fill")
@@ -93,35 +88,54 @@ struct TeamsView: View {
                             .background(Capsule().fill(Color.accentColor.opacity(0.15)))
                         }
                     }
+                }
 
-                    if swapCandidates.count == 2 {
-                        Button {
-                            teamsManager.swapParticipants(swapCandidates[0], swapCandidates[1])
-                            swapCandidates.removeAll()
-                        } label: {
-                            Label("Swap \(swapCandidates[0].name) ↔︎ \(swapCandidates[1].name)", systemImage: "arrow.left.arrow.right")
-                                .frame(maxWidth: .infinity)
-                        }
-                        .buttonStyle(.borderedProminent)
-                        .controlSize(.large)
-                        .padding(.horizontal)
-                    }
-
-                    Button("Clear Swap Selection") {
+                Button {
+                    if swapReady {
+                        teamsManager.swapParticipants(swapCandidates[0], swapCandidates[1])
                         swapCandidates.removeAll()
                     }
-                    .font(.subheadline)
-                    .foregroundColor(.secondary)
+                } label: {
+                    Label(
+                        swapReady
+                            ? "Swap \(swapCandidates[0].name) ↔︎ \(swapCandidates[1].name)"
+                            : "Swap players",
+                        systemImage: "arrow.left.arrow.right"
+                    )
+                    .frame(maxWidth: .infinity)
                 }
-                .padding()
-                .background(
-                    RoundedRectangle(cornerRadius: 12)
-                        .fill(Color(NSColor.controlBackgroundColor).opacity(0.6))
-                        .shadow(color: .black.opacity(0.05), radius: 3, x: 0, y: 1)
-                )
+                .buttonStyle(.borderedProminent)
+                .controlSize(.large)
                 .padding(.horizontal)
-                .padding(.bottom, 8)
+                .disabled(!swapReady)
+
+                Button("Clear Swap Selection") {
+                    swapCandidates.removeAll()
+                }
+                .font(.subheadline)
+                .foregroundColor(.secondary)
+                .disabled(swapCandidates.isEmpty)
             }
+            .padding()
+            .background(
+                RoundedRectangle(cornerRadius: 12)
+                    .fill(Color(NSColor.controlBackgroundColor).opacity(0.6))
+                    .shadow(color: .black.opacity(0.05), radius: 3, x: 0, y: 1)
+            )
+            .padding(.horizontal)
+            .padding(.bottom, 8)
+
+            // Generate Draws button (stays below)
+            Button(action: generate) {
+                Label("Generate Draws", systemImage: "shuffle")
+                    .font(.headline)
+                    .frame(maxWidth: .infinity)
+            }
+            .buttonStyle(.borderedProminent)
+            .controlSize(.large)
+            .padding()
+            .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12))
+            .shadow(color: .black.opacity(0.05), radius: 4, x: 0, y: 2)
         }
         .navigationTitle("Teams")
         .onChange(of: session.id) {
@@ -241,7 +255,7 @@ struct TeamMemberRow: View {
                 .foregroundColor(color(for: team))
                 .frame(width: 30, height: 30)
 
-            Text("\(name) [\(teamPosition)]")
+            Text(name)
                 .font(.body)
                 .padding(.leading, 5)
 

@@ -95,7 +95,6 @@ struct SeasonalResultsView: View {
         let scores = results.map { $0.finalAverageScore }
         let minScore = scores.min() ?? 0
         let maxScore = scores.max() ?? 1
-        let targetWidth: CGFloat = 1600
         let targetHeight: CGFloat = 2000
         let titleHeight: CGFloat = 36
         let headerHeight: CGFloat = 44
