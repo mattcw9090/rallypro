@@ -19,6 +19,7 @@
 /* Begin PBXFileReference section */
 		FB1D91652E375E0D00726576 /* RallyProDesktop.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = RallyProDesktop.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		FB36CC492D3CE8230013B8D6 /* RallyProIOS.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = RallyProIOS.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		FBD9CBCC2E4C270300C04572 /* RallyProDesktop-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = "RallyProDesktop-Info.plist"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -85,6 +86,7 @@
 		FB36CC402D3CE8230013B8D6 = {
 			isa = PBXGroup;
 			children = (
+				FBD9CBCC2E4C270300C04572 /* RallyProDesktop-Info.plist */,
 				FB36CC4B2D3CE8230013B8D6 /* RallyPro */,
 				FB1D91662E375E0D00726576 /* RallyProMac */,
 				FBA2EC0E2D6631ED00F3F4DB /* Frameworks */,
@@ -259,9 +261,11 @@
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "RallyProDesktop-Info.plist";
 				INFOPLIST_KEY_CFBundleDisplayName = "RallyPro Desktop";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				INFOPLIST_KEY_UIUserInterfaceStyle = Light;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
@@ -292,9 +296,11 @@
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "RallyProDesktop-Info.plist";
 				INFOPLIST_KEY_CFBundleDisplayName = "RallyPro Desktop";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				INFOPLIST_KEY_UIUserInterfaceStyle = Light;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",

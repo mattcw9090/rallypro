@@ -4,34 +4,27 @@ import SwiftData
 struct DrawsView: View {
     let session: Session
 
-    // Inject the DrawsManager via the environment.
     @EnvironmentObject var drawsManager: DrawsManager
     @Environment(\.modelContext) private var modelContext
 
     @State private var isEditingPlayers = false
 
-    // Computed properties using in‑memory filtering provided by the manager.
     private var filteredMatches: [DoublesMatch] {
         drawsManager.doublesMatches(for: session)
     }
-    
     private var participants: [SessionParticipant] {
         drawsManager.participants(for: session)
     }
-    
     private var redTeamMembers: [Player] {
         drawsManager.redTeamMembers(for: session)
     }
-    
     private var blackTeamMembers: [Player] {
         drawsManager.blackTeamMembers(for: session)
     }
-    
     private var maxWaveNumber: Int {
         drawsManager.maxWaveNumber(for: session)
     }
-    
-    /// This is the interactive (display) content.
+
     private var displayContent: some View {
         let groupedMatches = Dictionary(grouping: filteredMatches, by: { $0.waveNumber })
         return VStack(spacing: 16) {
@@ -55,14 +48,11 @@ struct DrawsView: View {
             }
         }
     }
-    
+
     var body: some View {
         NavigationStack {
             ZStack {
-                // The interactive content is wrapped in a ScrollView.
-                ScrollView {
-                    displayContent
-                }
+                ScrollView { displayContent }
             }
             .navigationTitle("Draws")
             .toolbar {
@@ -70,11 +60,8 @@ struct DrawsView: View {
                     if isEditingPlayers {
                         try? modelContext.save()
                     }
-                    withAnimation {
-                        isEditingPlayers.toggle()
-                    }
+                    withAnimation { isEditingPlayers.toggle() }
                 }
-
                 if isEditingPlayers {
                     Button("Add Wave") {
                         drawsManager.addWave(for: session)
@@ -82,32 +69,20 @@ struct DrawsView: View {
                 }
             }
         }
-        .onAppear {
-            drawsManager.refreshData()
-        }
-        .onChange(of: session.id) {
-            drawsManager.refreshData()
-        }
+        .onAppear { drawsManager.refreshData() }
+        .onChange(of: session.id) { drawsManager.refreshData() }
     }
 }
-
-// MARK: - WaveView
 
 struct WaveView: View {
     let title: String
     let matches: [DoublesMatch]
-    
-    // Passed down from DrawsView.
     let isEditingPlayers: Bool
-    
     let redTeamMembers: [Player]
     let blackTeamMembers: [Player]
-    
-    // Handler for adding a match in this wave.
     let addMatchAction: () -> Void
-    // Handler for deleting a match.
     let deleteMatchAction: (DoublesMatch) -> Void
-    
+
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
@@ -115,9 +90,7 @@ struct WaveView: View {
                     .font(.headline)
                     .padding(.horizontal, 8)
                     .padding(.vertical, 4)
-                
                 Spacer()
-                
                 if isEditingPlayers {
                     Button(action: addMatchAction) {
                         Text("Add Match")
@@ -130,7 +103,6 @@ struct WaveView: View {
                     .transition(.opacity)
                 }
             }
-            
             VStack(spacing: 12) {
                 ForEach(matches, id: \.id) { match in
                     MatchView(
@@ -149,41 +121,31 @@ struct WaveView: View {
     }
 }
 
-// MARK: - MatchView
-
 struct MatchView: View {
     @Environment(\.modelContext) private var modelContext
     @Bindable var match: DoublesMatch
-    
+
     @FocusState private var activeScoreField: ScoreField?
-    
-    private enum ScoreField {
-        case redFirst, blackFirst, redSecond, blackSecond
-    }
-    
+
+    private enum ScoreField { case redFirst, blackFirst, redSecond, blackSecond }
+
     let isEditingPlayers: Bool
-    
     let redTeamMembers: [Player]
     let blackTeamMembers: [Player]
-    
-    // Callback to delete the match.
     let deleteMatchAction: (DoublesMatch) -> Void
-    
-    // Local states for score input.
+
     @State private var redFirstSetScore = ""
     @State private var blackFirstSetScore = ""
     @State private var redSecondSetScore = ""
     @State private var blackSecondSetScore = ""
-    
-    // Alert state.
+
     @State private var showingAlert = false
     @State private var alertMessage = ""
-    
+
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack(spacing: 8) {
                 matchHeader
-
                 if match.isOngoing && !match.isComplete {
                     Text("ONGOING")
                         .font(.caption2).bold()
@@ -193,7 +155,6 @@ struct MatchView: View {
                         .cornerRadius(4)
                 }
             }
-
             if isEditingPlayers {
                 scoreInputView
             } else if let text = partialScoreText {
@@ -208,15 +169,15 @@ struct MatchView: View {
         .shadow(radius: 2)
         .onAppear { initializeScores() }
         .alert(isPresented: $showingAlert) {
-            Alert(title: Text("Error"),
-                  message: Text(alertMessage),
-                  dismissButton: .default(Text("OK")))
+            Alert(
+                title: Text("Error"),
+                message: Text(alertMessage),
+                dismissButton: .default(Text("OK"))
+            )
         }
         .contextMenu {
-            Button(match.isOngoing ? "Clear Ongoing" : "Mark Ongoing") {
-                toggleOngoing()
-            }
-            .disabled(match.isComplete)
+            Button(match.isOngoing ? "Clear Ongoing" : "Mark Ongoing") { toggleOngoing() }
+                .disabled(match.isComplete)
         }
         .onChange(of: match.isComplete) {
             if match.isComplete, match.isOngoing {
@@ -251,23 +212,17 @@ struct MatchView: View {
             }
         }
     }
-    
+
     private var partialScoreText: String? {
         var pieces: [String] = []
-
-        // Treat 0/0 as "not entered" (matches your current initialize/save logic).
         if match.redTeamScoreFirstSet != 0 || match.blackTeamScoreFirstSet != 0 {
             pieces.append("\(match.redTeamScoreFirstSet)-\(match.blackTeamScoreFirstSet)")
         }
         if match.redTeamScoreSecondSet != 0 || match.blackTeamScoreSecondSet != 0 {
             pieces.append("\(match.redTeamScoreSecondSet)-\(match.blackTeamScoreSecondSet)")
         }
-
         return pieces.isEmpty ? nil : pieces.joined(separator: ", ")
     }
-
-
-    // MARK: - Action
 
     private func toggleOngoing() {
         guard !match.isComplete else { return }
@@ -280,12 +235,9 @@ struct MatchView: View {
     }
 }
 
-// MARK: - MatchView Subviews & Helpers
-
 extension MatchView {
     private var matchHeader: some View {
         HStack {
-            // Red team (two players)
             VStack(alignment: .leading, spacing: 6) {
                 teamPlayerNameView(
                     currentPlayer: match.redPlayer1,
@@ -299,11 +251,9 @@ extension MatchView {
                 )
             }
             .frame(maxWidth: .infinity, alignment: .leading)
-            
-            Text("vs")
-                .bold()
-            
-            // Black team (two players)
+
+            Text("vs").bold()
+
             VStack(alignment: .trailing, spacing: 6) {
                 teamPlayerNameView(
                     currentPlayer: match.blackPlayer1,
@@ -317,7 +267,7 @@ extension MatchView {
                 )
             }
             .frame(maxWidth: .infinity, alignment: .trailing)
-            
+
             if isEditingPlayers {
                 Button(role: .destructive) {
                     deleteMatchAction(match)
@@ -330,7 +280,7 @@ extension MatchView {
         }
         .padding(.vertical, 4)
     }
-    
+
     private func teamPlayerNameView(
         currentPlayer: Player,
         team: Team,
@@ -341,9 +291,7 @@ extension MatchView {
             if isEditingPlayers {
                 Menu {
                     ForEach(relevantTeamMembers, id: \.id) { player in
-                        Button(player.name) {
-                            updateAction(player)
-                        }
+                        Button(player.name) { updateAction(player) }
                     }
                 } label: {
                     Text(currentPlayer.name)
@@ -356,78 +304,61 @@ extension MatchView {
             }
         }
     }
-    
+
     @ViewBuilder
     private var scoreInputView: some View {
         HStack(spacing: 16) {
-            // Set 1
             VStack(spacing: 4) {
-                Text("Set 1")
-                    .font(.caption)
+                Text("Set 1").font(.caption)
                 HStack(spacing: 4) {
                     TextField("R", text: $redFirstSetScore)
                         .textFieldStyle(.roundedBorder)
                         .frame(width: 40)
                         .focused($activeScoreField, equals: .redFirst)
-                    
                     Text("-")
-                    
                     TextField("B", text: $blackFirstSetScore)
                         .textFieldStyle(.roundedBorder)
                         .frame(width: 40)
                         .focused($activeScoreField, equals: .blackFirst)
                 }
             }
-            
-            // Set 2
             VStack(spacing: 4) {
-                Text("Set 2")
-                    .font(.caption)
+                Text("Set 2").font(.caption)
                 HStack(spacing: 4) {
                     TextField("R", text: $redSecondSetScore)
                         .textFieldStyle(.roundedBorder)
                         .frame(width: 40)
                         .focused($activeScoreField, equals: .redSecond)
-                    
                     Text("-")
-                    
                     TextField("B", text: $blackSecondSetScore)
                         .textFieldStyle(.roundedBorder)
                         .frame(width: 40)
                         .focused($activeScoreField, equals: .blackSecond)
                 }
             }
-            
             Spacer()
         }
         .padding(.top, 4)
-        .onChange(of: redFirstSetScore)     { handleScoreChange() }
-        .onChange(of: blackFirstSetScore)   { handleScoreChange() }
-        .onChange(of: redSecondSetScore)    { handleScoreChange() }
-        .onChange(of: blackSecondSetScore)  { handleScoreChange() }
+        .onChange(of: redFirstSetScore)    { handleScoreChange() }
+        .onChange(of: blackFirstSetScore)  { handleScoreChange() }
+        .onChange(of: redSecondSetScore)   { handleScoreChange() }
+        .onChange(of: blackSecondSetScore) { handleScoreChange() }
     }
-    
+
     private func handleScoreChange() {
-        // 1) parse out Ints
-        match.redTeamScoreFirstSet    = Int(redFirstSetScore)   ?? 0
-        match.blackTeamScoreFirstSet  = Int(blackFirstSetScore) ?? 0
-        match.redTeamScoreSecondSet   = Int(redSecondSetScore)  ?? 0
+        match.redTeamScoreFirstSet    = Int(redFirstSetScore)    ?? 0
+        match.blackTeamScoreFirstSet  = Int(blackFirstSetScore)  ?? 0
+        match.redTeamScoreSecondSet   = Int(redSecondSetScore)   ?? 0
         match.blackTeamScoreSecondSet = Int(blackSecondSetScore) ?? 0
 
-        // 2) mark complete if both sets have values
         let set1Done = !redFirstSetScore.isEmpty && !blackFirstSetScore.isEmpty
         let set2Done = !redSecondSetScore.isEmpty && !blackSecondSetScore.isEmpty
         match.isComplete = set1Done && set2Done
 
-        // ✅ If complete, auto-clear ongoing
-        if match.isComplete {
-            match.isOngoing = false
-        }
+        if match.isComplete { match.isOngoing = false }
 
-        // 3) save
-        do {
-            try modelContext.save()
-        } catch {
+        do { try modelContext.save() }
+        catch {
             alertMessage = "Failed to save scores: \(error.localizedDescription)"
             showingAlert = true
         }
@@ -443,18 +374,18 @@ extension MatchView {
             blackSecondSetScore = "\(match.blackTeamScoreSecondSet)"
         }
     }
-    
+
     private func updateScoreFields() {
         match.redTeamScoreFirstSet = Int(redFirstSetScore) ?? 0
         match.blackTeamScoreFirstSet = Int(blackFirstSetScore) ?? 0
         match.redTeamScoreSecondSet = Int(redSecondSetScore) ?? 0
         match.blackTeamScoreSecondSet = Int(blackSecondSetScore) ?? 0
-        
+
         let set1Complete = (!redFirstSetScore.isEmpty && !blackFirstSetScore.isEmpty)
         let set2Complete = (!redSecondSetScore.isEmpty && !blackSecondSetScore.isEmpty)
         match.isComplete = set1Complete && set2Complete
     }
-    
+
     private func updateRedPlayer1(to newPlayer: Player) {
         do {
             match.redPlayer1 = newPlayer
@@ -464,7 +395,7 @@ extension MatchView {
             showingAlert = true
         }
     }
-    
+
     private func updateRedPlayer2(to newPlayer: Player) {
         do {
             match.redPlayer2 = newPlayer
@@ -474,7 +405,7 @@ extension MatchView {
             showingAlert = true
         }
     }
-    
+
     private func updateBlackPlayer1(to newPlayer: Player) {
         do {
             match.blackPlayer1 = newPlayer
@@ -484,7 +415,7 @@ extension MatchView {
             showingAlert = true
         }
     }
-    
+
     private func updateBlackPlayer2(to newPlayer: Player) {
         do {
             match.blackPlayer2 = newPlayer
@@ -494,7 +425,7 @@ extension MatchView {
             showingAlert = true
         }
     }
-    
+
     private var winningTeam: Team? {
         let redTotal = match.redTeamScoreFirstSet + match.redTeamScoreSecondSet
         let blackTotal = match.blackTeamScoreFirstSet + match.blackTeamScoreSecondSet
@@ -502,16 +433,12 @@ extension MatchView {
         else if blackTotal > redTotal { return .Black }
         else { return nil }
     }
-    
+
     private var winningTeamColor: Color {
         switch winningTeam {
-        case .Red:
-            return Color.red.opacity(0.2)
-        case .Black:
-            return Color.black.opacity(0.2)
-        case .none:
-            return Color.clear
+        case .Red: return Color.red.opacity(0.2)
+        case .Black: return Color.black.opacity(0.2)
+        case .none: return Color.clear
         }
     }
-
 }
