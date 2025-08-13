@@ -214,24 +214,19 @@ enum PlayerManagerError: LocalizedError {
 }
 
 extension PlayerManager {
-    /// Deletes a player (or, if they're on the waitlist, just removes them from it.)
     func deletePlayer(_ player: Player) throws {
-        // 1) Otherwise ensure they have no session records:
         let descriptor = FetchDescriptor<SessionParticipant>()
         let participants = try modelContext.fetch(descriptor)
         if participants.contains(where: { $0.player.id == player.id }) {
             throw PlayerManagerError.playerHasSessionRecords
         }
         
-        // 2) If on the waitlist, remove them from it:
         if player.status == .onWaitlist {
             try removeFromWaitlist(player)
         }
 
-        // 3) Safe to delete entirely:
         modelContext.delete(player)
         try modelContext.save()
         fetchAllPlayers()
     }
 }
-
