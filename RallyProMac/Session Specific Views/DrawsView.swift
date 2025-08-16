@@ -16,7 +16,7 @@ struct DrawsView: View {
 
     private var displayContent: some View {
         let grouped = Dictionary(grouping: filteredMatches, by: { $0.waveNumber })
-        return VStack(spacing: 16) {
+        return VStack(spacing: 10) {
             ForEach(grouped.keys.sorted(), id: \.self) { wave in
                 if let matches = grouped[wave] {
                     WaveView(
@@ -28,7 +28,7 @@ struct DrawsView: View {
                         addMatchAction: { drawsManager.addMatch(for: session, wave: wave) },
                         deleteMatchAction: { drawsManager.deleteMatch($0, for: session) }
                     )
-                    .padding(.horizontal)
+                    .padding(.horizontal, 8)
                 }
             }
         }
@@ -63,26 +63,26 @@ struct WaveView: View {
     let deleteMatchAction: (DoublesMatch) -> Void
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            HStack {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack(spacing: 8) {
                 Text(title)
-                    .font(.headline)
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 4)
+                    .font(.headline.weight(.semibold))
+                    .padding(.horizontal, 6)
+                    .padding(.vertical, 2)
                 Spacer()
                 if isEditingPlayers {
                     Button(action: addMatchAction) {
                         Text("Add Match")
-                            .font(.subheadline)
-                            .padding(.horizontal, 8)
-                            .padding(.vertical, 4)
-                            .background(Color.blue.opacity(0.15))
+                            .font(.subheadline.weight(.semibold))
+                            .padding(.horizontal, 6) // trimmed
+                            .padding(.vertical, 3)
+                            .background(Color.blue.opacity(0.12))
                             .cornerRadius(6)
                     }
                     .transition(.opacity)
                 }
             }
-            VStack(spacing: 12) {
+            VStack(spacing: 8) {
                 ForEach(matches, id: \.id) { match in
                     MatchView(
                         match: match,
@@ -93,9 +93,9 @@ struct WaveView: View {
                     )
                 }
             }
-            .padding(8)
-            .background(Color.gray.opacity(0.1))
-            .cornerRadius(8)
+            .padding(6)
+            .background(Color.gray.opacity(0.08))
+            .cornerRadius(6)
         }
     }
 }
@@ -121,8 +121,8 @@ struct MatchView: View {
     @State private var alertMessage = ""
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            HStack(spacing: 8) {
+        VStack(alignment: .leading, spacing: 6) {
+            HStack(spacing: 6) {
                 matchHeader
                 if match.isOngoing && !match.isComplete {
                     Text("ONGOING")
@@ -139,11 +139,10 @@ struct MatchView: View {
                 Text("Score: \(text)").font(.subheadline)
             }
         }
-        .padding()
+        .padding(8)
         .background(matchBackground)
         .overlay(ongoingBorder)
         .cornerRadius(8)
-        .shadow(radius: 2)
         .onAppear { initializeScores() }
         .alert(isPresented: $showingAlert) {
             Alert(title: Text("Error"), message: Text(alertMessage), dismissButton: .default(Text("OK")))
@@ -165,16 +164,17 @@ struct MatchView: View {
     }
 
     private var matchHeader: some View {
-        HStack {
-            VStack(alignment: .leading, spacing: 6) {
+        HStack(alignment: .center, spacing: 8) {
+            VStack(alignment: .leading, spacing: 4) {
                 teamPlayerNameView(currentPlayer: match.redPlayer1,   team: .Red)   { updatePlayer(.red1, to: $0) }
                 teamPlayerNameView(currentPlayer: match.redPlayer2,   team: .Red)   { updatePlayer(.red2, to: $0) }
             }
             .frame(maxWidth: .infinity, alignment: .leading)
 
-            Text("vs").bold()
+            Text("vs")
+                .font(.callout.weight(.bold))
 
-            VStack(alignment: .trailing, spacing: 6) {
+            VStack(alignment: .trailing, spacing: 4) {
                 teamPlayerNameView(currentPlayer: match.blackPlayer1, team: .Black) { updatePlayer(.black1, to: $0) }
                 teamPlayerNameView(currentPlayer: match.blackPlayer2, team: .Black) { updatePlayer(.black2, to: $0) }
             }
@@ -182,12 +182,14 @@ struct MatchView: View {
 
             if isEditingPlayers {
                 Button(role: .destructive) { deleteMatchAction(match) } label: {
-                    Image(systemName: "trash").foregroundColor(.red)
+                    Image(systemName: "trash")
+                        .font(.system(size: 13, weight: .semibold))
+                        .foregroundColor(.red)
                 }
-                .padding(.leading, 8)
+                .padding(.leading, 6)
             }
         }
-        .padding(.vertical, 4)
+        .padding(.vertical, 2)
     }
 
     private func teamPlayerNameView(
@@ -206,10 +208,12 @@ struct MatchView: View {
                     Text(currentPlayer.name)
                         .underline()
                         .foregroundColor(team == .Red ? .red : .black)
+                        .font(.title3.weight(.semibold))
                 }
             } else {
                 Text(currentPlayer.name)
                     .foregroundColor(team == .Red ? .red : .black)
+                    .font(.title3.weight(.semibold))
             }
         }
     }
@@ -239,17 +243,17 @@ struct MatchView: View {
         redFocus: ScoreField,
         blackFocus: ScoreField
     ) -> some View {
-        VStack(spacing: 4) {
+        VStack(spacing: 2) {
             Text(title).font(.caption)
             HStack(spacing: 4) {
                 TextField("R", text: red)
                     .textFieldStyle(.roundedBorder)
-                    .frame(width: 40)
+                    .frame(width: 36)
                     .focused($activeScoreField, equals: redFocus)
                 Text("-")
                 TextField("B", text: black)
                     .textFieldStyle(.roundedBorder)
-                    .frame(width: 40)
+                    .frame(width: 36)
                     .focused($activeScoreField, equals: blackFocus)
             }
         }
