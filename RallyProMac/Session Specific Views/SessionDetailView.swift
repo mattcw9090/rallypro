@@ -116,28 +116,36 @@ struct SessionDetailView: View {
         let drawsPage = page("Draws") {
             let matches = drawsManager.doublesMatches(for: session)
             let grouped = Dictionary(grouping: matches, by: { $0.waveNumber })
-            VStack(alignment: .leading, spacing: 16) {
+            VStack(alignment: .leading, spacing: 12) {
                 ForEach(grouped.keys.sorted(), id: \.self) { wave in
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text("Wave \(wave)").font(.headline)
+                    VStack(alignment: .leading, spacing: 6) {
+                        Text("Wave \(wave)")
+                            .font(.headline.weight(.semibold))
+
                         VStack(alignment: .leading, spacing: 6) {
                             ForEach(grouped[wave] ?? [], id: \.id) { m in
-                                HStack(alignment: .firstTextBaseline, spacing: 8) {
+                                HStack(alignment: .center, spacing: 8) {
                                     Text("\(m.redPlayer1.name) & \(m.redPlayer2.name)")
+                                        .font(.title3.weight(.semibold))
                                         .foregroundColor(.red)
                                         .frame(maxWidth: .infinity, alignment: .leading)
-                                    Text("vs").bold()
+
+                                    Text("vs")
+                                        .font(.callout.weight(.bold))
+
                                     Text("\(m.blackPlayer1.name) & \(m.blackPlayer2.name)")
+                                        .font(.title3.weight(.semibold))
                                         .foregroundColor(.black)
                                         .frame(maxWidth: .infinity, alignment: .leading)
+
                                     if m.redTeamScoreFirstSet + m.blackTeamScoreFirstSet +
                                         m.redTeamScoreSecondSet + m.blackTeamScoreSecondSet > 0 {
                                         Text("Score: \(m.redTeamScoreFirstSet)-\(m.blackTeamScoreFirstSet), \(m.redTeamScoreSecondSet)-\(m.blackTeamScoreSecondSet)")
-                                            .font(.footnote)
+                                            .font(.footnote.weight(.semibold))
                                             .foregroundStyle(.secondary)
                                     }
                                 }
-                                .padding(8)
+                                .padding(6)
                                 .background(Color.gray.opacity(0.08))
                                 .cornerRadius(6)
                             }
