@@ -17,6 +17,10 @@ class ResultsManager: ObservableObject {
         fetchAllDoublesMatches()
         fetchAllSessionParticipants()
     }
+    
+    private func setHasData(_ red: Int, _ black: Int) -> Bool {
+        return red > 0 || black > 0
+    }
 
     private func fetchAllDoublesMatches() {
         let descriptor = FetchDescriptor<DoublesMatch>()
@@ -49,28 +53,49 @@ class ResultsManager: ObservableObject {
     }
 
     func totalRedScore(for session: Session) -> Int {
-        completedMatches(for: session).reduce(0) {
-            $0 + $1.redTeamScoreFirstSet + $1.redTeamScoreSecondSet
+        doublesMatches(for: session).reduce(0) { total, match in
+            var t = total
+            if setHasData(match.redTeamScoreFirstSet, match.blackTeamScoreFirstSet) {
+                t += match.redTeamScoreFirstSet
+            }
+            if setHasData(match.redTeamScoreSecondSet, match.blackTeamScoreSecondSet) {
+                t += match.redTeamScoreSecondSet
+            }
+            return t
         }
     }
 
     func totalBlackScore(for session: Session) -> Int {
-        completedMatches(for: session).reduce(0) {
-            $0 + $1.blackTeamScoreFirstSet + $1.blackTeamScoreSecondSet
+        doublesMatches(for: session).reduce(0) { total, match in
+            var t = total
+            if setHasData(match.redTeamScoreFirstSet, match.blackTeamScoreFirstSet) {
+                t += match.blackTeamScoreFirstSet
+            }
+            if setHasData(match.redTeamScoreSecondSet, match.blackTeamScoreSecondSet) {
+                t += match.blackTeamScoreSecondSet
+            }
+            return t
         }
     }
 
     func participantScores(for session: Session) -> [(String, Int)] {
         let participants = sessionParticipants(for: session)
-        let matches = completedMatches(for: session)
+        let matches = doublesMatches(for: session)
+
         return participants.map { participant in
             let netScore = matches.filter {
                 [$0.redPlayer1.id, $0.redPlayer2.id, $0.blackPlayer1.id, $0.blackPlayer2.id]
                     .contains(participant.player.id)
             }.reduce(0) { sum, match in
-                let scoreDiff = (match.blackTeamScoreFirstSet + match.blackTeamScoreSecondSet) -
-                                (match.redTeamScoreFirstSet + match.redTeamScoreSecondSet)
-                return sum + (participant.team == .Black ? scoreDiff : -scoreDiff)
+                var diff = 0
+                if setHasData(match.redTeamScoreFirstSet, match.blackTeamScoreFirstSet) {
+                    diff += (match.blackTeamScoreFirstSet - match.redTeamScoreFirstSet)
+                }
+                if setHasData(match.redTeamScoreSecondSet, match.blackTeamScoreSecondSet) {
+                    diff += (match.blackTeamScoreSecondSet - match.redTeamScoreSecondSet)
+                }
+                // If the participant is on Black, positive diff is good; on Red, invert
+                return sum + (participant.team == .Black ? diff : -diff)
             }
             return (participant.player.name, netScore)
         }
