@@ -166,7 +166,6 @@ struct TeamsView: View {
     private func generate() {
         if teamsManager.validateTeams() {
             teamsManager.generateDrawsStatic()
-            alertMessage = AlertMessage(message: "Draws generated. Please close the app and reopen to view.")
         } else {
             alertMessage = AlertMessage(message: "Team validation failed.")
         }
